@@ -1,0 +1,291 @@
+<div class="space-y-6">
+  <!-- Header Section -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+        <span>Magazyn Surowców</span>
+        @if (inventoryService.criticalAlertsCount() > 0) {
+          <span class="status-badge-danger animate-pulse text-xs">
+            {{ inventoryService.criticalAlertsCount() }} alert(y)
+          </span>
+        }
+      </h1>
+      <p class="text-slate-400 text-sm mt-1">
+        Ewidencja zapasów kuchni w gramach (g), mililitrach (ml) i sztukach.
+      </p>
+    </div>
+
+    <div>
+      <button (click)="openAddModal()" class="gastro-btn-primary w-full sm:w-auto shadow-lg shadow-orange-500/20">
+        <span class="material-icons-round text-xl">add_box</span>
+        <span>Dodaj surowiec</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Status Metric Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <!-- All Items -->
+    <div
+      (click)="selectedStatusFilter.set('all')"
+      class="gastro-card cursor-pointer border transition-all hover:border-slate-600"
+      [class.border-orange-500]="selectedStatusFilter() === 'all'"
+      [class.bg-orange-500/5]="selectedStatusFilter() === 'all'"
+    >
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Wszystkie</span>
+        <span class="material-icons-round text-slate-400 text-xl">inventory_2</span>
+      </div>
+      <p class="text-2xl font-bold text-white mt-2">{{ inventoryService.totalItemsCount() }}</p>
+      <p class="text-xs text-slate-500 mt-1">Pozycji w magazynie</p>
+    </div>
+
+    <!-- Healthy Stock -->
+    <div
+      (click)="selectedStatusFilter.set('ok')"
+      class="gastro-card cursor-pointer border transition-all hover:border-slate-600"
+      [class.border-emerald-500]="selectedStatusFilter() === 'ok'"
+      [class.bg-emerald-500/5]="selectedStatusFilter() === 'ok'"
+    >
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Dostępne</span>
+        <span class="material-icons-round text-emerald-400 text-xl">check_circle</span>
+      </div>
+      <p class="text-2xl font-bold text-emerald-400 mt-2">{{ inventoryService.healthyStockItems().length }}</p>
+      <p class="text-xs text-slate-500 mt-1">Stan powyżej progu</p>
+    </div>
+
+    <!-- Low Stock -->
+    <div
+      (click)="selectedStatusFilter.set('low')"
+      class="gastro-card cursor-pointer border transition-all hover:border-slate-600"
+      [class.border-amber-500]="selectedStatusFilter() === 'low'"
+      [class.bg-amber-500/5]="selectedStatusFilter() === 'low'"
+    >
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Niski stan</span>
+        <span class="material-icons-round text-amber-400 text-xl">warning_amber</span>
+      </div>
+      <p class="text-2xl font-bold text-amber-400 mt-2">{{ inventoryService.lowStockItems().length }}</p>
+      <p class="text-xs text-slate-500 mt-1">Wymagają zamówienia</p>
+    </div>
+
+    <!-- Out of Stock -->
+    <div
+      (click)="selectedStatusFilter.set('out')"
+      class="gastro-card cursor-pointer border transition-all hover:border-slate-600"
+      [class.border-rose-500]="selectedStatusFilter() === 'out'"
+      [class.bg-rose-500/5]="selectedStatusFilter() === 'out'"
+    >
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-rose-400 uppercase tracking-wider">Brak surowca</span>
+        <span class="material-icons-round text-rose-400 text-xl">error_outline</span>
+      </div>
+      <p class="text-2xl font-bold text-rose-400 mt-2">{{ inventoryService.outOfStockItems().length }}</p>
+      <p class="text-xs text-slate-500 mt-1">Zerowy stan magazynu</p>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="gastro-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4">
+    <!-- Search Bar -->
+    <div class="relative flex-1">
+      <span class="material-icons-round absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg">search</span>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Szukaj surowca po nazwie lub kategorii..."
+        class="gastro-input pl-10 py-2 text-sm"
+      />
+      @if (searchQuery()) {
+        <button
+          (click)="searchQuery.set('')"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+        >
+          <span class="material-icons-round text-base">close</span>
+        </button>
+      }
+    </div>
+
+    <!-- Category Dropdown Filter -->
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-slate-400 font-medium whitespace-nowrap">Kategoria:</span>
+      <select
+        [ngModel]="selectedCategory()"
+        (ngModelChange)="selectedCategory.set($event)"
+        class="gastro-input py-2 text-xs w-44"
+      >
+        <option value="all">Wszystkie kategorie</option>
+        @for (cat of categories(); track cat) {
+          <option [value]="cat">{{ cat }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Inventory Table Card -->
+  <div class="gastro-card p-0 overflow-hidden border border-slate-800 shadow-xl">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-slate-300">
+        <thead class="text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-950/60 border-b border-slate-800">
+          <tr>
+            <th class="py-3.5 px-4 sm:px-6">Nazwa Surowca</th>
+            <th class="py-3.5 px-4">Stan Magazynowy</th>
+            <th class="py-3.5 px-4 hidden md:table-cell">Próg Alertowy</th>
+            <th class="py-3.5 px-4">Status</th>
+            <th class="py-3.5 px-4 text-center">Szybka Dostawa</th>
+            <th class="py-3.5 px-4 sm:px-6 text-right">Akcje</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/80">
+          @if (filteredItems().length === 0) {
+            <tr>
+              <td colspan="6" class="py-12 text-center text-slate-400">
+                <div class="flex flex-col items-center justify-center gap-2">
+                  <span class="material-icons-round text-4xl text-slate-600">search_off</span>
+                  <p class="font-medium text-slate-300">Nie znaleziono surowców spełniających kryteria</p>
+                  <p class="text-xs text-slate-500">Zmień filtry lub dodaj nowy składnik do magazynu</p>
+                </div>
+              </td>
+            </tr>
+          }
+
+          @for (item of filteredItems(); track item.id) {
+            <tr class="hover:bg-slate-800/40 transition-colors group">
+              <!-- Name & Category -->
+              <td class="py-4 px-4 sm:px-6 font-medium text-white">
+                <div class="flex items-center gap-2.5">
+                  <span class="font-semibold">{{ item.name }}</span>
+                  @if (item.category) {
+                    <span class="px-2 py-0.5 rounded text-[11px] font-normal bg-slate-800 text-slate-400 border border-slate-700/60">
+                      {{ item.category }}
+                    </span>
+                  }
+                </div>
+              </td>
+
+              <!-- Stock Amount with Smart Formatting -->
+              <td class="py-4 px-4">
+                <div>
+                  <span class="text-base font-bold text-slate-100">
+                    {{ formatAmount(item.amount, item.unit).display }}
+                  </span>
+                  @if (item.unit !== 'szt' && item.amount >= 1000) {
+                    <span class="text-[11px] text-slate-500 block">
+                      ({{ formatAmount(item.amount, item.unit).raw }})
+                    </span>
+                  }
+                </div>
+              </td>
+
+              <!-- Min Alert Threshold -->
+              <td class="py-4 px-4 text-slate-400 hidden md:table-cell text-xs">
+                {{ formatAmount(item.minAmount, item.unit).display }}
+              </td>
+
+              <!-- Status Badge -->
+              <td class="py-4 px-4">
+                @switch (getItemStatus(item)) {
+                  @case ('ok') {
+                    <span class="status-badge-success">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                      Dostępny
+                    </span>
+                  }
+                  @case ('low') {
+                    <span class="status-badge-warning">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                      Niski stan
+                    </span>
+                  }
+                  @case ('out') {
+                    <span class="status-badge-danger">
+                      <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                      Brak
+                    </span>
+                  }
+                }
+              </td>
+
+              <!-- Quick Delivery Button -->
+              <td class="py-4 px-4 text-center">
+                <button
+                  (click)="openDeliveryModal(item)"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                  title="Wprowadź szybką dostawę towaru"
+                >
+                  <span class="material-icons-round text-base">local_shipping</span>
+                  <span>+ Dostawa</span>
+                </button>
+              </td>
+
+              <!-- Actions (Edit & Delete) -->
+              <td class="py-4 px-4 sm:px-6 text-right">
+                <div class="inline-flex items-center gap-1">
+                  <button
+                    (click)="openEditModal(item)"
+                    class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    title="Edytuj surowiec"
+                  >
+                    <span class="material-icons-round text-lg">edit</span>
+                  </button>
+                  <button
+                    (click)="promptDeleteItem(item)"
+                    class="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                    title="Usuń surowiec"
+                  >
+                    <span class="material-icons-round text-lg">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Dodaj / Edytuj Składnik -->
+@if (isAddEditModalOpen()) {
+  <app-add-edit-ingredient-modal
+    [itemToEdit]="itemToEdit()"
+    (close)="closeAddEditModal()"
+    (save)="onSaveItem($event)"
+  ></app-add-edit-ingredient-modal>
+}
+
+<!-- Modal: Szybka Dostawa -->
+@if (isDeliveryModalOpen() && deliveryTargetItem()) {
+  <app-quick-delivery-modal
+    [item]="deliveryTargetItem()!"
+    (close)="closeDeliveryModal()"
+    (confirm)="onConfirmDelivery($event)"
+  ></app-quick-delivery-modal>
+}
+
+<!-- Modal: Potwierdzenie Usunięcia -->
+@if (itemToDelete()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 text-center space-y-4">
+      <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20">
+        <span class="material-icons-round text-2xl">warning</span>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-white">Usunąć surowiec?</h3>
+        <p class="text-xs text-slate-400 mt-1">
+          Czy na pewno chcesz usunąć <strong class="text-white">{{ itemToDelete()?.name }}</strong> z magazynu? Ta operacja jest nieodwracalna.
+        </p>
+      </div>
+      <div class="flex items-center justify-center gap-3 pt-2">
+        <button (click)="cancelDeleteItem()" class="gastro-btn-secondary flex-1 py-2 text-xs">
+          Anuluj
+        </button>
+        <button (click)="confirmDeleteItem()" class="gastro-btn-primary bg-rose-600 hover:bg-rose-500 flex-1 py-2 text-xs">
+          Usuń
+        </button>
+      </div>
+    </div>
+  </div>
+}

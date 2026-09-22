@@ -1,0 +1,92 @@
+<div class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+  <div class="w-full max-w-md">
+    <!-- Brand / Header -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 shadow-xl shadow-orange-500/20 mb-4">
+        <span class="material-icons-round text-3xl text-white">restaurant</span>
+      </div>
+      <h1 class="text-2xl font-bold tracking-tight text-white">GastroApp</h1>
+      <p class="text-slate-400 text-sm mt-1">Zaloguj się do panelu zarządzania restauracją</p>
+    </div>
+
+    <!-- Login Card -->
+    <div class="gastro-card border border-slate-800 shadow-2xl">
+      <!-- Error message alert -->
+      @if (errorMessage()) {
+        <div class="mb-5 p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-rose-400 text-sm">
+          <span class="material-icons-round text-lg shrink-0 mt-0.5">error_outline</span>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        <!-- Email Field -->
+        <div>
+          <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-1.5" for="email">
+            Adres E-mail
+          </label>
+          <div class="relative">
+            <span class="material-icons-round absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg">email</span>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="restauracja@przyklad.pl"
+              class="gastro-input pl-10"
+              [class.border-rose-500]="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
+            />
+          </div>
+          @if (loginForm.get('email')?.touched && loginForm.get('email')?.invalid) {
+            <p class="text-rose-400 text-xs mt-1">Wprowadź prawidłowy adres e-mail.</p>
+          }
+        </div>
+
+        <!-- Password Field -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider" for="password">
+              Hasło
+            </label>
+          </div>
+          <div class="relative">
+            <span class="material-icons-round absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg">lock</span>
+            <input
+              id="password"
+              type="password"
+              formControlName="password"
+              placeholder="••••••••"
+              class="gastro-input pl-10"
+              [class.border-rose-500]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
+            />
+          </div>
+          @if (loginForm.get('password')?.touched && loginForm.get('password')?.invalid) {
+            <p class="text-rose-400 text-xs mt-1">Hasło musi mieć co najmniej 6 znaków.</p>
+          }
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          [disabled]="isLoading()"
+          class="w-full gastro-btn-primary py-3 mt-2 text-base font-semibold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          @if (isLoading()) {
+            <span class="animate-spin material-icons-round text-xl">progress_activity</span>
+            <span>Logowanie...</span>
+          } @else {
+            <span>Zaloguj się</span>
+            <span class="material-icons-round text-lg">arrow_forward</span>
+          }
+        </button>
+      </form>
+
+      <!-- Footer register link -->
+      <div class="mt-6 pt-5 border-t border-slate-800 text-center text-sm text-slate-400">
+        Nie masz jeszcze konta?
+        <a routerLink="/register" class="text-orange-400 hover:text-orange-300 font-medium ml-1 transition-colors">
+          Zarejestruj lokal
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
