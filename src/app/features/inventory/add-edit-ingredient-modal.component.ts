@@ -1,22 +1,34 @@
-import { Component, EventEmitter, Input, Output, OnInit, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InventoryItem, InventoryUnit } from '../../core/models/inventory-item.model';
+import { InventoryService } from '../../core/services/inventory.service';
+import { CategorySelectorComponent } from '../../shared/components/category-selector/category-selector.component';
 
 @Component({
   selector: 'app-add-edit-ingredient-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, CategorySelectorComponent],
   templateUrl: './add-edit-ingredient-modal.component.html'
 })
 export class AddEditIngredientModalComponent implements OnInit {
   private fb = inject(FormBuilder);
+  readonly inventoryService = inject(InventoryService);
 
   @Input() itemToEdit?: InventoryItem;
   @Output() close = new EventEmitter<void>();
   @Output() save = new EventEmitter<Omit<InventoryItem, 'id' | 'restaurantId'>>();
 
   form!: FormGroup;
+
+  readonly availableCategories = computed(() => {
+    const items = this.inventoryService.items();
+    const set = new Set<string>();
+    items.forEach(i => {
+      if (i.category) set.add(i.category);
+    });
+    return Array.from(set);
+  });
 
   get isEditMode(): boolean {
     return !!this.itemToEdit;
@@ -83,12 +95,17 @@ export class AddEditIngredientModalComponent implements OnInit {
     const baseAmount = Math.round(Number(val.displayAmount) * amountMult);
     const baseMinAmount = Math.round(Number(val.displayMinAmount) * minMult);
 
-    this.save.emit({
+    const itemData: Omit<InventoryItem, 'id' | 'restaurantId'> = {
       name: val.name.trim(),
       unit: val.unit,
-      category: val.category ? val.category.trim() : undefined,
       amount: baseAmount,
       minAmount: baseMinAmount
-    });
+    };
+
+    if (val.category && val.category.trim()) {
+      itemData.category = val.category.trim();
+    }
+
+    this.save.emit(itemData);
   }
 }

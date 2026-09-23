@@ -1,0 +1,107 @@
+<div class="relative w-full">
+  <!-- Input Container -->
+  <div class="relative flex items-center">
+    <span class="material-icons-round absolute left-3 text-slate-400 dark:text-slate-500 text-lg pointer-events-none">
+      sell
+    </span>
+
+    <input
+      type="text"
+      [value]="searchQuery()"
+      (input)="onInput($event)"
+      (focus)="openDropdown()"
+      (keydown)="onKeyDown($event)"
+      [disabled]="isDisabled()"
+      [placeholder]="placeholder"
+      class="gastro-input pl-9 pr-16 py-2.5 text-sm transition-colors"
+      [class.border-rose-500]="hasError"
+      [class.focus:ring-rose-500]="hasError"
+      autocomplete="off"
+    />
+
+    <!-- Action Buttons inside input -->
+    <div class="absolute right-2.5 flex items-center gap-1 text-slate-400">
+      @if (selectedValue()) {
+        <button
+          type="button"
+          (mousedown)="$event.preventDefault()"
+          (click)="clearValue($event)"
+          class="p-0.5 rounded hover:text-slate-700 dark:hover:text-white transition-colors"
+          title="Wyczyść kategorię"
+        >
+          <span class="material-icons-round text-base">close</span>
+        </button>
+      }
+
+      <button
+        type="button"
+        (mousedown)="$event.preventDefault()"
+        (click)="isOpen() ? closeDropdown() : openDropdown()"
+        class="p-0.5 rounded hover:text-slate-700 dark:hover:text-white transition-colors"
+        tabindex="-1"
+      >
+        <span class="material-icons-round text-lg transition-transform duration-200" [class.rotate-180]="isOpen()">
+          expand_more
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Dropdown Options Menu -->
+  @if (isOpen()) {
+    <div class="absolute z-50 mt-1.5 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden max-h-56 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150">
+      
+      <!-- Opcja Utworzenia Nowej Kategorii -->
+      @if (canCreateNew()) {
+        <button
+          type="button"
+          (mousedown)="$event.preventDefault()"
+          (click)="createNewCategory()"
+          class="w-full px-3.5 py-2.5 flex items-center gap-2.5 text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 border-b border-orange-500/20 transition-colors text-left"
+        >
+          <span class="material-icons-round text-base shrink-0">add_circle</span>
+          <span class="truncate">Utwórz nową kategorię: <strong>"{{ searchQuery().trim() }}"</strong></span>
+        </button>
+      }
+
+      <!-- Istniejące Kategorie -->
+      @if (filteredCategories().length > 0) {
+        <div class="p-1.5 space-y-0.5">
+          <div class="px-2 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            Istniejące kategorie
+          </div>
+
+          @for (cat of filteredCategories(); track cat) {
+            <button
+              type="button"
+              (mousedown)="$event.preventDefault()"
+              (click)="selectCategory(cat)"
+              class="w-full px-3 py-2 rounded-lg flex items-center justify-between text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left group"
+              [class.bg-orange-50]="selectedValue() === cat"
+              [class.dark:bg-orange-500/10]="selectedValue() === cat"
+              [class.text-orange-600]="selectedValue() === cat"
+              [class.dark:text-orange-400]="selectedValue() === cat"
+            >
+              <div class="flex items-center gap-2">
+                <span class="material-icons-round text-sm text-slate-400 group-hover:text-orange-500 transition-colors">
+                  label
+                </span>
+                <span>{{ cat }}</span>
+              </div>
+
+              @if (selectedValue() === cat) {
+                <span class="material-icons-round text-sm text-orange-600 dark:text-orange-400">
+                  check
+                </span>
+              }
+            </button>
+          }
+        </div>
+      } @else if (!canCreateNew()) {
+        <div class="p-4 text-center text-xs text-slate-400 dark:text-slate-500">
+          Wpisz nazwę, aby utworzyć nową kategorię.
+        </div>
+      }
+    </div>
+  }
+</div>

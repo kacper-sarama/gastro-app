@@ -1,25 +1,38 @@
-import { Component, EventEmitter, Input, Output, OnInit, inject, computed } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Recipe, RecipeIngredient, calculateRecipeCapacity } from '../../core/models/recipe.model';
 import { InventoryService } from '../../core/services/inventory.service';
+import { RecipeService } from '../../core/services/recipe.service';
 import { InventoryItem, InventoryUnit } from '../../core/models/inventory-item.model';
+import { CategorySelectorComponent } from '../../shared/components/category-selector/category-selector.component';
 
 @Component({
   selector: 'app-add-edit-recipe-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, CategorySelectorComponent],
   templateUrl: './add-edit-recipe-modal.component.html'
 })
 export class AddEditRecipeModalComponent implements OnInit {
   private fb = inject(FormBuilder);
   readonly inventoryService = inject(InventoryService);
+  readonly recipeService = inject(RecipeService);
 
   @Input() recipeToEdit?: Recipe;
   @Output() close = new EventEmitter<void>();
   @Output() save = new EventEmitter<Omit<Recipe, 'id' | 'restaurantId' | 'updatedAt'>>();
 
   form!: FormGroup;
+  readonly showValidationErrors = signal<boolean>(false);
+
+  readonly availableCategories = computed(() => {
+    const list = this.recipeService.recipes();
+    const set = new Set<string>();
+    list.forEach(r => {
+      if (r.category) set.add(r.category);
+    });
+    return Array.from(set);
+  });
 
   get isEditMode(): boolean {
     return !!this.recipeToEdit;
@@ -92,6 +105,7 @@ export class AddEditRecipeModalComponent implements OnInit {
 
   onSubmit(): void {
     if (this.form.invalid) {
+      this.showValidationErrors.set(true);
       this.form.markAllAsTouched();
       return;
     }
@@ -113,12 +127,20 @@ export class AddEditRecipeModalComponent implements OnInit {
       return;
     }
 
-    this.save.emit({
+    const recipeData: Omit<Recipe, 'id' | 'restaurantId' | 'updatedAt'> = {
       name: val.name.trim(),
       category: val.category.trim(),
-      description: val.description ? val.description.trim() : undefined,
-      sellingPrice: val.sellingPrice ? Number(val.sellingPrice) : undefined,
       ingredients
-    });
+    };
+
+    if (val.description && val.description.trim()) {
+      recipeData.description = val.description.trim();
+    }
+
+    if (val.sellingPrice !== null && val.sellingPrice !== undefined && val.sellingPrice !== '') {
+      recipeData.sellingPrice = Number(val.sellingPrice);
+    }
+
+    this.save.emit(recipeData);
   }
 }

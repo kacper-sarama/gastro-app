@@ -22,6 +22,13 @@
 
     <!-- Form Body -->
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="p-6 space-y-5 overflow-y-auto flex-1">
+      @if (showValidationErrors() && form.invalid) {
+        <div class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center gap-2.5 text-xs text-rose-600 dark:text-rose-400 font-medium animate-in fade-in duration-200">
+          <span class="material-icons-round text-lg shrink-0">error_outline</span>
+          <span>Proszę uzupełnić wszystkie wymagane pola (nazwa dania, kategoria oraz składniki).</span>
+        </div>
+      }
+
       <!-- Nazwa i Kategoria -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="sm:col-span-2">
@@ -34,24 +41,26 @@
             formControlName="name"
             placeholder="np. Pizza Margherita 32cm"
             class="gastro-input"
-            [class.border-rose-500]="form.get('name')?.touched && form.get('name')?.invalid"
+            [class.border-rose-500]="(form.get('name')?.touched || showValidationErrors()) && form.get('name')?.invalid"
           />
-          @if (form.get('name')?.touched && form.get('name')?.invalid) {
+          @if ((form.get('name')?.touched || showValidationErrors()) && form.get('name')?.invalid) {
             <p class="text-rose-600 dark:text-rose-400 text-xs mt-1">Wpisz nazwę dania (min. 2 znaki).</p>
           }
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5" for="category">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
             Kategoria *
           </label>
-          <input
-            id="category"
-            type="text"
+          <app-category-selector
             formControlName="category"
-            placeholder="np. Pizza, Makarony"
-            class="gastro-input"
-          />
+            [existingCategories]="availableCategories()"
+            [hasError]="!!((form.get('category')?.touched || showValidationErrors()) && form.get('category')?.invalid)"
+            placeholder="Wybierz lub wpisz kategorię..."
+          ></app-category-selector>
+          @if ((form.get('category')?.touched || showValidationErrors()) && form.get('category')?.invalid) {
+            <p class="text-rose-600 dark:text-rose-400 text-xs mt-1">Kategoria jest wymagana.</p>
+          }
         </div>
       </div>
 
@@ -113,7 +122,13 @@
         <!-- Dynamic Rows -->
         <div formArrayName="ingredients" class="space-y-3 mt-3">
           @for (group of ingredientsArray.controls; track $index) {
-            <div [formGroupName]="$index" class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+            <div [formGroupName]="$index" 
+              class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/40 border transition-colors"
+              [class.border-slate-200]="!showValidationErrors() || group.valid"
+              [class.dark:border-slate-800]="!showValidationErrors() || group.valid"
+              [class.border-rose-500]="showValidationErrors() && group.invalid"
+              [class.bg-rose-500/5]="showValidationErrors() && group.invalid"
+            >
               <!-- Select Inventory Item -->
               <div class="flex-1">
                 <select formControlName="inventoryItemId" class="gastro-input py-2 text-xs">

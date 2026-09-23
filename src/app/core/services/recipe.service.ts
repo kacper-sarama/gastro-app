@@ -1,15 +1,16 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { Firestore } from '@angular/fire/firestore';
 import { 
-  Firestore, 
   collection, 
-  collectionData, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
   doc, 
   query, 
-  where 
-} from '@angular/fire/firestore';
+  where,
+  onSnapshot,
+  Unsubscribe 
+} from 'firebase/firestore';
 import { AuthService } from './auth.service';
 import { InventoryService } from './inventory.service';
 import { 
@@ -33,7 +34,7 @@ export class RecipeService {
   readonly isLoading = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
 
-  private firestoreSub: Subscription | null = null;
+  private firestoreUnsub: Unsubscribe | null = null;
 
   // Mapa wyliczonej wydajności per ID receptury (reaktywna na zmiany magazynu i receptur)
   readonly capacitiesMap = computed<Map<string, RecipeCapacityResult>>(() => {
@@ -87,29 +88,31 @@ export class RecipeService {
 
   private initFirestoreSubscription(restaurantId: string): void {
     this.isLoading.set(true);
-    if (this.firestoreSub) {
-      this.firestoreSub.unsubscribe();
+    if (this.firestoreUnsub) {
+      this.firestoreUnsub();
+      this.firestoreUnsub = null;
     }
 
     try {
       const recipesCol = collection(this.firestore, 'recipes');
       const q = query(recipesCol, where('restaurantId', '==', restaurantId));
 
-      this.firestoreSub = collectionData(q, { idField: 'id' }).subscribe({
-        next: (docs) => {
-          const items = docs as Recipe[];
-          if (items.length === 0) {
-            this.seedStarterRecipes(restaurantId);
-          } else {
-            this.recipes.set(items);
-            this.isLoading.set(false);
-          }
-        },
-        error: (err) => {
-          console.warn('Firestore recipes fallback to local storage:', err);
-          this.loadLocalFallback();
+      this.firestoreUnsub = onSnapshot(q, (snapshot) => {
+        const items = snapshot.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        } as Recipe));
+
+        if (items.length === 0) {
+          this.seedStarterRecipes(restaurantId);
+        } else {
+          this.recipes.set(items);
           this.isLoading.set(false);
         }
+      }, (err) => {
+        console.warn('Firestore recipes fallback to local storage:', err);
+        this.loadLocalFallback();
+        this.isLoading.set(false);
       });
     } catch (err) {
       console.warn('Firestore recipes initialization error:', err);
@@ -261,13 +264,23 @@ export class RecipeService {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(recipes));
   }
 
+  private sanitizeForFirestore<T extends Record<string, any>>(obj: T): Record<string, any> {
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = value;
+      }
+    }
+    return cleaned;
+  }
+
   async addRecipe(data: Omit<Recipe, 'id' | 'restaurantId' | 'updatedAt'>): Promise<void> {
     const user = this.authService.currentUser();
-    const newRecipeData = {
+    const newRecipeData = this.sanitizeForFirestore({
       ...data,
       restaurantId: user ? user.uid : 'demo-restaurant',
       updatedAt: new Date().toISOString()
-    };
+    }) as any;
 
     if (user) {
       try {
@@ -291,10 +304,10 @@ export class RecipeService {
 
   async updateRecipe(id: string, partial: Partial<Recipe>): Promise<void> {
     const user = this.authService.currentUser();
-    const updatedFields = {
+    const updatedFields = this.sanitizeForFirestore({
       ...partial,
       updatedAt: new Date().toISOString()
-    };
+    }) as any;
 
     if (user && !id.startsWith('recipe-local-')) {
       try {

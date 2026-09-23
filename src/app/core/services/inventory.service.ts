@@ -1,15 +1,16 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { Firestore } from '@angular/fire/firestore';
 import { 
-  Firestore, 
   collection, 
-  collectionData, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
   doc, 
   query, 
-  where 
-} from '@angular/fire/firestore';
+  where,
+  onSnapshot,
+  Unsubscribe 
+} from 'firebase/firestore';
 import { AuthService } from './auth.service';
 import { InventoryItem, getStockStatus } from '../models/inventory-item.model';
 import { Subscription } from 'rxjs';
@@ -56,7 +57,7 @@ export class InventoryService {
     this.outOfStockItems().length + this.lowStockItems().length
   );
 
-  private firestoreSub: Subscription | null = null;
+  private firestoreUnsub: Unsubscribe | null = null;
 
   constructor() {
     // Automatycznie reaguj na zmianę stanu logowania
@@ -72,30 +73,32 @@ export class InventoryService {
 
   private initFirestoreSubscription(restaurantId: string): void {
     this.isLoading.set(true);
-    if (this.firestoreSub) {
-      this.firestoreSub.unsubscribe();
+    if (this.firestoreUnsub) {
+      this.firestoreUnsub();
+      this.firestoreUnsub = null;
     }
 
     try {
       const inventoryCol = collection(this.firestore, 'inventory');
       const q = query(inventoryCol, where('restaurantId', '==', restaurantId));
 
-      this.firestoreSub = collectionData(q, { idField: 'id' }).subscribe({
-        next: (docs) => {
-          const items = docs as InventoryItem[];
-          if (items.length === 0) {
-            // Jeśli baza użytkownika jest pusta, załaduj składniki startowe do Firestore
-            this.seedStarterIngredientsToFirestore(restaurantId);
-          } else {
-            this.items.set(items);
-            this.isLoading.set(false);
-          }
-        },
-        error: (err) => {
-          console.warn('Firestore subscription fallback to local storage:', err);
-          this.loadLocalFallback();
+      this.firestoreUnsub = onSnapshot(q, (snapshot) => {
+        const items = snapshot.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        } as InventoryItem));
+
+        if (items.length === 0) {
+          // Jeśli baza użytkownika jest pusta, załaduj składniki startowe do Firestore
+          this.seedStarterIngredientsToFirestore(restaurantId);
+        } else {
+          this.items.set(items);
           this.isLoading.set(false);
         }
+      }, (err) => {
+        console.warn('Firestore subscription fallback to local storage:', err);
+        this.loadLocalFallback();
+        this.isLoading.set(false);
       });
     } catch (err) {
       console.warn('Firestore initialization fallback:', err);
@@ -150,13 +153,23 @@ export class InventoryService {
 
   // --- CRUD Operacje ---
 
+  private sanitizeForFirestore<T extends Record<string, any>>(obj: T): Record<string, any> {
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = value;
+      }
+    }
+    return cleaned;
+  }
+
   async addItem(data: Omit<InventoryItem, 'id' | 'restaurantId'>): Promise<void> {
     const user = this.authService.currentUser();
-    const newItemData = {
+    const newItemData = this.sanitizeForFirestore({
       ...data,
       restaurantId: user ? user.uid : 'demo-restaurant',
       updatedAt: new Date().toISOString()
-    };
+    }) as any;
 
     if (user) {
       try {
@@ -181,10 +194,10 @@ export class InventoryService {
 
   async updateItem(id: string, partial: Partial<InventoryItem>): Promise<void> {
     const user = this.authService.currentUser();
-    const updatedFields = {
+    const updatedFields = this.sanitizeForFirestore({
       ...partial,
       updatedAt: new Date().toISOString()
-    };
+    }) as any;
 
     if (user && !id.startsWith('local-item-')) {
       try {
