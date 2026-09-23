@@ -1,19 +1,37 @@
-<div class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+<div class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-100 via-orange-50/30 to-slate-200 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors duration-150 relative">
+  <!-- Theme Toggle Floating Button -->
+  <div class="fixed top-5 right-5 z-20">
+    <button
+      (click)="themeService.toggleTheme()"
+      type="button"
+      class="gastro-btn-secondary px-3 py-2 text-xs font-medium flex items-center gap-2 shadow-md transition-all hover:scale-105"
+      [title]="themeService.isDarkMode ? 'Przełącz na jasny motyw' : 'Przełącz na ciemny motyw'"
+    >
+      @if (themeService.isDarkMode) {
+        <span class="material-icons-round text-amber-400 text-base">light_mode</span>
+        <span class="font-medium">Jasny</span>
+      } @else {
+        <span class="material-icons-round text-indigo-500 text-base">dark_mode</span>
+        <span class="font-medium">Ciemny</span>
+      }
+    </button>
+  </div>
+
   <div class="w-full max-w-md">
     <!-- Brand / Header -->
     <div class="text-center mb-8">
       <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 shadow-xl shadow-orange-500/20 mb-4">
         <span class="material-icons-round text-3xl text-white">restaurant</span>
       </div>
-      <h1 class="text-2xl font-bold tracking-tight text-white">GastroApp</h1>
-      <p class="text-slate-400 text-sm mt-1">Zaloguj się do panelu zarządzania restauracją</p>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">GastroApp</h1>
+      <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Zaloguj się do panelu zarządzania restauracją</p>
     </div>
 
     <!-- Login Card -->
-    <div class="gastro-card border border-slate-800 shadow-2xl">
+    <div class="gastro-card border border-slate-200 dark:border-slate-800 shadow-2xl">
       <!-- Error message alert -->
       @if (errorMessage()) {
-        <div class="mb-5 p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-rose-400 text-sm">
+        <div class="mb-5 p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-rose-600 dark:text-rose-400 text-sm">
           <span class="material-icons-round text-lg shrink-0 mt-0.5">error_outline</span>
           <span>{{ errorMessage() }}</span>
         </div>
@@ -22,11 +40,11 @@
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
         <!-- Email Field -->
         <div>
-          <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-1.5" for="email">
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5" for="email">
             Adres E-mail
           </label>
           <div class="relative">
-            <span class="material-icons-round absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg">email</span>
+            <span class="material-icons-round absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg">email</span>
             <input
               id="email"
               type="email"
@@ -37,19 +55,19 @@
             />
           </div>
           @if (loginForm.get('email')?.touched && loginForm.get('email')?.invalid) {
-            <p class="text-rose-400 text-xs mt-1">Wprowadź prawidłowy adres e-mail.</p>
+            <p class="text-rose-600 dark:text-rose-400 text-xs mt-1">Wprowadź prawidłowy adres e-mail.</p>
           }
         </div>
 
         <!-- Password Field -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider" for="password">
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider" for="password">
               Hasło
             </label>
           </div>
           <div class="relative">
-            <span class="material-icons-round absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-lg">lock</span>
+            <span class="material-icons-round absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg">lock</span>
             <input
               id="password"
               type="password"
@@ -60,7 +78,7 @@
             />
           </div>
           @if (loginForm.get('password')?.touched && loginForm.get('password')?.invalid) {
-            <p class="text-rose-400 text-xs mt-1">Hasło musi mieć co najmniej 6 znaków.</p>
+            <p class="text-rose-600 dark:text-rose-400 text-xs mt-1">Hasło musi mieć co najmniej 6 znaków.</p>
           }
         </div>
 
@@ -81,9 +99,9 @@
       </form>
 
       <!-- Footer register link -->
-      <div class="mt-6 pt-5 border-t border-slate-800 text-center text-sm text-slate-400">
+      <div class="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 text-center text-sm text-slate-500 dark:text-slate-400">
         Nie masz jeszcze konta?
-        <a routerLink="/register" class="text-orange-400 hover:text-orange-300 font-medium ml-1 transition-colors">
+        <a routerLink="/register" class="text-orange-600 dark:text-orange-400 hover:text-orange-500 dark:hover:text-orange-300 font-medium ml-1 transition-colors">
           Zarejestruj lokal
         </a>
       </div>

@@ -1,9 +1,9 @@
-<div class="min-h-screen bg-slate-950 flex flex-col md:flex-row text-slate-100">
+<div class="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row text-slate-800 dark:text-slate-100 transition-colors duration-150">
   <!-- Mobile Backdrop Overlay -->
   @if (isMobileMenuOpen()) {
     <div
       (click)="closeMobileMenu()"
-      class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 md:hidden transition-opacity"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity"
     ></div>
   }
 
@@ -11,23 +11,23 @@
   <aside
     [class.translate-x-0]="isMobileMenuOpen()"
     [class.-translate-x-full]="!isMobileMenuOpen()"
-    class="fixed md:static inset-y-0 left-0 z-50 w-72 bg-slate-900 border-r border-slate-800 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none"
+    class="fixed md:static inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none"
   >
     <!-- Brand Header -->
-    <div class="h-20 flex items-center justify-between px-6 border-b border-slate-800/80">
+    <div class="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800/80">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
           <span class="material-icons-round text-white text-xl">restaurant</span>
         </div>
         <div>
-          <span class="font-bold text-lg tracking-tight text-white block leading-tight">GastroApp</span>
-          <span class="text-[11px] text-orange-400 font-medium tracking-wide uppercase">Magazyn & Menu</span>
+          <span class="font-bold text-lg tracking-tight text-slate-900 dark:text-white block leading-tight">GastroApp</span>
+          <span class="text-[11px] text-orange-600 dark:text-orange-400 font-medium tracking-wide uppercase">Magazyn & Menu</span>
         </div>
       </div>
       <!-- Close button on mobile -->
       <button
         (click)="closeMobileMenu()"
-        class="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+        class="md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
       >
         <span class="material-icons-round text-2xl">close</span>
       </button>
@@ -35,18 +35,18 @@
 
     <!-- Navigation Links -->
     <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
-      <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">
+      <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mb-2">
         Nawigacja Główna
       </div>
       @for (item of navItems; track item.route) {
         <a
           [routerLink]="item.route"
           (click)="closeMobileMenu()"
-          routerLinkActive="bg-orange-500/10 text-orange-400 font-semibold border-l-4 border-orange-500 shadow-sm shadow-orange-500/5"
+          routerLinkActive="bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold border-l-4 border-orange-500 shadow-sm shadow-orange-500/5"
           [routerLinkActiveOptions]="{ exact: false }"
-          class="flex items-center gap-3.5 px-3.5 py-3 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-all duration-150 group"
+          class="flex items-center gap-3.5 px-3.5 py-3 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-150 group"
         >
-          <span class="material-icons-round text-slate-400 group-hover:text-orange-400 text-xl transition-colors">
+          <span class="material-icons-round text-slate-400 group-hover:text-orange-500 text-xl transition-colors">
             {{ item.icon }}
           </span>
           <span>{{ item.label }}</span>
@@ -55,14 +55,14 @@
     </nav>
 
     <!-- Bottom User Section in Sidebar -->
-    <div class="p-4 border-t border-slate-800/80 bg-slate-900/50">
+    <div class="p-4 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-900/50">
       <div class="flex items-center gap-3 px-2 py-1">
-        <div class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-orange-400 font-bold text-sm">
+        <div class="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center text-orange-600 dark:text-orange-400 font-bold text-sm">
           {{ authService.restaurantName().charAt(0).toUpperCase() }}
         </div>
         <div class="min-w-0 flex-1">
-          <p class="text-sm font-medium text-white truncate">{{ authService.restaurantName() }}</p>
-          <p class="text-xs text-slate-400 truncate">{{ authService.currentUser()?.email }}</p>
+          <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ authService.restaurantName() }}</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ authService.currentUser()?.email }}</p>
         </div>
       </div>
     </div>
@@ -71,32 +71,50 @@
   <!-- Main Content Column -->
   <div class="flex-1 flex flex-col min-w-0">
     <!-- Top Navbar -->
-    <header class="h-20 bg-slate-900/60 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30">
+    <header class="h-20 bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30 transition-colors duration-150">
       <div class="flex items-center gap-3">
         <!-- Mobile menu hamburger button -->
         <button
           (click)="toggleMobileMenu()"
-          class="md:hidden p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 focus:outline-none"
+          class="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
         >
           <span class="material-icons-round text-2xl">menu</span>
         </button>
 
         <div class="hidden sm:block">
-          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+          <h2 class="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <span>{{ authService.restaurantName() }}</span>
-            <span class="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span class="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
               Online
             </span>
           </h2>
-          <p class="text-xs text-slate-400">System kontroli kuchni i stanów magazynowych</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">System kontroli kuchni i stanów magazynowych</p>
         </div>
       </div>
 
       <!-- Actions -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Theme Toggle Button -->
+        <button
+          (click)="themeService.toggleTheme()"
+          type="button"
+          class="gastro-btn-secondary px-3 py-2 text-xs font-medium flex items-center gap-2 transition-all hover:scale-[1.02]"
+          [title]="themeService.isDarkMode ? 'Przełącz na jasny motyw' : 'Przełącz na ciemny motyw'"
+          aria-label="Przełącz motyw graficzny"
+        >
+          @if (themeService.isDarkMode) {
+            <span class="material-icons-round text-amber-400 text-lg">light_mode</span>
+            <span class="hidden sm:inline font-medium">Jasny</span>
+          } @else {
+            <span class="material-icons-round text-indigo-500 text-lg">dark_mode</span>
+            <span class="hidden sm:inline font-medium">Ciemny</span>
+          }
+        </button>
+
+        <!-- Logout button -->
         <button
           (click)="logout()"
-          class="gastro-btn-secondary px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-rose-400 hover:border-rose-500/30"
+          class="gastro-btn-secondary px-3.5 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-500/30"
           title="Wyloguj się"
         >
           <span class="material-icons-round text-base">logout</span>

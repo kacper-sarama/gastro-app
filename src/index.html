@@ -1,11 +1,29 @@
 <!doctype html>
-<html lang="pl" class="dark">
+<html lang="pl">
 <head>
   <meta charset="utf-8">
   <title>GastroApp - Zarządzanie Magazynem i Menu</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <!-- Immediate Theme Initialization (Prevents FOUC) -->
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('gastro_theme');
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = saved ? saved : (prefersDark ? 'dark' : 'light');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = 'dark';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.colorScheme = 'light';
+        }
+      } catch (e) {}
+    })();
+  </script>
   
   <!-- Google Fonts: Inter & Roboto -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,7 +33,7 @@
   <!-- Material Symbols / Icons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Round" rel="stylesheet">
 </head>
-<body class="mat-typography bg-slate-950 text-slate-100 font-sans antialiased min-h-screen">
+<body class="mat-typography bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased min-h-screen transition-colors duration-150">
   <app-root></app-root>
 </body>
 </html>

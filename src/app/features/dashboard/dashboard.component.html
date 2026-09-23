@@ -2,11 +2,11 @@
   <!-- Welcome Header -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
-      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
         <span>Witaj w panelu, {{ authService.restaurantName() }}!</span>
         <span class="text-2xl">👋</span>
       </h1>
-      <p class="text-slate-400 text-sm mt-1">
+      <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
         Centrum kontroli magazynu, receptur i cyfrowego menu Twojego lokalu.
       </p>
     </div>
@@ -25,14 +25,14 @@
     <div class="gastro-card border-l-4 border-l-orange-500">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Surowce w bazie</p>
-          <h3 class="text-2xl font-bold text-white mt-1">{{ inventoryService.totalItemsCount() }}</h3>
+          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Surowce w bazie</p>
+          <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ inventoryService.totalItemsCount() }}</h3>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center">
           <span class="material-icons-round">kitchen</span>
         </div>
       </div>
-      <p class="text-xs text-slate-400 mt-3">
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-3">
         Ewidencja w g, ml, szt
       </p>
     </div>
@@ -41,18 +41,18 @@
     <div class="gastro-card border-l-4" [class.border-l-rose-500]="inventoryService.criticalAlertsCount() > 0" [class.border-l-emerald-500]="inventoryService.criticalAlertsCount() === 0">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Braki do zamówienia</p>
-          <h3 class="text-2xl font-bold mt-1" [class.text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
+          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Braki do zamówienia</p>
+          <h3 class="text-2xl font-bold mt-1" [class.text-rose-600]="inventoryService.criticalAlertsCount() > 0" [class.dark:text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.text-emerald-600]="inventoryService.criticalAlertsCount() === 0" [class.dark:text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
             {{ inventoryService.criticalAlertsCount() }}
           </h3>
         </div>
-        <div class="w-10 h-10 rounded-lg flex items-center justify-center" [class.bg-rose-500/10]="inventoryService.criticalAlertsCount() > 0" [class.text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.bg-emerald-500/10]="inventoryService.criticalAlertsCount() === 0" [class.text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" [class.bg-rose-500/10]="inventoryService.criticalAlertsCount() > 0" [class.text-rose-500]="inventoryService.criticalAlertsCount() > 0" [class.dark:text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.bg-emerald-500/10]="inventoryService.criticalAlertsCount() === 0" [class.text-emerald-500]="inventoryService.criticalAlertsCount() === 0" [class.dark:text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
           <span class="material-icons-round">
             {{ inventoryService.criticalAlertsCount() > 0 ? 'shopping_basket' : 'check_circle' }}
           </span>
         </div>
       </div>
-      <p class="text-xs mt-3" [class.text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
+      <p class="text-xs mt-3 font-medium" [class.text-rose-600]="inventoryService.criticalAlertsCount() > 0" [class.dark:text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.text-emerald-600]="inventoryService.criticalAlertsCount() === 0" [class.dark:text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
         {{ inventoryService.criticalAlertsCount() > 0 ? 'Wymaga pilnego uzupełnienia' : 'Stany w normie' }}
       </p>
     </div>
@@ -61,14 +61,14 @@
     <div class="gastro-card border-l-4 border-l-amber-500">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Wydajność Kuchni</p>
-          <h3 class="text-2xl font-bold text-white mt-1">Faza 3</h3>
+          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Wydajność Kuchni</p>
+          <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">Faza 3</h3>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center">
           <span class="material-icons-round">bolt</span>
         </div>
       </div>
-      <p class="text-xs text-slate-400 mt-3">
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-3">
         Symulator porcji dań
       </p>
     </div>
@@ -77,14 +77,14 @@
     <div class="gastro-card border-l-4 border-l-blue-500">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Menu dla Gości</p>
-          <h3 class="text-2xl font-bold text-white mt-1">Faza 4</h3>
+          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Menu dla Gości</p>
+          <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">Faza 4</h3>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-500 dark:text-blue-400 flex items-center justify-center">
           <span class="material-icons-round">qr_code_2</span>
         </div>
       </div>
-      <p class="text-xs text-slate-400 mt-3">
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-3">
         Publiczny link i kod QR
       </p>
     </div>
@@ -92,34 +92,34 @@
 
   <!-- Critical Stock Alert Widget (Zadanie 2.9) -->
   @if (inventoryService.criticalAlertsCount() > 0) {
-    <div class="gastro-card border-l-4 border-l-rose-500 bg-slate-900/90 shadow-xl">
-      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+    <div class="gastro-card border-l-4 border-l-rose-500 shadow-xl">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
+          <div class="w-9 h-9 rounded-lg bg-rose-500/10 text-rose-500 dark:text-rose-400 flex items-center justify-center">
             <span class="material-icons-round">notification_important</span>
           </div>
           <div>
-            <h3 class="text-base font-bold text-white">Surowce wymagające zamówienia</h3>
-            <p class="text-xs text-slate-400">Te składniki są na wyczerpaniu lub ich stan wynosi zero.</p>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Surowce wymagające zamówienia</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Te składniki są na wyczerpaniu lub ich stan wynosi zero.</p>
           </div>
         </div>
-        <a routerLink="/inventory" class="text-xs text-orange-400 hover:text-orange-300 font-semibold flex items-center gap-1">
+        <a routerLink="/inventory" class="text-xs text-orange-600 dark:text-orange-400 hover:text-orange-500 dark:hover:text-orange-300 font-semibold flex items-center gap-1">
           <span>Zarządzaj w magazynie</span>
           <span class="material-icons-round text-sm">arrow_forward</span>
         </a>
       </div>
 
-      <div class="divide-y divide-slate-800/60 mt-2">
+      <div class="divide-y divide-slate-200 dark:divide-slate-800/60 mt-2">
         <!-- Wyczerpane (Brak) -->
         @for (item of inventoryService.outOfStockItems(); track item.id) {
           <div class="py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
               <span class="status-badge-danger">Brak (0)</span>
-              <span class="font-medium text-white text-sm">{{ item.name }}</span>
+              <span class="font-medium text-slate-900 dark:text-white text-sm">{{ item.name }}</span>
             </div>
             <div class="text-right">
-              <span class="text-xs text-rose-400 font-semibold block">0 {{ item.unit }}</span>
-              <span class="text-[11px] text-slate-500">Próg: {{ formatAmount(item.minAmount, item.unit).display }}</span>
+              <span class="text-xs text-rose-600 dark:text-rose-400 font-semibold block">0 {{ item.unit }}</span>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">Próg: {{ formatAmount(item.minAmount, item.unit).display }}</span>
             </div>
           </div>
         }
@@ -129,13 +129,13 @@
           <div class="py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
               <span class="status-badge-warning">Niski stan</span>
-              <span class="font-medium text-white text-sm">{{ item.name }}</span>
+              <span class="font-medium text-slate-900 dark:text-white text-sm">{{ item.name }}</span>
             </div>
             <div class="text-right">
-              <span class="text-xs text-amber-400 font-semibold block">
+              <span class="text-xs text-amber-600 dark:text-amber-400 font-semibold block">
                 Stan: {{ formatAmount(item.amount, item.unit).display }}
               </span>
-              <span class="text-[11px] text-slate-500">Próg: {{ formatAmount(item.minAmount, item.unit).display }}</span>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">Próg: {{ formatAmount(item.minAmount, item.unit).display }}</span>
             </div>
           </div>
         }
@@ -143,12 +143,12 @@
     </div>
   } @else {
     <div class="gastro-card bg-emerald-500/5 border-emerald-500/20 p-5 flex items-center gap-4">
-      <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+      <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
         <span class="material-icons-round text-2xl">verified</span>
       </div>
       <div>
-        <h4 class="font-semibold text-white text-sm">Wszystkie stany magazynowe w normie!</h4>
-        <p class="text-xs text-slate-400 mt-0.5">Żaden surowiec nie spadł poniżej zdefiniowanego progu minimalnego.</p>
+        <h4 class="font-semibold text-slate-900 dark:text-white text-sm">Wszystkie stany magazynowe w normie!</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Żaden surowiec nie spadł poniżej zdefiniowanego progu minimalnego.</p>
       </div>
     </div>
   }

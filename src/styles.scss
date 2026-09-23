@@ -4,8 +4,23 @@
 @tailwind components;
 @tailwind utilities;
 
-// Angular Material 3 Dark Theme setup
-$theme: mat.define-theme((
+// Angular Material 3 Themes setup
+$light-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+    tertiary: mat.$orange-palette,
+  ),
+  typography: (
+    plain-family: 'Inter, sans-serif',
+    brand-family: 'Inter, sans-serif',
+  ),
+  density: (
+    scale: 0,
+  )
+));
+
+$dark-theme: mat.define-theme((
   color: (
     theme-type: dark,
     primary: mat.$azure-palette,
@@ -21,8 +36,13 @@ $theme: mat.define-theme((
 ));
 
 html {
-  @include mat.all-component-themes($theme);
-  color-scheme: dark;
+  @include mat.all-component-themes($light-theme);
+  color-scheme: light;
+
+  &.dark {
+    @include mat.all-component-colors($dark-theme);
+    color-scheme: dark;
+  }
 }
 
 // Global Custom Utility Classes for Restaurant Inventory Statuses
@@ -32,23 +52,23 @@ html {
   }
   
   .status-badge-success {
-    @apply status-badge bg-emerald-500/10 text-emerald-400 border border-emerald-500/20;
+    @apply status-badge bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20;
   }
 
   .status-badge-warning {
-    @apply status-badge bg-amber-500/10 text-amber-400 border border-amber-500/20;
+    @apply status-badge bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20;
   }
 
   .status-badge-danger {
-    @apply status-badge bg-rose-500/10 text-rose-400 border border-rose-500/20;
+    @apply status-badge bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20;
   }
 
   .gastro-card {
-    @apply bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-xl p-5 shadow-lg shadow-black/20;
+    @apply bg-white border border-slate-200/90 rounded-xl p-5 shadow-sm text-slate-800 transition-colors duration-150 dark:bg-slate-900/80 dark:backdrop-blur-md dark:border-slate-800 dark:text-slate-100 dark:shadow-lg dark:shadow-black/20;
   }
 
   .gastro-input {
-    @apply w-full bg-slate-950/60 border border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all;
+    @apply w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all dark:bg-slate-950/60 dark:border-slate-700/80 dark:text-slate-100 dark:placeholder-slate-500;
   }
 
   .gastro-btn-primary {
@@ -56,6 +76,6 @@ html {
   }
 
   .gastro-btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm border border-slate-700 transition-all duration-200 active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm border border-slate-200 transition-all duration-200 active:scale-[0.98] dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700;
   }
 }

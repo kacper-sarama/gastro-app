@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ThemeService } from '../services/theme.service';
 
 interface NavItem {
   label: string;
@@ -17,6 +18,7 @@ interface NavItem {
 })
 export class MainLayoutComponent {
   readonly authService = inject(AuthService);
+  readonly themeService = inject(ThemeService);
   private router = inject(Router);
 
   isMobileMenuOpen = signal(false);
