@@ -2,10 +2,18 @@
   <!-- Header Section -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center flex-wrap gap-2.5">
         <span>Karta Dań & Menu Lokalu</span>
-        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/40">
-          Faza 4
+        <span 
+          class="text-xs px-2.5 py-1 rounded-full font-semibold border flex items-center gap-1.5 transition-all shadow-sm"
+          [ngClass]="menuOnlineStatus().badgeClass"
+        >
+          <span 
+            class="w-2 h-2 rounded-full"
+            [ngClass]="menuOnlineStatus().dotClass"
+            [class.animate-pulse]="menuOnlineStatus().pulse"
+          ></span>
+          <span>{{ menuOnlineStatus().label }}</span>
         </span>
       </h1>
       <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">

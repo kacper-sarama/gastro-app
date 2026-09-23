@@ -98,6 +98,37 @@ export class MenuManagementComponent {
     return recipes.filter(r => r.isAvailable === false).length;
   });
 
+  // Dynamiczny status cyfrowej karty menu na żywo (dla chipa w nagłówku)
+  readonly menuOnlineStatus = computed(() => {
+    const total = this.totalDishes();
+    const soldOut = this.soldOutDishes();
+
+    if (total === 0) {
+      return {
+        label: 'Szkic menu',
+        badgeClass: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700',
+        dotClass: 'bg-slate-400',
+        pulse: false
+      };
+    }
+
+    if (soldOut > 0) {
+      return {
+        label: `Karta Online (${soldOut} ${soldOut === 1 ? 'wyprzedane' : 'wyprzedane'})`,
+        badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+        dotClass: 'bg-amber-500',
+        pulse: true
+      };
+    }
+
+    return {
+      label: 'Karta Online (Wszystkie dania dostępne)',
+      badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+      dotClass: 'bg-emerald-500',
+      pulse: true
+    };
+  });
+
   getCapacity(recipeId: string): RecipeCapacityResult {
     return this.recipeService.getCapacity(recipeId);
   }
