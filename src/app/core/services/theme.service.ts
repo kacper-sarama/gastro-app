@@ -1,5 +1,5 @@
 import { Injectable, signal, effect, PLATFORM_ID, inject } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, DOCUMENT } from '@angular/common';
 
 export type AppTheme = 'light' | 'dark';
 
@@ -10,6 +10,7 @@ export class ThemeService {
   private readonly STORAGE_KEY = 'gastro_theme';
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
+  private document = inject(DOCUMENT);
 
   // Reaktywny sygnał przechowujący aktualny motyw
   readonly theme = signal<AppTheme>(this.getInitialTheme());
@@ -68,7 +69,7 @@ export class ThemeService {
   private applyTheme(theme: AppTheme): void {
     if (!this.isBrowser) return;
 
-    const root = document.documentElement;
+    const root = this.document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
       root.style.colorScheme = 'dark';
