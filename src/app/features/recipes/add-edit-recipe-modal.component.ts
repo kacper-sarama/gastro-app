@@ -25,14 +25,7 @@ export class AddEditRecipeModalComponent implements OnInit {
   form!: FormGroup;
   readonly showValidationErrors = signal<boolean>(false);
 
-  readonly availableCategories = computed(() => {
-    const list = this.recipeService.recipes();
-    const set = new Set<string>();
-    list.forEach(r => {
-      if (r.category) set.add(r.category);
-    });
-    return Array.from(set);
-  });
+  readonly availableCategories = computed(() => this.recipeService.allCategories());
 
   get isEditMode(): boolean {
     return !!this.recipeToEdit;

@@ -7,6 +7,7 @@ import { InventoryService } from '../../core/services/inventory.service';
 import { Recipe, RecipeCapacityResult } from '../../core/models/recipe.model';
 import { AddEditRecipeModalComponent } from './add-edit-recipe-modal.component';
 import { RecipeDetailsModalComponent } from './recipe-details-modal.component';
+import { ManageCategoriesModalComponent } from './manage-categories-modal.component';
 
 @Component({
   selector: 'app-recipes-list',
@@ -15,7 +16,8 @@ import { RecipeDetailsModalComponent } from './recipe-details-modal.component';
     CommonModule, 
     FormsModule, 
     AddEditRecipeModalComponent, 
-    RecipeDetailsModalComponent
+    RecipeDetailsModalComponent,
+    ManageCategoriesModalComponent
   ],
   templateUrl: './recipes-list.component.html'
 })
@@ -35,16 +37,15 @@ export class RecipesListComponent {
   isDetailsModalOpen = signal(false);
   selectedRecipeForDetails = signal<Recipe | undefined>(undefined);
 
+  isManageCategoriesModalOpen = signal(false);
+
   recipeToDelete = signal<Recipe | undefined>(undefined);
 
-  readonly categories = computed(() => {
-    const list = this.recipeService.recipes();
-    const set = new Set<string>();
-    list.forEach(r => {
-      if (r.category) set.add(r.category);
-    });
-    return Array.from(set);
-  });
+  readonly categories = computed(() => this.recipeService.allCategories());
+
+  getCategoryDishCount(cat: string): number {
+    return this.recipeService.getCategoryDishCount(cat);
+  }
 
   readonly filteredRecipes = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
@@ -115,6 +116,14 @@ export class RecipesListComponent {
   closeDetailsModal(): void {
     this.isDetailsModalOpen.set(false);
     this.selectedRecipeForDetails.set(undefined);
+  }
+
+  openManageCategoriesModal(): void {
+    this.isManageCategoriesModalOpen.set(true);
+  }
+
+  closeManageCategoriesModal(): void {
+    this.isManageCategoriesModalOpen.set(false);
   }
 
   promptDelete(recipe: Recipe): void {
