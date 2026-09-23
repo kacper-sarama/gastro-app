@@ -6,6 +6,8 @@ import { RegisterComponent } from './features/auth/register/register.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { InventoryListComponent } from './features/inventory/inventory-list.component';
 import { RecipesListComponent } from './features/recipes/recipes-list.component';
+import { MenuManagementComponent } from './features/menu/menu-management.component';
+import { GuestMenuComponent } from './features/menu/guest-menu.component';
 
 export const routes: Routes = [
   // Public auth routes
@@ -18,6 +20,12 @@ export const routes: Routes = [
     path: 'register',
     component: RegisterComponent,
     canActivate: [guestGuard]
+  },
+
+  // Public guest menu route (accessible without login, via QR code)
+  {
+    path: 'menu/:restaurantId',
+    component: GuestMenuComponent
   },
 
   // Protected application routes inside MainLayout
@@ -45,7 +53,7 @@ export const routes: Routes = [
       },
       {
         path: 'dishes',
-        redirectTo: 'dashboard' // Będzie podpięte w Fazie 4
+        component: MenuManagementComponent
       }
     ]
   },

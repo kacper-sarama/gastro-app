@@ -78,21 +78,22 @@
       </p>
     </a>
 
-    <!-- Karta Menu -->
-    <div class="gastro-card border-l-4 border-l-blue-500">
+    <!-- Karta Menu (Faza 4 aktywna) -->
+    <a routerLink="/dishes" class="gastro-card border-l-4 border-l-blue-500 hover:shadow-md transition-shadow block group">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Menu dla Gości</p>
-          <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">Faza 4</h3>
+          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Karta Menu</p>
+          <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">Aktywna</h3>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-500 dark:text-blue-400 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-500 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
           <span class="material-icons-round">qr_code_2</span>
         </div>
       </div>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-3">
-        Publiczny link i kod QR
+      <p class="text-xs text-blue-600 dark:text-blue-400 mt-3 font-medium flex items-center gap-1">
+        <span>Zarządzaj kartą i kodem QR</span>
+        <span class="material-icons-round text-xs">arrow_forward</span>
       </p>
-    </div>
+    </a>
   </div>
 
   <!-- Critical Stock Alert Widget (Zadanie 2.9) -->

@@ -1,0 +1,276 @@
+<div class="space-y-6">
+  <!-- Header Section -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+        <span>Karta Dań & Menu Lokalu</span>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/40">
+          Faza 4
+        </span>
+      </h1>
+      <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+        Zarządzaj widocznością pozycji w karcie, cenami oraz generuj kod QR dla gości na stoliki.
+      </p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <button
+        type="button"
+        (click)="openQrModal()"
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 shadow-sm transition-all"
+      >
+        <span class="material-icons-round text-lg text-blue-500">qr_code_2</span>
+        <span>Kod QR na stoliki</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="openGuestPreview()"
+        class="gastro-btn-primary shadow-lg shadow-orange-500/20 text-xs py-2.5 px-4"
+      >
+        <span class="material-icons-round text-lg">open_in_new</span>
+        <span>Podgląd karty gościa</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Metrics Bar -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <!-- Wszystkie dania -->
+    <div class="gastro-card border">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pozycje w menu</span>
+        <span class="material-icons-round text-slate-400 text-xl">restaurant_menu</span>
+      </div>
+      <p class="text-2xl font-bold text-slate-900 dark:text-white mt-2">{{ totalDishes() }}</p>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Łącznie w bazie dań</p>
+    </div>
+
+    <!-- Dostępne dla gości -->
+    <div class="gastro-card border border-emerald-500/30 bg-emerald-500/5">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Dostępne w lokalu</span>
+        <span class="material-icons-round text-emerald-500 text-xl">check_circle</span>
+      </div>
+      <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{{ availableDishes() }}</p>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Aktywne i gotowe do podania</p>
+    </div>
+
+    <!-- Wyprzedane z magazynu (Live Sold-out) -->
+    <div class="gastro-card border border-rose-500/30 bg-rose-500/5">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Brak w magazynie</span>
+        <span class="material-icons-round text-rose-500 text-xl">production_quantity_limits</span>
+      </div>
+      <p class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2">{{ soldOutDishes() }}</p>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Chwilowo wyprzedane (Sold out)</p>
+    </div>
+
+    <!-- Ukryte ręcznie -->
+    <div class="gastro-card border border-amber-500/30 bg-amber-500/5">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Wyłączone z karty</span>
+        <span class="material-icons-round text-amber-500 text-xl">visibility_off</span>
+      </div>
+      <p class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2">{{ manuallyHiddenDishes() }}</p>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Ukryte ręcznie przez managera</p>
+    </div>
+  </div>
+
+  <!-- Search and Categories Filter Bar -->
+  <div class="gastro-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4">
+    <div class="relative flex-1">
+      <span class="material-icons-round absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg">search</span>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Szukaj dania w karcie po nazwie, opisie lub składnikach..."
+        class="gastro-input pl-10 py-2 text-sm"
+      />
+      @if (searchQuery()) {
+        <button
+          (click)="searchQuery.set('')"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
+        >
+          <span class="material-icons-round text-base">close</span>
+        </button>
+      }
+    </div>
+
+    <div class="flex items-center gap-2">
+      <select
+        [ngModel]="selectedCategory()"
+        (ngModelChange)="selectedCategory.set($event)"
+        class="gastro-input py-2 text-xs w-48"
+      >
+        <option value="all">Wszystkie działy karty</option>
+        @for (cat of categories(); track cat) {
+          <option [value]="cat">{{ cat }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Menu Dishes Grouped by Category -->
+  @if (groupedDishes().length === 0) {
+    <div class="gastro-card py-16 text-center text-slate-400 border border-slate-200 dark:border-slate-800">
+      <span class="material-icons-round text-5xl text-slate-400 dark:text-slate-600 mb-2">restaurant</span>
+      <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">Brak dań spełniających kryteria</h3>
+      <p class="text-xs text-slate-500 mt-1">Zmień filtr lub dodaj nowe pozycje w Księdze Receptur.</p>
+      <div class="mt-4">
+        <a routerLink="/recipes" class="gastro-btn-primary inline-flex text-xs py-2 px-4">
+          Przejdź do Receptur
+        </a>
+      </div>
+    </div>
+  } @else {
+    <div class="space-y-8">
+      @for (group of groupedDishes(); track group.category) {
+        <div class="space-y-4">
+          
+          <!-- Category Section Header -->
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                {{ group.category }}
+              </h2>
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                ({{ group.items.length }} {{ group.items.length === 1 ? 'pozycja' : 'pozycje' }})
+              </span>
+            </div>
+          </div>
+
+          <!-- Dishes Grid for this Category -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @for (dish of group.items; track dish.id) {
+              @let cap = getCapacity(dish.id);
+              @let isSoldOut = cap.status === 'blocked';
+              @let isManualActive = dish.isAvailable !== false;
+
+              <div
+                class="gastro-card border transition-all flex flex-col justify-between"
+                [ngClass]="{
+                  'opacity-60 bg-slate-50/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800': !isManualActive,
+                  'border-rose-300 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10': isManualActive && isSoldOut,
+                  'hover:border-slate-400 dark:hover:border-slate-600': isManualActive && !isSoldOut
+                }"
+              >
+                <!-- Top Card Info -->
+                <div class="space-y-3">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white truncate">
+                          {{ dish.name }}
+                        </h3>
+                        @if (dish.isFeatured) {
+                          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center gap-1">
+                            <span class="material-icons-round text-xs">star</span>
+                            <span>Hit karty</span>
+                          </span>
+                        }
+                      </div>
+
+                      @if (dish.description) {
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                          {{ dish.description }}
+                        </p>
+                      }
+                    </div>
+
+                    <!-- Price Badge -->
+                    <div class="text-right flex-shrink-0">
+                      <span class="text-base font-extrabold text-slate-900 dark:text-white">
+                        {{ dish.sellingPrice ? (dish.sellingPrice | number:'1.2-2') : '—' }}
+                      </span>
+                      <span class="text-[10px] font-semibold text-slate-400 ml-0.5">PLN</span>
+                    </div>
+                  </div>
+
+                  <!-- Składniki w daniu -->
+                  @let ingNames = getIngredientNames(dish);
+                  @if (ingNames.length > 0) {
+                    <div class="flex items-center gap-1.5 flex-wrap pt-1">
+                      @for (name of ingNames; track name) {
+                        <span class="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                          {{ name }}
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <!-- Bottom Status & Controls -->
+                <div class="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                  <!-- Live Stock Status Badge -->
+                  <div class="flex items-center gap-1.5 text-xs">
+                    @if (!isManualActive) {
+                      <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                        <span class="material-icons-round text-sm">visibility_off</span>
+                        <span>Ukryte w menu</span>
+                      </span>
+                    } @else if (isSoldOut) {
+                      <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-900">
+                        <span class="material-icons-round text-xs">block</span>
+                        <span>Wyprzedane (0 porcji)</span>
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <span class="material-icons-round text-sm">check_circle</span>
+                        <span>Dostępne ({{ cap.maxPortions }} porcji)</span>
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Quick Controls: Featured & Active Toggle -->
+                  <div class="flex items-center gap-2">
+                    <!-- Toggle Featured Star -->
+                    <button
+                      type="button"
+                      (click)="toggleFeatured(dish)"
+                      class="p-1.5 rounded-lg transition-colors"
+                      [ngClass]="dish.isFeatured 
+                        ? 'text-amber-500 hover:text-amber-600 bg-amber-50 dark:bg-amber-950/40' 
+                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                      title="Wyróżnij w karcie (Hit lokalu)"
+                    >
+                      <span class="material-icons-round text-lg">{{ dish.isFeatured ? 'star' : 'star_border' }}</span>
+                    </button>
+
+                    <!-- Toggle Availability Button -->
+                    <button
+                      type="button"
+                      (click)="toggleAvailability(dish)"
+                      class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 border"
+                      [ngClass]="isManualActive 
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100' 
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-200'"
+                      title="Przełącz widoczność w karcie gościa"
+                    >
+                      <span class="material-icons-round text-sm">{{ isManualActive ? 'toggle_on' : 'toggle_off' }}</span>
+                      <span>{{ isManualActive ? 'W karcie' : 'Ukryte' }}</span>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            }
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modal: QR Kod na stoliki -->
+@if (isQrModalOpen()) {
+  <app-qr-code-modal
+    [restaurantName]="authService.restaurantName()"
+    [menuUrl]="publicMenuUrl()"
+    (close)="closeQrModal()"
+  ></app-qr-code-modal>
+}

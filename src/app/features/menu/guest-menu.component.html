@@ -1,0 +1,197 @@
+<div class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors pb-16">
+  
+  <!-- Guest Top Navigation Bar -->
+  <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-colors">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+      
+      <!-- Restaurant Branding -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20">
+          <span class="material-icons-round text-2xl">restaurant</span>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+            Menu Lokalu
+          </h1>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+              Kuchnia otwarta
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls: Back to Panel (optional) & Theme Toggle -->
+      <div class="flex items-center gap-2">
+        <a
+          routerLink="/dishes"
+          class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-700"
+          title="Wróć do panelu lokalu"
+        >
+          <span class="material-icons-round text-sm">dashboard</span>
+          <span>Panel</span>
+        </a>
+
+        <button
+          type="button"
+          (click)="themeService.toggleTheme()"
+          class="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-850 transition-colors border border-slate-200 dark:border-slate-700"
+          [title]="themeService.isDarkMode ? 'Tryb jasny' : 'Tryb ciemny'"
+        >
+          <span class="material-icons-round text-lg">
+            {{ themeService.isDarkMode ? 'light_mode' : 'dark_mode' }}
+          </span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Category Pills Tabs (Sticky Navigation) -->
+    <div class="border-t border-slate-100 dark:border-slate-850 bg-white/70 dark:bg-slate-900/70">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 py-2 overflow-x-auto scrollbar-none flex items-center gap-2">
+        <button
+          type="button"
+          (click)="selectedCategory.set('all')"
+          class="px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all"
+          [ngClass]="selectedCategory() === 'all' 
+            ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30 font-semibold' 
+            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
+        >
+          Wszystkie
+        </button>
+
+        @for (cat of categories(); track cat) {
+          <button
+            type="button"
+            (click)="selectedCategory.set(cat)"
+            class="px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all"
+            [ngClass]="selectedCategory() === cat 
+              ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30 font-semibold' 
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
+          >
+            {{ cat }}
+          </button>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Menu Content Container -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 pt-6 space-y-10">
+    
+    @if (groupedDishes().length === 0) {
+      <div class="py-20 text-center space-y-3">
+        <span class="material-icons-round text-5xl text-slate-300 dark:text-slate-600">restaurant</span>
+        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200">Karta menu jest aktualizowana</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Zapytaj obsługę lokalu o aktualne pozycje.</p>
+      </div>
+    } @else {
+      @for (group of groupedDishes(); track group.category) {
+        <section class="space-y-4">
+          
+          <!-- Category Section Title -->
+          <div class="flex items-center gap-2 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+            <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              {{ group.category }}
+            </h2>
+          </div>
+
+          <!-- Dishes Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            @for (dish of group.items; track dish.id) {
+              @let soldOut = isSoldOut(dish);
+
+              <article
+                class="p-4 sm:p-5 rounded-2xl border transition-all flex flex-col justify-between"
+                [ngClass]="soldOut 
+                  ? 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-60' 
+                  : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700'"
+              >
+                <div class="space-y-2.5">
+                  <!-- Dish Header: Name & Price -->
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white leading-snug">
+                          {{ dish.name }}
+                        </h3>
+                        @if (dish.isFeatured) {
+                          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center gap-0.5">
+                            <span class="material-icons-round text-xs">star</span>
+                            <span>Polecane</span>
+                          </span>
+                        }
+                      </div>
+
+                      @if (dish.description) {
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                          {{ dish.description }}
+                        </p>
+                      }
+                    </div>
+
+                    <!-- Price -->
+                    <div class="text-right flex-shrink-0 pt-0.5">
+                      <span class="text-lg font-extrabold text-slate-900 dark:text-white">
+                        {{ dish.sellingPrice ? (dish.sellingPrice | number:'1.2-2') : '—' }}
+                      </span>
+                      <span class="text-[11px] font-semibold text-slate-400 ml-0.5">zł</span>
+                    </div>
+                  </div>
+
+                  <!-- Ingredients Pill list -->
+                  @let ingredients = getIngredientNames(dish);
+                  @if (ingredients.length > 0) {
+                    <div class="flex items-center gap-1 flex-wrap pt-1">
+                      @for (ing of ingredients; track ing) {
+                        <span class="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400">
+                          {{ ing }}
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <!-- Bottom Status -->
+                <div class="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+                  @if (soldOut) {
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-900">
+                      <span class="material-icons-round text-xs">block</span>
+                      <span>Chwilowo wyprzedane</span>
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                      <span class="material-icons-round text-xs">check_circle</span>
+                      <span>Dostępne od ręki</span>
+                    </span>
+                  }
+
+                  <span class="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                    1 porcja
+                  </span>
+                </div>
+
+              </article>
+            }
+          </div>
+
+        </section>
+      }
+    }
+
+  </main>
+
+  <!-- Guest Footer -->
+  <footer class="max-w-4xl mx-auto px-4 sm:px-6 pt-12 text-center space-y-2 border-t border-slate-200/60 dark:border-slate-800/60 mt-12">
+    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+      Życzymy smacznego!
+    </p>
+    <p class="text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1">
+      <span class="material-icons-round text-xs text-orange-500">sync</span>
+      <span>Menu i dostępność aktualizowane na żywo z magazynu kuchni</span>
+    </p>
+  </footer>
+
+</div>

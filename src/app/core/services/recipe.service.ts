@@ -408,6 +408,20 @@ export class RecipeService {
     this.deleteLocalRecipe(id);
   }
 
+  /**
+   * Włącza lub wyłącza dostępność dania w karcie menu
+   */
+  async toggleAvailability(id: string, isAvailable: boolean): Promise<void> {
+    await this.updateRecipe(id, { isAvailable });
+  }
+
+  /**
+   * Włącza lub wyłącza wyróżnienie pozycji w karcie (szef poleca)
+   */
+  async toggleFeatured(id: string, isFeatured: boolean): Promise<void> {
+    await this.updateRecipe(id, { isFeatured });
+  }
+
   // --- ZARZĄDZANIE KATEGORIAMI DAŃ ---
 
   private saveCategoriesToStorage(categories: string[]): void {

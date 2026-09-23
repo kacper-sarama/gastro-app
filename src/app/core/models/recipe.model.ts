@@ -13,6 +13,8 @@ export interface Recipe {
   description?: string;
   sellingPrice?: number;    // Cena w karcie menu (PLN)
   ingredients: RecipeIngredient[];
+  isAvailable?: boolean;    // Czy danie jest aktywne w karcie menu (domyślnie true)
+  isFeatured?: boolean;     // Czy danie jest wyróżnione (np. szef poleca)
   createdAt?: string;
   updatedAt: string;
 }
@@ -26,6 +28,8 @@ export interface RecipeFormData {
   description?: string;
   sellingPrice?: number;
   ingredients: RecipeIngredient[];
+  isAvailable?: boolean;
+  isFeatured?: boolean;
 }
 
 export interface IngredientCapacityDetail {
