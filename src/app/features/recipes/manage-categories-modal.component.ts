@@ -121,12 +121,8 @@ export class ManageCategoriesModalComponent {
     const count = this.getDishCount(cat);
     this.cancelEdit();
 
-    if (count === 0) {
-      // Usuń bezpośrednio jeśli kategoria jest pusta
-      this.executeDelete(cat);
-    } else {
-      // Wymaga wyboru nowej kategorii dla dań
-      this.deletingCategory.set(cat);
+    this.deletingCategory.set(cat);
+    if (count > 0) {
       const alternatives = this.categories().filter(c => c !== cat);
       this.targetReassignCategory.set(alternatives.length > 0 ? alternatives[0] : 'Inne');
     }
@@ -137,6 +133,17 @@ export class ManageCategoriesModalComponent {
     this.targetReassignCategory.set('');
   }
 
+  async confirmDeleteEmpty(cat: string): Promise<void> {
+    this.isSubmitting.set(true);
+    try {
+      await this.recipeService.deleteCategory(cat);
+      this.cancelDelete();
+      this.showFeedback(`Kategoria "${cat}" została usunięta.`);
+    } finally {
+      this.isSubmitting.set(false);
+    }
+  }
+
   async confirmDeleteWithReassign(cat: string): Promise<void> {
     const target = this.targetReassignCategory() || 'Inne';
     this.isSubmitting.set(true);
@@ -144,16 +151,6 @@ export class ManageCategoriesModalComponent {
       await this.recipeService.deleteCategory(cat, target);
       this.cancelDelete();
       this.showFeedback(`Kategoria "${cat}" usunięta. Dania przeniesiono do "${target}".`);
-    } finally {
-      this.isSubmitting.set(false);
-    }
-  }
-
-  async executeDelete(cat: string): Promise<void> {
-    this.isSubmitting.set(true);
-    try {
-      await this.recipeService.deleteCategory(cat);
-      this.showFeedback(`Kategoria "${cat}" została usunięta.`);
     } finally {
       this.isSubmitting.set(false);
     }

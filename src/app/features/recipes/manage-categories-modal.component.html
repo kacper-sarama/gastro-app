@@ -78,50 +78,86 @@
           @for (cat of categories(); track cat) {
             <div class="p-3.5 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
               
-              <!-- Tryb 1: Usuwanie z przenoszeniem dań -->
+              <!-- Tryb 1: Usuwanie z ostrzeżeniem i potwierdzeniem -->
               @if (deletingCategory() === cat) {
-                <div class="space-y-3 bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl animate-fade-in">
-                  <div class="flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
-                    <span class="material-icons-round text-base text-amber-500 flex-shrink-0 mt-0.5">warning</span>
-                    <div>
-                      <p class="font-semibold">Kategoria „{{ cat }}” posiada {{ getDishCount(cat) }} przypisanych dań.</p>
-                      <p class="text-[11px] text-amber-700 dark:text-amber-300/90 mt-0.5">
-                        Wybierz kategorię, do której zostaną przepisane te dania przed jej usunięciem:
-                      </p>
+                @if (getDishCount(cat) === 0) {
+                  <!-- Ostrzeżenie dla pustej kategorii -->
+                  <div class="space-y-3 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 p-3.5 rounded-xl animate-fade-in">
+                    <div class="flex items-start gap-2.5 text-xs">
+                      <span class="material-icons-round text-base text-rose-500 flex-shrink-0 mt-0.5">warning</span>
+                      <div>
+                        <p class="font-bold text-slate-900 dark:text-white">Czy na pewno chcesz usunąć kategorię „{{ cat }}”?</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          Ta kategoria nie zawiera obecnie żadnych przypisanych dań.
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                    <select
-                      [ngModel]="targetReassignCategory()"
-                      (ngModelChange)="targetReassignCategory.set($event)"
-                      class="gastro-input text-xs py-1.5 flex-1"
-                    >
-                      @for (alt of alternativeCategories(); track alt) {
-                        <option [value]="alt">{{ alt }}</option>
-                      }
-                      <option value="Inne">Inne (Domyślna)</option>
-                    </select>
-
-                    <div class="flex items-center gap-2">
-                      <button
-                        type="button"
-                        (click)="confirmDeleteWithReassign(cat)"
-                        [disabled]="isSubmitting()"
-                        class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium transition-colors whitespace-nowrap"
-                      >
-                        Przenieś i usuń
-                      </button>
+                    <div class="flex items-center justify-end gap-2 pt-1">
                       <button
                         type="button"
                         (click)="cancelDelete()"
+                        [disabled]="isSubmitting()"
                         class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium transition-colors"
                       >
                         Anuluj
                       </button>
+                      <button
+                        type="button"
+                        (click)="confirmDeleteEmpty(cat)"
+                        [disabled]="isSubmitting()"
+                        class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-colors flex items-center gap-1 shadow-sm"
+                      >
+                        <span class="material-icons-round text-sm">delete_forever</span>
+                        <span>Tak, usuń</span>
+                      </button>
                     </div>
                   </div>
-                </div>
+                } @else {
+                  <!-- Ostrzeżenie z przenoszeniem dań dla niepustej kategorii -->
+                  <div class="space-y-3 bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl animate-fade-in">
+                    <div class="flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+                      <span class="material-icons-round text-base text-amber-500 flex-shrink-0 mt-0.5">warning</span>
+                      <div>
+                        <p class="font-bold">Kategoria „{{ cat }}” posiada {{ getDishCount(cat) }} {{ getDishCount(cat) === 1 ? 'przypisane danie' : 'przypisanych dań' }}.</p>
+                        <p class="text-[11px] text-amber-700 dark:text-amber-300/90 mt-0.5">
+                          Wybierz kategorię, do której zostaną przepisane te dania przed jej usunięciem:
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+                      <select
+                        [ngModel]="targetReassignCategory()"
+                        (ngModelChange)="targetReassignCategory.set($event)"
+                        class="gastro-input text-xs py-1.5 flex-1"
+                      >
+                        @for (alt of alternativeCategories(); track alt) {
+                          <option [value]="alt">{{ alt }}</option>
+                        }
+                        <option value="Inne">Inne (Domyślna)</option>
+                      </select>
+
+                      <div class="flex items-center gap-2">
+                        <button
+                          type="button"
+                          (click)="confirmDeleteWithReassign(cat)"
+                          [disabled]="isSubmitting()"
+                          class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-colors whitespace-nowrap shadow-sm"
+                        >
+                          Przenieś i usuń
+                        </button>
+                        <button
+                          type="button"
+                          (click)="cancelDelete()"
+                          class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium transition-colors"
+                        >
+                          Anuluj
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
 
               <!-- Tryb 2: Edycja nazwy inline -->
               } @else if (editingCategory() === cat) {
