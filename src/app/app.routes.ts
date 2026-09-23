@@ -5,6 +5,7 @@ import { LoginComponent } from './features/auth/login/login.component';
 import { RegisterComponent } from './features/auth/register/register.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { InventoryListComponent } from './features/inventory/inventory-list.component';
+import { RecipesListComponent } from './features/recipes/recipes-list.component';
 
 export const routes: Routes = [
   // Public auth routes
@@ -40,11 +41,11 @@ export const routes: Routes = [
       },
       {
         path: 'recipes',
-        redirectTo: 'dashboard' // Będzie podpięte w Fazie 3
+        component: RecipesListComponent
       },
       {
         path: 'dishes',
-        redirectTo: 'dashboard' // Będzie podpięte w Fazie 3
+        redirectTo: 'dashboard' // Będzie podpięte w Fazie 4
       }
     ]
   },

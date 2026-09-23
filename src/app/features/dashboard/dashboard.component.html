@@ -57,21 +57,26 @@
       </p>
     </div>
 
-    <!-- Wydajność dań -->
-    <div class="gastro-card border-l-4 border-l-amber-500">
+    <!-- Wydajność dań (Faza 3 zintegrowana) -->
+    <a routerLink="/recipes" class="gastro-card border-l-4 border-l-amber-500 hover:shadow-md transition-shadow block group">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Wydajność Kuchni</p>
-          <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">Faza 3</h3>
+          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Księga Receptur</p>
+          <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ recipeService.totalRecipesCount() }} dań</h3>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center">
-          <span class="material-icons-round">bolt</span>
+        <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+          <span class="material-icons-round">menu_book</span>
         </div>
       </div>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-3">
-        Symulator porcji dań
+      <p class="text-xs mt-3 font-medium flex items-center justify-between">
+        <span class="text-emerald-600 dark:text-emerald-400">Gotowe: {{ recipeService.availableRecipesCount() }}</span>
+        @if (recipeService.blockedRecipesCount() > 0) {
+          <span class="text-rose-600 dark:text-rose-400">Brak składników: {{ recipeService.blockedRecipesCount() }}</span>
+        } @else {
+          <span class="text-slate-400">Wszystkie aktywne</span>
+        }
       </p>
-    </div>
+    </a>
 
     <!-- Karta Menu -->
     <div class="gastro-card border-l-4 border-l-blue-500">

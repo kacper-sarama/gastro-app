@@ -1,0 +1,160 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+  <div class="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <!-- Header -->
+    <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center border border-orange-500/20">
+          <span class="material-icons-round text-xl">menu_book</span>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">
+            {{ recipe.name }}
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Analiza receptury i symulacja wydajności kuchni
+          </p>
+        </div>
+      </div>
+      <button (click)="close.emit()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+        <span class="material-icons-round text-2xl">close</span>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 space-y-6 overflow-y-auto flex-1">
+      <!-- Status Card -->
+      <div
+        class="p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        [class.bg-emerald-50]="capacity.status === 'available'"
+        [class.border-emerald-200]="capacity.status === 'available'"
+        [class.dark:bg-emerald-500/10]="capacity.status === 'available'"
+        [class.dark:border-emerald-500/20]="capacity.status === 'available'"
+        [class.bg-amber-50]="capacity.status === 'low'"
+        [class.border-amber-200]="capacity.status === 'low'"
+        [class.dark:bg-amber-500/10]="capacity.status === 'low'"
+        [class.dark:border-amber-500/20]="capacity.status === 'low'"
+        [class.bg-rose-50]="capacity.status === 'blocked'"
+        [class.border-rose-200]="capacity.status === 'blocked'"
+        [class.dark:bg-rose-500/10]="capacity.status === 'blocked'"
+        [class.dark:border-rose-500/20]="capacity.status === 'blocked'"
+      >
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider block"
+            [class.text-emerald-700]="capacity.status === 'available'"
+            [class.dark:text-emerald-400]="capacity.status === 'available'"
+            [class.text-amber-700]="capacity.status === 'low'"
+            [class.dark:text-amber-400]="capacity.status === 'low'"
+            [class.text-rose-700]="capacity.status === 'blocked'"
+            [class.dark:text-rose-400]="capacity.status === 'blocked'"
+          >
+            Maksymalna wydajność kuchni
+          </span>
+          <h4 class="text-2xl font-bold mt-0.5"
+            [class.text-emerald-800]="capacity.status === 'available'"
+            [class.dark:text-emerald-300]="capacity.status === 'available'"
+            [class.text-amber-800]="capacity.status === 'low'"
+            [class.dark:text-amber-300]="capacity.status === 'low'"
+            [class.text-rose-800]="capacity.status === 'blocked'"
+            [class.dark:text-rose-300]="capacity.status === 'blocked'"
+          >
+            {{ capacity.maxPortions }} porcji
+          </h4>
+        </div>
+
+        <!-- Bottleneck info -->
+        @if (capacity.bottleneckIngredient) {
+          <div class="sm:text-right">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">
+              Wąskie gardło (brakujący składnik):
+            </span>
+            <span class="text-sm font-bold text-rose-600 dark:text-rose-400">
+              {{ capacity.bottleneckIngredient.name }}
+            </span>
+            <span class="text-xs text-slate-500 dark:text-slate-400 block">
+              Stan: {{ formatAmount(capacity.bottleneckIngredient.currentStock, capacity.bottleneckIngredient.unit).display }} (wymagane {{ formatAmount(capacity.bottleneckIngredient.neededPerPortion, capacity.bottleneckIngredient.unit).display }}/porcja)
+            </span>
+          </div>
+        }
+      </div>
+
+      <!-- Description & Metadata -->
+      @if (recipe.description || recipe.sellingPrice) {
+        <div class="flex flex-col sm:flex-row gap-4 justify-between items-start text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/40 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800">
+          <div>
+            @if (recipe.description) {
+              <p><strong class="text-slate-800 dark:text-slate-200">Opis:</strong> {{ recipe.description }}</p>
+            }
+          </div>
+          @if (recipe.sellingPrice) {
+            <div class="shrink-0">
+              <span class="font-semibold text-slate-700 dark:text-slate-300">Cena w menu:</span>
+              <span class="text-base font-bold text-slate-950 dark:text-white ml-1.5">{{ recipe.sellingPrice.toFixed(2) }} PLN</span>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Detailed Breakdown Table -->
+      <div>
+        <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2.5">
+          Zużycie składników na 1 porcję & Stan w magazynie
+        </h4>
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+          <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+            <thead class="bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <tr>
+                <th class="py-2.5 px-3">Składnik</th>
+                <th class="py-2.5 px-3">Na 1 porcję</th>
+                <th class="py-2.5 px-3">Stan w magazynie</th>
+                <th class="py-2.5 px-3 text-right">Starczy na</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              @for (detail of capacity.ingredientDetails; track detail.inventoryItem?.id || $index) {
+                <tr [class.bg-rose-500/5]="detail.isBottleneck" [class.hover:bg-slate-50]="!detail.isBottleneck" [class.dark:hover:bg-slate-800/40]="!detail.isBottleneck">
+                  <td class="py-2.5 px-3 font-medium text-slate-900 dark:text-white">
+                    <div class="flex items-center gap-1.5">
+                      <span>{{ detail.inventoryItem?.name || 'Nieznany surowiec' }}</span>
+                      @if (detail.isBottleneck) {
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                          Limituje
+                        </span>
+                      }
+                    </div>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    {{ formatAmount(detail.neededPerPortion, detail.unit).display }}
+                  </td>
+                  <td class="py-2.5 px-3 font-medium" [class.text-rose-600]="detail.currentStock === 0" [class.dark:text-rose-400]="detail.currentStock === 0">
+                    {{ formatAmount(detail.currentStock, detail.unit).display }}
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-bold" [class.text-rose-600]="detail.isBottleneck" [class.dark:text-rose-400]="detail.isBottleneck" [class.text-slate-900]="!detail.isBottleneck" [class.dark:text-white]="!detail.isBottleneck">
+                    {{ detail.possiblePortions }} porcji
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 flex items-center justify-between">
+      <a routerLink="/inventory" (click)="close.emit()" class="text-xs text-orange-600 dark:text-orange-400 hover:underline font-semibold flex items-center gap-1">
+        <span class="material-icons-round text-base">inventory_2</span>
+        <span>Przejdź do magazynu i uzupełnij braki</span>
+      </a>
+
+      <div class="flex items-center gap-2">
+        <button (click)="close.emit()" type="button" class="gastro-btn-secondary py-2 text-xs">
+          Zamknij
+        </button>
+        <button (click)="edit.emit(recipe); close.emit()" type="button" class="gastro-btn-primary py-2 text-xs">
+          <span class="material-icons-round text-base">edit</span>
+          <span>Edytuj recepturę</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
