@@ -17,6 +17,17 @@ export interface Recipe {
   updatedAt: string;
 }
 
+/**
+ * Prosty model danych przesyłanych z formularza receptury (bez id i metadanych)
+ */
+export interface RecipeFormData {
+  name: string;
+  category: string;
+  description?: string;
+  sellingPrice?: number;
+  ingredients: RecipeIngredient[];
+}
+
 export interface IngredientCapacityDetail {
   inventoryItem?: InventoryItem;
   neededPerPortion: number;
@@ -42,13 +53,14 @@ export interface RecipeCapacityResult {
 
 /**
  * Symulator wydajności kuchni:
- * Oblicza ile porcji danego dania kuchnia może przygotować z aktualnego stanu magazynu,
- * oraz identyfikuje składnik limitujący (wąskie gardło).
+ * Oblicza, ile porcji danego dania kuchnia może przygotować z aktualnego stanu magazynu
+ * i wskazuje składnik, którego brakuje najbardziej (wąskie gardło).
  */
 export function calculateRecipeCapacity(
   recipe: Recipe,
   inventoryItems: InventoryItem[]
 ): RecipeCapacityResult {
+  // Jeśli receptura nie ma składników, nie można wydać żadnej porcji
   if (!recipe.ingredients || recipe.ingredients.length === 0) {
     return {
       maxPortions: 0,
@@ -57,49 +69,49 @@ export function calculateRecipeCapacity(
     };
   }
 
+  // 1. Stwórz szybki słownik surowców [id -> surowiec]
   const itemsMap = new Map<string, InventoryItem>(
     inventoryItems.map(item => [item.id, item])
   );
 
-  let minPortions = Infinity;
-  let bottleneckItem: InventoryItem | undefined;
-  let bottleneckNeeded = 0;
-
-  const ingredientDetails: IngredientCapacityDetail[] = [];
-
-  for (const ing of recipe.ingredients) {
+  // 2. Przelicz wydajność dla każdego składnika z osobna
+  const ingredientDetails: IngredientCapacityDetail[] = recipe.ingredients.map(ing => {
     const item = itemsMap.get(ing.inventoryItemId);
     const currentStock = item ? Math.max(0, item.amount) : 0;
     const unit: InventoryUnit = item ? item.unit : 'g';
-    const needed = Math.max(0.001, ing.amount);
+    const needed = Math.max(0.001, ing.amount); // zapobieganie dzieleniu przez zero
 
-    const possible = Math.floor(currentStock / needed);
+    const possiblePortions = Math.floor(currentStock / needed);
 
-    ingredientDetails.push({
+    return {
       inventoryItem: item,
       neededPerPortion: ing.amount,
       currentStock,
       unit,
-      possiblePortions: possible,
+      possiblePortions,
       isBottleneck: false
-    });
+    };
+  });
 
-    if (possible < minPortions) {
-      minPortions = possible;
-      bottleneckItem = item;
-      bottleneckNeeded = ing.amount;
+  // 3. Maksymalna liczba gotowych porcji to NAJMNIEJSZA wartość ze wszystkich składników
+  const portionsList = ingredientDetails.map(d => d.possiblePortions);
+  const maxPortions = portionsList.length > 0 ? Math.min(...portionsList) : 0;
+
+  // 4. Oznacz składniki, które są wąskim gardłem (blokują lub limitują wydanie)
+  let bottleneckItem: InventoryItem | undefined;
+  let bottleneckNeeded = 0;
+
+  for (const detail of ingredientDetails) {
+    if (detail.possiblePortions === maxPortions) {
+      detail.isBottleneck = true;
+      if (!bottleneckItem && detail.inventoryItem) {
+        bottleneckItem = detail.inventoryItem;
+        bottleneckNeeded = detail.neededPerPortion;
+      }
     }
   }
 
-  const maxPortions = minPortions === Infinity ? 0 : minPortions;
-
-  // Oznacz składniki będące wąskim gardłem
-  ingredientDetails.forEach(detail => {
-    if (detail.possiblePortions === maxPortions) {
-      detail.isBottleneck = true;
-    }
-  });
-
+  // 5. Określ status dostępności dania
   let status: RecipePortionStatus = 'available';
   if (maxPortions === 0) {
     status = 'blocked';

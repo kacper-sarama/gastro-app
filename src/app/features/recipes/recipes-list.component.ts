@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { RecipeService } from '../../core/services/recipe.service';
 import { InventoryService } from '../../core/services/inventory.service';
-import { Recipe, RecipeCapacityResult } from '../../core/models/recipe.model';
+import { Recipe, RecipeCapacityResult, RecipeFormData } from '../../core/models/recipe.model';
 import { AddEditRecipeModalComponent } from './add-edit-recipe-modal.component';
 import { RecipeDetailsModalComponent } from './recipe-details-modal.component';
 import { ManageCategoriesModalComponent } from './manage-categories-modal.component';
@@ -98,7 +98,7 @@ export class RecipesListComponent {
     this.recipeToEdit.set(undefined);
   }
 
-  async onSaveRecipe(data: Omit<Recipe, 'id' | 'restaurantId' | 'updatedAt'>): Promise<void> {
+  async onSaveRecipe(data: RecipeFormData): Promise<void> {
     const edit = this.recipeToEdit();
     if (edit) {
       await this.recipeService.updateRecipe(edit.id, data);

@@ -151,70 +151,78 @@ export class InventoryService {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
   }
 
-  // --- CRUD Operacje ---
-
-  private sanitizeForFirestore<T extends Record<string, any>>(obj: T): Record<string, any> {
-    const cleaned: Record<string, any> = {};
-    for (const [key, value] of Object.entries(obj)) {
-      if (value !== undefined) {
-        cleaned[key] = value;
+  /**
+   * Usuwa pola undefined (Firestore ich nie obsługuje)
+   */
+  private cleanObject(obj: Record<string, any>): Record<string, any> {
+    const result: Record<string, any> = {};
+    for (const [key, val] of Object.entries(obj)) {
+      if (val !== undefined) {
+        result[key] = val;
       }
     }
-    return cleaned;
+    return result;
   }
+
+  // --- Operacje lokalne (tryb demo / offline) ---
+
+  private addLocalItem(item: InventoryItem): void {
+    const updated = [item, ...this.items()];
+    this.items.set(updated);
+    this.saveToLocalFallback(updated);
+  }
+
+  private updateLocalItem(id: string, fields: Partial<InventoryItem>): void {
+    const updated = this.items().map(i => i.id === id ? { ...i, ...fields } : i);
+    this.items.set(updated);
+    this.saveToLocalFallback(updated);
+  }
+
+  private deleteLocalItem(id: string): void {
+    const updated = this.items().filter(i => i.id !== id);
+    this.items.set(updated);
+    this.saveToLocalFallback(updated);
+  }
+
+  // --- Główne metody CRUD ---
 
   async addItem(data: Omit<InventoryItem, 'id' | 'restaurantId'>): Promise<void> {
     const user = this.authService.currentUser();
-    const newItemData = this.sanitizeForFirestore({
+    const itemData = this.cleanObject({
       ...data,
       restaurantId: user ? user.uid : 'demo-restaurant',
       updatedAt: new Date().toISOString()
-    }) as any;
+    });
 
     if (user) {
       try {
-        const inventoryCol = collection(this.firestore, 'inventory');
-        await addDoc(inventoryCol, newItemData);
+        await addDoc(collection(this.firestore, 'inventory'), itemData);
         return;
       } catch (err) {
-        console.warn('Error adding doc to Firestore, using fallback:', err);
+        console.warn('Błąd zapisu do Firestore, używam trybu lokalnego:', err);
       }
     }
 
-    // Fallback lokalny
-    const current = this.items();
-    const item: InventoryItem = {
-      ...newItemData,
-      id: `local-item-${Date.now()}`
-    };
-    const updated = [item, ...current];
-    this.items.set(updated);
-    this.saveToLocalFallback(updated);
+    this.addLocalItem({ ...itemData, id: `local-item-${Date.now()}` } as InventoryItem);
   }
 
   async updateItem(id: string, partial: Partial<InventoryItem>): Promise<void> {
     const user = this.authService.currentUser();
-    const updatedFields = this.sanitizeForFirestore({
+    const fields = this.cleanObject({
       ...partial,
       updatedAt: new Date().toISOString()
-    }) as any;
+    });
 
     if (user && !id.startsWith('local-item-')) {
       try {
-        const docRef = doc(this.firestore, `inventory/${id}`);
-        await updateDoc(docRef, updatedFields);
+        await updateDoc(doc(this.firestore, `inventory/${id}`), fields);
         return;
       } catch (err) {
-        console.warn('Error updating Firestore doc:', err);
+        console.warn('Błąd aktualizacji w Firestore:', err);
       }
     }
 
-    // Fallback lokalny
-    const updated = this.items().map(item => 
-      item.id === id ? { ...item, ...updatedFields } : item
-    );
-    this.items.set(updated);
-    this.saveToLocalFallback(updated);
+    this.updateLocalItem(id, fields);
   }
 
   async deleteItem(id: string): Promise<void> {
@@ -222,18 +230,14 @@ export class InventoryService {
 
     if (user && !id.startsWith('local-item-')) {
       try {
-        const docRef = doc(this.firestore, `inventory/${id}`);
-        await deleteDoc(docRef);
+        await deleteDoc(doc(this.firestore, `inventory/${id}`));
         return;
       } catch (err) {
-        console.warn('Error deleting Firestore doc:', err);
+        console.warn('Błąd usuwania w Firestore:', err);
       }
     }
 
-    // Fallback lokalny
-    const updated = this.items().filter(item => item.id !== id);
-    this.items.set(updated);
-    this.saveToLocalFallback(updated);
+    this.deleteLocalItem(id);
   }
 
   /**

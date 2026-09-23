@@ -17,6 +17,7 @@ import { InventoryService } from './inventory.service';
 import { 
   Recipe, 
   RecipeCapacityResult, 
+  RecipeFormData,
   calculateRecipeCapacity 
 } from '../models/recipe.model';
 import { Subscription } from 'rxjs';
@@ -318,64 +319,78 @@ export class RecipeService {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(recipes));
   }
 
-  private sanitizeForFirestore<T extends Record<string, any>>(obj: T): Record<string, any> {
-    const cleaned: Record<string, any> = {};
-    for (const [key, value] of Object.entries(obj)) {
-      if (value !== undefined) {
-        cleaned[key] = value;
+  /**
+   * Usuwa pola undefined (Firestore ich nie akceptuje)
+   */
+  private cleanObject(obj: Record<string, any>): Record<string, any> {
+    const result: Record<string, any> = {};
+    for (const [key, val] of Object.entries(obj)) {
+      if (val !== undefined) {
+        result[key] = val;
       }
     }
-    return cleaned;
+    return result;
   }
 
-  async addRecipe(data: Omit<Recipe, 'id' | 'restaurantId' | 'updatedAt'>): Promise<void> {
+  // --- Operacje lokalne (tryb demo / offline) ---
+
+  private addLocalRecipe(recipe: Recipe): void {
+    const updated = [recipe, ...this.recipes()];
+    this.recipes.set(updated);
+    this.saveToLocalFallback(updated);
+  }
+
+  private updateLocalRecipe(id: string, fields: Partial<Recipe>): void {
+    const updated = this.recipes().map(r => r.id === id ? { ...r, ...fields } : r);
+    this.recipes.set(updated);
+    this.saveToLocalFallback(updated);
+  }
+
+  private deleteLocalRecipe(id: string): void {
+    const updated = this.recipes().filter(r => r.id !== id);
+    this.recipes.set(updated);
+    this.saveToLocalFallback(updated);
+  }
+
+  // --- Główne metody CRUD ---
+
+  async addRecipe(data: RecipeFormData): Promise<void> {
     const user = this.authService.currentUser();
-    const newRecipeData = this.sanitizeForFirestore({
+    const recipeData = this.cleanObject({
       ...data,
       restaurantId: user ? user.uid : 'demo-restaurant',
       updatedAt: new Date().toISOString()
-    }) as any;
+    });
 
     if (user) {
       try {
-        const col = collection(this.firestore, 'recipes');
-        await addDoc(col, newRecipeData);
+        await addDoc(collection(this.firestore, 'recipes'), recipeData);
         return;
       } catch (err) {
-        console.warn('Error saving recipe to Firestore:', err);
+        console.warn('Błąd zapisu receptury do Firestore, używam trybu lokalnego:', err);
       }
     }
 
-    const current = this.recipes();
-    const recipe: Recipe = {
-      ...newRecipeData,
-      id: `recipe-local-${Date.now()}`
-    };
-    const updated = [recipe, ...current];
-    this.recipes.set(updated);
-    this.saveToLocalFallback(updated);
+    this.addLocalRecipe({ ...recipeData, id: `recipe-local-${Date.now()}` } as Recipe);
   }
 
   async updateRecipe(id: string, partial: Partial<Recipe>): Promise<void> {
     const user = this.authService.currentUser();
-    const updatedFields = this.sanitizeForFirestore({
+    const fields = this.cleanObject({
       ...partial,
       updatedAt: new Date().toISOString()
-    }) as any;
+    });
 
     if (user && !id.startsWith('recipe-local-')) {
       try {
-        const docRef = doc(this.firestore, `recipes/${id}`);
-        await updateDoc(docRef, updatedFields);
+        await updateDoc(doc(this.firestore, `recipes/${id}`), fields);
         return;
       } catch (err) {
-        console.warn('Error updating recipe in Firestore:', err);
+        console.warn('Błąd aktualizacji receptury w Firestore:', err);
       }
     }
 
-    const updated = this.recipes().map(r => r.id === id ? { ...r, ...updatedFields } : r);
-    this.recipes.set(updated);
-    this.saveToLocalFallback(updated);
+    this.updateLocalRecipe(id, fields);
   }
 
   async deleteRecipe(id: string): Promise<void> {
@@ -383,17 +398,14 @@ export class RecipeService {
 
     if (user && !id.startsWith('recipe-local-')) {
       try {
-        const docRef = doc(this.firestore, `recipes/${id}`);
-        await deleteDoc(docRef);
+        await deleteDoc(doc(this.firestore, `recipes/${id}`));
         return;
       } catch (err) {
-        console.warn('Error deleting recipe in Firestore:', err);
+        console.warn('Błąd usuwania receptury z Firestore:', err);
       }
     }
 
-    const updated = this.recipes().filter(r => r.id !== id);
-    this.recipes.set(updated);
-    this.saveToLocalFallback(updated);
+    this.deleteLocalRecipe(id);
   }
 
   // --- ZARZĄDZANIE KATEGORIAMI DAŃ ---

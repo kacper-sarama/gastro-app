@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, OnInit, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Recipe, RecipeIngredient, calculateRecipeCapacity } from '../../core/models/recipe.model';
+import { Recipe, RecipeIngredient, RecipeFormData, calculateRecipeCapacity } from '../../core/models/recipe.model';
 import { InventoryService } from '../../core/services/inventory.service';
 import { RecipeService } from '../../core/services/recipe.service';
 import { InventoryItem, InventoryUnit } from '../../core/models/inventory-item.model';
@@ -20,7 +20,7 @@ export class AddEditRecipeModalComponent implements OnInit {
 
   @Input() recipeToEdit?: Recipe;
   @Output() close = new EventEmitter<void>();
-  @Output() save = new EventEmitter<Omit<Recipe, 'id' | 'restaurantId' | 'updatedAt'>>();
+  @Output() save = new EventEmitter<RecipeFormData>();
 
   form!: FormGroup;
   readonly showValidationErrors = signal<boolean>(false);
@@ -120,7 +120,7 @@ export class AddEditRecipeModalComponent implements OnInit {
       return;
     }
 
-    const recipeData: Omit<Recipe, 'id' | 'restaurantId' | 'updatedAt'> = {
+    const recipeData: RecipeFormData = {
       name: val.name.trim(),
       category: val.category.trim(),
       ingredients
