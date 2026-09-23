@@ -5,6 +5,7 @@ import { InventoryService } from '../../core/services/inventory.service';
 import { InventoryItem, StockStatus, formatStockAmount, getStockStatus } from '../../core/models/inventory-item.model';
 import { AddEditIngredientModalComponent } from './add-edit-ingredient-modal.component';
 import { QuickDeliveryModalComponent } from './quick-delivery-modal.component';
+import { ManageInventoryCategoriesModalComponent } from './manage-inventory-categories-modal.component';
 
 @Component({
   selector: 'app-inventory-list',
@@ -13,7 +14,8 @@ import { QuickDeliveryModalComponent } from './quick-delivery-modal.component';
     CommonModule, 
     FormsModule, 
     AddEditIngredientModalComponent, 
-    QuickDeliveryModalComponent
+    QuickDeliveryModalComponent,
+    ManageInventoryCategoriesModalComponent
   ],
   templateUrl: './inventory-list.component.html'
 })
@@ -32,16 +34,12 @@ export class InventoryListComponent {
   isDeliveryModalOpen = signal(false);
   deliveryTargetItem = signal<InventoryItem | null>(null);
 
+  isManageCategoriesModalOpen = signal(false);
+
   itemToDelete = signal<InventoryItem | null>(null);
 
   // Unikalne kategorie
-  readonly categories = computed(() => {
-    const set = new Set<string>();
-    this.inventoryService.items().forEach(item => {
-      if (item.category) set.add(item.category);
-    });
-    return Array.from(set).sort();
-  });
+  readonly categories = computed(() => this.inventoryService.allCategories());
 
   // Filtrowane surowce
   readonly filteredItems = computed(() => {
@@ -115,6 +113,14 @@ export class InventoryListComponent {
       await this.inventoryService.quickAdjustStock(target.id, addedAmount);
     }
     this.closeDeliveryModal();
+  }
+
+  openManageCategoriesModal(): void {
+    this.isManageCategoriesModalOpen.set(true);
+  }
+
+  closeManageCategoriesModal(): void {
+    this.isManageCategoriesModalOpen.set(false);
   }
 
   promptDeleteItem(item: InventoryItem): void {

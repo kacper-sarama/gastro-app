@@ -9,6 +9,7 @@ import {
   query, 
   where,
   onSnapshot,
+  setDoc,
   Unsubscribe 
 } from 'firebase/firestore';
 import { AuthService } from './auth.service';
@@ -16,6 +17,8 @@ import { InventoryItem, getStockStatus } from '../models/inventory-item.model';
 import { Subscription } from 'rxjs';
 
 const LOCAL_STORAGE_KEY = 'gastro_inventory_items_fallback';
+const INVENTORY_CATEGORIES_STORAGE_KEY = 'gastro_inventory_categories_fallback';
+const DEFAULT_INVENTORY_CATEGORIES = ['Suche', 'Nabiał', 'Przetwory', 'Warzywa', 'Dodatki', 'Tłuszcze', 'Zioła'];
 
 const STARTER_INGREDIENTS: Omit<InventoryItem, 'id' | 'restaurantId'>[] = [
   { name: 'Mąka pszenna (typ 00)', amount: 15000, unit: 'g', minAmount: 5000, category: 'Suche' },
@@ -35,8 +38,28 @@ export class InventoryService {
   private authService = inject(AuthService);
 
   readonly items = signal<InventoryItem[]>([]);
+  readonly customCategories = signal<string[]>([]);
   readonly isLoading = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
+
+  // Unikalne kategorie surowców (z produktów oraz zdefiniowane ręcznie)
+  readonly allCategories = computed<string[]>(() => {
+    const set = new Set<string>();
+    for (const item of this.items()) {
+      if (item.category && item.category.trim()) {
+        set.add(item.category.trim());
+      }
+    }
+    for (const c of this.customCategories()) {
+      if (c && c.trim()) {
+        set.add(c.trim());
+      }
+    }
+    if (set.size === 0) {
+      DEFAULT_INVENTORY_CATEGORIES.forEach(c => set.add(c));
+    }
+    return Array.from(set).sort();
+  });
 
   // Wyliczane sygnały stanu
   readonly totalItemsCount = computed(() => this.items().length);
@@ -58,6 +81,7 @@ export class InventoryService {
   );
 
   private firestoreUnsub: Unsubscribe | null = null;
+  private categoriesUnsub: Unsubscribe | null = null;
 
   constructor() {
     // Automatycznie reaguj na zmianę stanu logowania
@@ -88,8 +112,26 @@ export class InventoryService {
       this.firestoreUnsub();
       this.firestoreUnsub = null;
     }
+    if (this.categoriesUnsub) {
+      this.categoriesUnsub();
+      this.categoriesUnsub = null;
+    }
 
     try {
+      // 1. Subskrypcja kategorii z ustawień lokalu
+      const settingsDocRef = doc(this.firestore, `restaurant_settings/${restaurantId}`);
+      this.categoriesUnsub = onSnapshot(settingsDocRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (Array.isArray(data?.['inventoryCategories'])) {
+            this.customCategories.set(data['inventoryCategories']);
+          }
+        }
+      }, () => {
+        // Fallback do pamięci lokalnej jeśli brak dokumentu
+      });
+
+      // 2. Subskrypcja surowców magazynowych
       const inventoryCol = collection(this.firestore, 'inventory');
       const q = query(inventoryCol, where('restaurantId', '==', restaurantId));
 
@@ -141,6 +183,15 @@ export class InventoryService {
   }
 
   private loadLocalFallback(): void {
+    const rawCategories = localStorage.getItem(INVENTORY_CATEGORIES_STORAGE_KEY);
+    if (rawCategories) {
+      try {
+        this.customCategories.set(JSON.parse(rawCategories));
+      } catch (e) {
+        // Fallback
+      }
+    }
+
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (raw) {
       try {
@@ -265,5 +316,138 @@ export class InventoryService {
 
     const newAmount = Math.max(0, target.amount + deltaAmount);
     await this.updateItem(id, { amount: newAmount });
+  }
+
+  // ==========================================
+  // ZARZĄDZANIE KATEGORIAMI SUROWCÓW
+  // ==========================================
+
+  getCategoryItemCount(category: string): number {
+    return this.items().filter(i => (i.category || '').trim().toLowerCase() === category.trim().toLowerCase()).length;
+  }
+
+  async addCategory(name: string): Promise<boolean> {
+    const trimmed = name.trim();
+    if (!trimmed) return false;
+
+    const exists = this.allCategories().some(c => c.toLowerCase() === trimmed.toLowerCase());
+    if (exists) return false;
+
+    const updated = Array.from(new Set([...this.customCategories(), trimmed]));
+    this.customCategories.set(updated);
+    this.saveCategoriesToStorage(updated);
+    await this.syncCategoriesToFirestore(updated);
+    return true;
+  }
+
+  async renameCategory(oldName: string, newName: string): Promise<boolean> {
+    const trimmedOld = oldName.trim();
+    const trimmedNew = newName.trim();
+    if (!trimmedNew || trimmedOld.toLowerCase() === trimmedNew.toLowerCase()) {
+      return false;
+    }
+
+    const user = this.authService.currentUser();
+    const affected = this.items().filter(
+      i => (i.category || '').trim().toLowerCase() === trimmedOld.toLowerCase()
+    );
+
+    // 1. Aktualizacja surowców w Firestore
+    for (const item of affected) {
+      if (user && !item.id.startsWith('local-item-')) {
+        try {
+          const docRef = doc(this.firestore, `inventory/${item.id}`);
+          await updateDoc(docRef, { 
+            category: trimmedNew, 
+            updatedAt: new Date().toISOString() 
+          });
+        } catch (err) {
+          console.warn(`Error updating inventory item ${item.id} category:`, err);
+        }
+      }
+    }
+
+    // 2. Aktualizacja stanu lokalnego surowców
+    const updatedItems = this.items().map(i => 
+      (i.category || '').trim().toLowerCase() === trimmedOld.toLowerCase()
+        ? { ...i, category: trimmedNew, updatedAt: new Date().toISOString() } 
+        : i
+    );
+    this.items.set(updatedItems);
+    this.saveToLocalFallback(updatedItems);
+
+    // 3. Aktualizacja listy kategorii
+    const currentCustom = this.customCategories();
+    const newCustom = currentCustom.map(c => 
+      c.trim().toLowerCase() === trimmedOld.toLowerCase() ? trimmedNew : c
+    );
+    if (!newCustom.some(c => c.toLowerCase() === trimmedNew.toLowerCase())) {
+      newCustom.push(trimmedNew);
+    }
+    const cleanCustom = Array.from(new Set(newCustom));
+    this.customCategories.set(cleanCustom);
+    this.saveCategoriesToStorage(cleanCustom);
+    await this.syncCategoriesToFirestore(cleanCustom);
+
+    return true;
+  }
+
+  async deleteCategory(categoryName: string, targetCategory?: string): Promise<void> {
+    const trimmed = categoryName.trim();
+    const fallback = targetCategory?.trim() || 'Dodatki';
+
+    const user = this.authService.currentUser();
+    const affected = this.items().filter(
+      i => (i.category || '').trim().toLowerCase() === trimmed.toLowerCase()
+    );
+
+    // 1. Przepięcie surowców do nowej kategorii
+    if (affected.length > 0) {
+      for (const item of affected) {
+        if (user && !item.id.startsWith('local-item-')) {
+          try {
+            const docRef = doc(this.firestore, `inventory/${item.id}`);
+            await updateDoc(docRef, { 
+              category: fallback, 
+              updatedAt: new Date().toISOString() 
+            });
+          } catch (err) {
+            console.warn(`Error reassigning category for item ${item.id}:`, err);
+          }
+        }
+      }
+
+      const updatedItems = this.items().map(i => 
+        (i.category || '').trim().toLowerCase() === trimmed.toLowerCase()
+          ? { ...i, category: fallback, updatedAt: new Date().toISOString() } 
+          : i
+      );
+      this.items.set(updatedItems);
+      this.saveToLocalFallback(updatedItems);
+    }
+
+    // 2. Usunięcie z customCategories
+    const cleanCustom = this.customCategories().filter(
+      c => c.trim().toLowerCase() !== trimmed.toLowerCase()
+    );
+    this.customCategories.set(cleanCustom);
+    this.saveCategoriesToStorage(cleanCustom);
+    await this.syncCategoriesToFirestore(cleanCustom);
+  }
+
+  private saveCategoriesToStorage(categories: string[]): void {
+    localStorage.setItem(INVENTORY_CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+  }
+
+  private async syncCategoriesToFirestore(categories: string[]): Promise<void> {
+    const user = this.authService.currentUser();
+    if (!user) return;
+
+    try {
+      const docRef = doc(this.firestore, `restaurant_settings/${user.uid}`);
+      await setDoc(docRef, { inventoryCategories: categories }, { merge: true });
+    } catch (err) {
+      console.warn('Error syncing inventory categories to Firestore:', err);
+    }
   }
 }

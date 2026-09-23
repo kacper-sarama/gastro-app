@@ -1,0 +1,247 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+  <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-8">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
+          <span class="material-icons-round text-2xl">category</span>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white">Zarządzanie kategoriami surowców</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Dodawaj, edytuj nazwy lub porządkuj działy magazynu</p>
+        </div>
+      </div>
+      <button
+        (click)="close.emit()"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        <span class="material-icons-round text-xl">close</span>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+      
+      <!-- Feedback alert -->
+      @if (successFeedback()) {
+        <div class="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-medium animate-fade-in">
+          <span class="material-icons-round text-base text-emerald-500">check_circle</span>
+          <span>{{ successFeedback() }}</span>
+        </div>
+      }
+
+      <!-- Dodawanie nowej kategorii -->
+      <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-3">
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+          Dodaj nową kategorię surowców
+        </label>
+        <div class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <span class="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">label</span>
+            <input
+              type="text"
+              [ngModel]="newCategoryName()"
+              (ngModelChange)="newCategoryName.set($event); newCategoryError.set(null)"
+              (keydown.enter)="onAddCategory()"
+              placeholder="np. Mięsa, Mrożonki, Opakowania, Owoce..."
+              class="gastro-input pl-9 py-2 text-xs"
+              [disabled]="isSubmitting()"
+            />
+          </div>
+          <button
+            type="button"
+            (click)="onAddCategory()"
+            [disabled]="isSubmitting() || !newCategoryName().trim()"
+            class="gastro-btn-primary py-2 px-3 text-xs whitespace-nowrap"
+          >
+            <span class="material-icons-round text-base">add</span>
+            <span>Dodaj</span>
+          </button>
+        </div>
+        @if (newCategoryError()) {
+          <p class="text-[11px] text-rose-500 flex items-center gap-1">
+            <span class="material-icons-round text-xs">error</span>
+            <span>{{ newCategoryError() }}</span>
+          </p>
+        }
+      </div>
+
+      <!-- Lista istniejących kategorii -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1 font-medium">
+          <span>Istniejące kategorie ({{ categories().length }})</span>
+          <span>Przypisane surowce</span>
+        </div>
+
+        <div class="space-y-1.5">
+          @for (cat of categories(); track cat) {
+            <div class="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-slate-200 dark:hover:border-slate-700 transition-all">
+              
+              <!-- Tryb standardowy -->
+              @if (editingCategory() !== cat && deletingCategory() !== cat) {
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                    <span class="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{{ cat }}</span>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs px-2 py-0.5 rounded-full font-medium"
+                          [class.bg-slate-100]="getItemCount(cat) === 0"
+                          [class.dark:bg-slate-800]="getItemCount(cat) === 0"
+                          [class.text-slate-500]="getItemCount(cat) === 0"
+                          [class.bg-orange-500/10]="getItemCount(cat) > 0"
+                          [class.text-orange-600]="getItemCount(cat) > 0"
+                          [class.dark:text-orange-400]="getItemCount(cat) > 0">
+                      {{ getItemCount(cat) }} surowców
+                    </span>
+
+                    <button
+                      type="button"
+                      (click)="startEdit(cat)"
+                      class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
+                      title="Zmień nazwę kategorii"
+                    >
+                      <span class="material-icons-round text-base">edit</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="startDelete(cat)"
+                      class="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded transition-colors"
+                      title="Usuń kategorię"
+                    >
+                      <span class="material-icons-round text-base">delete</span>
+                    </button>
+                  </div>
+                </div>
+              }
+
+              <!-- Tryb edycji nazwy inline -->
+              @if (editingCategory() === cat) {
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="text"
+                      [ngModel]="editCategoryName()"
+                      (ngModelChange)="editCategoryName.set($event); editCategoryError.set(null)"
+                      (keydown.enter)="onSaveEdit(cat)"
+                      class="gastro-input py-1 px-2.5 text-xs flex-1"
+                      [disabled]="isSubmitting()"
+                    />
+                    <button
+                      type="button"
+                      (click)="onSaveEdit(cat)"
+                      [disabled]="isSubmitting()"
+                      class="gastro-btn-primary py-1 px-2.5 text-xs"
+                    >
+                      Zapisz
+                    </button>
+                    <button
+                      type="button"
+                      (click)="cancelEdit()"
+                      class="gastro-btn-secondary py-1 px-2 text-xs"
+                    >
+                      Anuluj
+                    </button>
+                  </div>
+                  @if (editCategoryError()) {
+                    <p class="text-[11px] text-rose-500">{{ editCategoryError() }}</p>
+                  }
+                  <p class="text-[11px] text-slate-400">
+                    Zmiana nazwy automatycznie zaktualizuje wszystkie przypisane surowce w magazynie.
+                  </p>
+                </div>
+              }
+
+              <!-- Tryb usuwania / przenoszenia surowców -->
+              @if (deletingCategory() === cat) {
+                <div class="p-3 rounded-lg bg-rose-500/5 border border-rose-500/20 space-y-3">
+                  <div class="flex items-start gap-2">
+                    <span class="material-icons-round text-rose-500 text-lg">warning</span>
+                    <div>
+                      <h4 class="text-xs font-bold text-slate-900 dark:text-white">
+                        Usuwanie kategorii: "{{ cat }}"
+                      </h4>
+                      @if (getItemCount(cat) > 0) {
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                          Ta kategoria zawiera <strong>{{ getItemCount(cat) }}</strong> przypisanych surowców. Wybierz kategorię, do której mają zostać przeniesione:
+                        </p>
+                      } @else {
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                          Kategoria nie zawiera żadnych surowców. Czy na pewno chcesz ją usunąć?
+                        </p>
+                      }
+                    </div>
+                  </div>
+
+                  @if (getItemCount(cat) > 0) {
+                    <div>
+                      <select
+                        [ngModel]="targetReassignCategory()"
+                        (ngModelChange)="targetReassignCategory.set($event)"
+                        class="gastro-input py-1.5 text-xs w-full cursor-pointer"
+                      >
+                        @for (alt of alternativeCategories(); track alt) {
+                          <option [value]="alt">Przenieś do: {{ alt }}</option>
+                        }
+                      </select>
+                    </div>
+                  }
+
+                  <div class="flex items-center justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      (click)="cancelDelete()"
+                      class="gastro-btn-secondary py-1.5 px-3 text-xs"
+                      [disabled]="isSubmitting()"
+                    >
+                      Anuluj
+                    </button>
+
+                    @if (getItemCount(cat) === 0) {
+                      <button
+                        type="button"
+                        (click)="confirmDeleteEmpty(cat)"
+                        [disabled]="isSubmitting()"
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors flex items-center gap-1"
+                      >
+                        <span class="material-icons-round text-sm">delete</span>
+                        <span>Usuń</span>
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        (click)="confirmDeleteWithReassign(cat)"
+                        [disabled]="isSubmitting()"
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors flex items-center gap-1"
+                      >
+                        <span class="material-icons-round text-sm">swap_horiz</span>
+                        <span>Przenieś i usuń</span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 flex justify-end">
+      <button
+        type="button"
+        (click)="close.emit()"
+        class="gastro-btn-secondary text-xs py-2 px-4"
+      >
+        Zamknij
+      </button>
+    </div>
+
+  </div>
+</div>
