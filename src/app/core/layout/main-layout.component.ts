@@ -25,6 +25,7 @@ export class MainLayoutComponent {
 
   readonly navItems: NavItem[] = [
     { label: 'Pulpit / Dashboard', route: '/dashboard', icon: 'dashboard' },
+    { label: 'Zamówienia & Kuchnia (KDS)', route: '/orders', icon: 'view_kanban' },
     { label: 'Magazyn Składników', route: '/inventory', icon: 'inventory_2' },
     { label: 'Receptury & Wydajność', route: '/recipes', icon: 'menu_book' },
     { label: 'Karta Dań & Menu', route: '/dishes', icon: 'restaurant_menu' }

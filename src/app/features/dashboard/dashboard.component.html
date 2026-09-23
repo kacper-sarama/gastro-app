@@ -7,46 +7,193 @@
         <span class="text-2xl">👋</span>
       </h1>
       <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
-        Centrum kontroli magazynu, receptur i cyfrowego menu Twojego lokalu.
+        Centrum kontroli zamówień kuchennych, magazynu surowców i cyfrowej karty dań.
       </p>
     </div>
 
     <div class="flex items-center gap-3">
-      <a routerLink="/inventory" class="gastro-btn-primary shadow-lg shadow-orange-500/20">
-        <span class="material-icons-round text-lg">inventory_2</span>
-        <span>Przejdź do Magazynu</span>
+      <a routerLink="/orders" class="gastro-btn-primary shadow-lg shadow-orange-500/20 flex items-center gap-2">
+        <span class="material-icons-round text-lg">view_kanban</span>
+        <span>Otwórz Tablicę Kuchni (KDS)</span>
       </a>
     </div>
   </div>
 
-  <!-- Quick Metrics Grid -->
+  <!-- ======================================================== -->
+  <!-- PODGLĄD STATUSÓW ZAMÓWIEŃ (KANBAN LIVE STATUS BAR)       -->
+  <!-- ======================================================== -->
+  <div class="space-y-2">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Bieżący Stan Zamówień (Kuchnia & Sala)</span>
+      </h2>
+      <a routerLink="/orders" class="text-xs font-semibold text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-0.5">
+        <span>Zobacz pełną tablicę KDS</span>
+        <span class="material-icons-round text-xs">arrow_forward</span>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <!-- 1. Oczekujące -->
+      <a routerLink="/orders" class="gastro-card border-l-4 border-l-amber-500 hover:shadow-md transition-all group block p-4 bg-white dark:bg-slate-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">1. Oczekujące</span>
+            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+              {{ orderService.pendingOrdersCount() }}
+            </div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <span class="material-icons-round">hourglass_empty</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
+          Czeka w kolejce na start
+        </p>
+      </a>
+
+      <!-- 2. W przygotowaniu -->
+      <a routerLink="/orders" class="gastro-card border-l-4 border-l-sky-500 hover:shadow-md transition-all group block p-4 bg-white dark:bg-slate-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[11px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider block">2. W kuchni</span>
+            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+              {{ orderService.inProgressOrdersCount() }}
+            </div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-500 dark:text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <span class="material-icons-round">skillet</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
+          W trakcie przygotowania
+        </p>
+      </a>
+
+      <!-- 3. Gotowe do wydania -->
+      <a routerLink="/orders" class="gastro-card border-l-4 border-l-emerald-500 hover:shadow-md transition-all group block p-4 bg-white dark:bg-slate-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">3. Gotowe</span>
+            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+              {{ orderService.readyOrdersCount() }}
+            </div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <span class="material-icons-round">room_service</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
+          Czeka na odbiór / salę
+        </p>
+      </a>
+
+      <!-- 4. Wydane dzisiaj -->
+      <a routerLink="/orders" class="gastro-card border-l-4 border-l-slate-400 dark:border-l-slate-600 hover:shadow-md transition-all group block p-4 bg-white dark:bg-slate-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">4. Wydane</span>
+            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+              {{ orderService.completedOrdersCount() }}
+            </div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-slate-500/10 text-slate-600 dark:text-slate-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <span class="material-icons-round">check_circle</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
+          Obrót: <span class="font-bold text-slate-800 dark:text-slate-200">{{ orderService.todaysRevenue().toFixed(2) }} zł</span>
+        </p>
+      </a>
+    </div>
+  </div>
+
+  <!-- Podgląd aktywnej kolejki kuchennej (jeśli są aktywne zamówienia) -->
+  @if (orderService.activeOrdersCount() > 0) {
+    <div class="gastro-card border border-slate-200 dark:border-slate-800 shadow-sm p-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+        <div class="flex items-center gap-2">
+          <span class="material-icons-round text-orange-500">restaurant</span>
+          <h3 class="font-bold text-sm text-slate-900 dark:text-white">
+            Aktywne zamówienia na kuchni ({{ orderService.activeOrdersCount() }})
+          </h3>
+        </div>
+        <a routerLink="/orders" class="text-xs text-orange-600 dark:text-orange-400 hover:underline font-semibold flex items-center gap-1">
+          <span>Przejdź do KDS</span>
+          <span class="material-icons-round text-sm">arrow_forward</span>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+        @for (order of activeOrders(); track order.id) {
+          <div class="p-3 rounded-lg border bg-slate-50/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-extrabold text-sm text-slate-900 dark:text-white">#{{ order.orderNumber }}</span>
+                <span class="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300">
+                  {{ order.tableNumber }}
+                </span>
+              </div>
+              <span 
+                class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                [class.bg-amber-100]="order.status === 'pending'"
+                [class.text-amber-800]="order.status === 'pending'"
+                [class.bg-sky-100]="order.status === 'in_progress'"
+                [class.text-sky-800]="order.status === 'in_progress'"
+                [class.bg-emerald-100]="order.status === 'ready'"
+                [class.text-emerald-800]="order.status === 'ready'"
+              >
+                {{ order.status === 'pending' ? 'Oczekujące' : (order.status === 'in_progress' ? 'W kuchni' : 'Gotowe') }}
+              </span>
+            </div>
+
+            <div class="text-xs text-slate-600 dark:text-slate-400 space-y-0.5">
+              @for (item of order.items; track item.recipeId + $index) {
+                <div class="truncate">
+                  <span class="font-semibold text-slate-800 dark:text-slate-200">{{ item.quantity }}x</span> {{ item.recipeName }}
+                </div>
+              }
+            </div>
+
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
+              <span>{{ getElapsedTime(order.createdAt) }}</span>
+              <span class="font-bold text-slate-700 dark:text-slate-300">{{ order.totalPrice.toFixed(2) }} zł</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Quick Metrics Grid (Magazyn, Alerty, Receptury, Menu) -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <!-- Pozycje w magazynie -->
-    <div class="gastro-card border-l-4 border-l-orange-500">
+    <a routerLink="/inventory" class="gastro-card border-l-4 border-l-orange-500 hover:shadow-md transition-shadow block group">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Surowce w bazie</p>
           <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ inventoryService.totalItemsCount() }}</h3>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center group-hover:scale-110 transition-transform">
           <span class="material-icons-round">kitchen</span>
         </div>
       </div>
       <p class="text-xs text-slate-500 dark:text-slate-400 mt-3">
         Ewidencja w g, ml, szt
       </p>
-    </div>
+    </a>
 
     <!-- Alerty zamówień -->
-    <div class="gastro-card border-l-4" [class.border-l-rose-500]="inventoryService.criticalAlertsCount() > 0" [class.border-l-emerald-500]="inventoryService.criticalAlertsCount() === 0">
+    <a routerLink="/inventory" class="gastro-card border-l-4 hover:shadow-md transition-shadow block group" [class.border-l-rose-500]="inventoryService.criticalAlertsCount() > 0" [class.border-l-emerald-500]="inventoryService.criticalAlertsCount() === 0">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Braki do zamówienia</p>
+          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Braki surowców</p>
           <h3 class="text-2xl font-bold mt-1" [class.text-rose-600]="inventoryService.criticalAlertsCount() > 0" [class.dark:text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.text-emerald-600]="inventoryService.criticalAlertsCount() === 0" [class.dark:text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
             {{ inventoryService.criticalAlertsCount() }}
           </h3>
         </div>
-        <div class="w-10 h-10 rounded-lg flex items-center justify-center" [class.bg-rose-500/10]="inventoryService.criticalAlertsCount() > 0" [class.text-rose-500]="inventoryService.criticalAlertsCount() > 0" [class.dark:text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.bg-emerald-500/10]="inventoryService.criticalAlertsCount() === 0" [class.text-emerald-500]="inventoryService.criticalAlertsCount() === 0" [class.dark:text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform" [class.bg-rose-500/10]="inventoryService.criticalAlertsCount() > 0" [class.text-rose-500]="inventoryService.criticalAlertsCount() > 0" [class.dark:text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.bg-emerald-500/10]="inventoryService.criticalAlertsCount() === 0" [class.text-emerald-500]="inventoryService.criticalAlertsCount() === 0" [class.dark:text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
           <span class="material-icons-round">
             {{ inventoryService.criticalAlertsCount() > 0 ? 'shopping_basket' : 'check_circle' }}
           </span>
@@ -55,7 +202,7 @@
       <p class="text-xs mt-3 font-medium" [class.text-rose-600]="inventoryService.criticalAlertsCount() > 0" [class.dark:text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.text-emerald-600]="inventoryService.criticalAlertsCount() === 0" [class.dark:text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
         {{ inventoryService.criticalAlertsCount() > 0 ? 'Wymaga pilnego uzupełnienia' : 'Stany w normie' }}
       </p>
-    </div>
+    </a>
 
     <!-- Wydajność dań (Faza 3 zintegrowana) -->
     <a routerLink="/recipes" class="gastro-card border-l-4 border-l-amber-500 hover:shadow-md transition-shadow block group">
@@ -96,7 +243,7 @@
     </a>
   </div>
 
-  <!-- Critical Stock Alert Widget (Zadanie 2.9) -->
+  <!-- Critical Stock Alert Widget -->
   @if (inventoryService.criticalAlertsCount() > 0) {
     <div class="gastro-card border-l-4 border-l-rose-500 shadow-xl">
       <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
