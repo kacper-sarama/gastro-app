@@ -23,6 +23,9 @@ export class NewOrderModalComponent {
   searchQuery = signal<string>('');
   selectedCategory = signal<string>('all');
 
+  // Krok w widoku mobilnym: 'menu' (wybór dań) lub 'summary' (stolik i podsumowanie)
+  mobileStep = signal<'menu' | 'summary'>('menu');
+
   // Mapa wybranych pozycji: [recipeId -> quantity]
   quantities = signal<Record<string, number>>({});
   isSubmitting = signal<boolean>(false);

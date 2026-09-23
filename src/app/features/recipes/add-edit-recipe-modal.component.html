@@ -123,15 +123,15 @@
         <div formArrayName="ingredients" class="space-y-3 mt-3">
           @for (group of ingredientsArray.controls; track $index) {
             <div [formGroupName]="$index" 
-              class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/40 border transition-colors"
+              class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/40 border transition-colors"
               [class.border-slate-200]="!showValidationErrors() || group.valid"
               [class.dark:border-slate-800]="!showValidationErrors() || group.valid"
               [class.border-rose-500]="showValidationErrors() && group.invalid"
               [class.bg-rose-500/5]="showValidationErrors() && group.invalid"
             >
-              <!-- Select Inventory Item -->
-              <div class="flex-1">
-                <select formControlName="inventoryItemId" class="gastro-input py-2 text-xs">
+              <!-- Select Inventory Item (pełna szerokość na mobile) -->
+              <div class="flex-1 min-w-0">
+                <select formControlName="inventoryItemId" class="gastro-input py-2 text-xs w-full">
                   <option value="" disabled>-- Wybierz surowiec z magazynu --</option>
                   @for (item of inventoryService.items(); track item.id) {
                     <option [value]="item.id">
@@ -141,43 +141,46 @@
                 </select>
               </div>
 
-              <!-- Amount Input -->
-              <div class="w-24 shrink-0">
-                <input
-                  type="number"
-                  step="any"
-                  min="0.01"
-                  formControlName="displayAmount"
-                  placeholder="Ilość"
-                  class="gastro-input py-2 text-xs"
-                />
-              </div>
+              <!-- Ilość, Jednostka i Przycisk usuwania w jednym rzędzie -->
+              <div class="flex items-center gap-2">
+                <!-- Amount Input -->
+                <div class="flex-1 sm:w-24 sm:shrink-0">
+                  <input
+                    type="number"
+                    step="any"
+                    min="0.01"
+                    formControlName="displayAmount"
+                    placeholder="Ilość"
+                    class="gastro-input py-2 text-xs"
+                  />
+                </div>
 
-              <!-- Multiplier / Unit -->
-              <div class="w-24 shrink-0">
-                <select formControlName="displayMultiplier" class="gastro-input py-2 text-xs">
-                  @if (getItemUnit(group.get('inventoryItemId')?.value) === 'g') {
-                    <option value="1">g</option>
-                    <option value="1000">kg</option>
-                  } @else if (getItemUnit(group.get('inventoryItemId')?.value) === 'ml') {
-                    <option value="1">ml</option>
-                    <option value="1000">l</option>
-                  } @else {
-                    <option value="1">szt</option>
-                  }
-                </select>
-              </div>
+                <!-- Multiplier / Unit -->
+                <div class="w-24 shrink-0">
+                  <select formControlName="displayMultiplier" class="gastro-input py-2 text-xs">
+                    @if (getItemUnit(group.get('inventoryItemId')?.value) === 'g') {
+                      <option value="1">g</option>
+                      <option value="1000">kg</option>
+                    } @else if (getItemUnit(group.get('inventoryItemId')?.value) === 'ml') {
+                      <option value="1">ml</option>
+                      <option value="1000">l</option>
+                    } @else {
+                      <option value="1">szt</option>
+                    }
+                  </select>
+                </div>
 
-              <!-- Remove button -->
-              <button
-                type="button"
-                (click)="removeIngredient($index)"
-                [disabled]="ingredientsArray.length <= 1"
-                class="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 disabled:opacity-30 transition-colors"
-                title="Usuń składnik"
-              >
-                <span class="material-icons-round text-lg">delete</span>
-              </button>
+                <!-- Remove button -->
+                <button
+                  type="button"
+                  (click)="removeIngredient($index)"
+                  [disabled]="ingredientsArray.length <= 1"
+                  class="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 disabled:opacity-30 transition-colors shrink-0"
+                  title="Usuń składnik"
+                >
+                  <span class="material-icons-round text-lg">delete</span>
+                </button>
+              </div>
             </div>
           }
         </div>

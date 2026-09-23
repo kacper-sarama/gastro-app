@@ -11,8 +11,8 @@
       </p>
     </div>
 
-    <div class="flex items-center gap-3">
-      <a routerLink="/orders" class="gastro-btn-primary shadow-lg shadow-orange-500/20 flex items-center gap-2">
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <a routerLink="/orders" class="gastro-btn-primary shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 w-full sm:w-auto">
         <span class="material-icons-round text-lg">view_kanban</span>
         <span>Otwórz Tablicę Kuchni (KDS)</span>
       </a>
@@ -265,12 +265,12 @@
       <div class="divide-y divide-slate-200 dark:divide-slate-800/60 mt-2">
         <!-- Wyczerpane (Brak) -->
         @for (item of inventoryService.outOfStockItems(); track item.id) {
-          <div class="py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <span class="status-badge-danger">Brak (0)</span>
-              <span class="font-medium text-slate-900 dark:text-white text-sm">{{ item.name }}</span>
+          <div class="py-3 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+              <span class="status-badge-danger shrink-0 text-[11px]">Brak (0)</span>
+              <span class="font-medium text-slate-900 dark:text-white text-sm truncate">{{ item.name }}</span>
             </div>
-            <div class="text-right">
+            <div class="text-right shrink-0">
               <span class="text-xs text-rose-600 dark:text-rose-400 font-semibold block">0 {{ item.unit }}</span>
               <span class="text-[11px] text-slate-500 dark:text-slate-400">Próg: {{ formatAmount(item.minAmount, item.unit).display }}</span>
             </div>
@@ -279,12 +279,12 @@
 
         <!-- Kończące się (Niski stan) -->
         @for (item of inventoryService.lowStockItems(); track item.id) {
-          <div class="py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <span class="status-badge-warning">Niski stan</span>
-              <span class="font-medium text-slate-900 dark:text-white text-sm">{{ item.name }}</span>
+          <div class="py-3 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+              <span class="status-badge-warning shrink-0 text-[11px]">Niski stan</span>
+              <span class="font-medium text-slate-900 dark:text-white text-sm truncate">{{ item.name }}</span>
             </div>
-            <div class="text-right">
+            <div class="text-right shrink-0">
               <span class="text-xs text-amber-600 dark:text-amber-400 font-semibold block">
                 Stan: {{ formatAmount(item.amount, item.unit).display }}
               </span>
