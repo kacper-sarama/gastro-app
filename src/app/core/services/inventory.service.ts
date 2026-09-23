@@ -13,8 +13,8 @@ import {
   Unsubscribe 
 } from 'firebase/firestore';
 import { AuthService } from './auth.service';
-import { InventoryItem, getStockStatus } from '../models/inventory-item.model';
-import { Subscription } from 'rxjs';
+import { ToastService } from './toast.service';
+import { InventoryItem, formatStockAmount, getStockStatus } from '../models/inventory-item.model';
 
 const LOCAL_STORAGE_KEY = 'gastro_inventory_items_fallback';
 const INVENTORY_CATEGORIES_STORAGE_KEY = 'gastro_inventory_categories_fallback';
@@ -36,6 +36,7 @@ const STARTER_INGREDIENTS: Omit<InventoryItem, 'id' | 'restaurantId'>[] = [
 export class InventoryService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
+  private toastService = inject(ToastService);
 
   readonly items = signal<InventoryItem[]>([]);
   readonly customCategories = signal<string[]>([]);
@@ -264,6 +265,7 @@ export class InventoryService {
     if (user) {
       try {
         await addDoc(collection(this.firestore, 'inventory'), itemData);
+        this.toastService.success(`Dodano surowiec "${data.name}" do magazynu.`, 'Magazyn');
         return;
       } catch (err) {
         console.warn('Błąd zapisu do Firestore, używam trybu lokalnego:', err);
@@ -271,6 +273,7 @@ export class InventoryService {
     }
 
     this.addLocalItem({ ...itemData, id: `local-item-${Date.now()}` } as InventoryItem);
+    this.toastService.success(`Dodano surowiec "${data.name}" do magazynu.`, 'Magazyn');
   }
 
   async updateItem(id: string, partial: Partial<InventoryItem>): Promise<void> {
@@ -294,10 +297,12 @@ export class InventoryService {
 
   async deleteItem(id: string): Promise<void> {
     const user = this.authService.currentUser();
+    const target = this.items().find(i => i.id === id);
 
     if (user && !id.startsWith('local-item-')) {
       try {
         await deleteDoc(doc(this.firestore, `inventory/${id}`));
+        this.toastService.danger(`Usunięto surowiec "${target?.name || 'Składnik'}" z magazynu.`, 'Magazyn');
         return;
       } catch (err) {
         console.warn('Błąd usuwania w Firestore:', err);
@@ -305,6 +310,7 @@ export class InventoryService {
     }
 
     this.deleteLocalItem(id);
+    this.toastService.danger(`Usunięto surowiec "${target?.name || 'Składnik'}" z magazynu.`, 'Magazyn');
   }
 
   /**
@@ -316,6 +322,23 @@ export class InventoryService {
 
     const newAmount = Math.max(0, target.amount + deltaAmount);
     await this.updateItem(id, { amount: newAmount });
+
+    if (deltaAmount > 0) {
+      this.toastService.success(
+        `Przyjęto dostawę +${formatStockAmount(deltaAmount, target.unit)} dla "${target.name}". Stan: ${formatStockAmount(newAmount, target.unit)}.`,
+        'Dostawa przyjęta'
+      );
+    } else if (newAmount === 0) {
+      this.toastService.danger(
+        `Surowiec "${target.name}" został wyczerpany do zera! Powiązane pozycje mogą zostać zablokowane.`,
+        'Brak surowca w magazynie'
+      );
+    } else if (newAmount <= target.minAmount) {
+      this.toastService.warning(
+        `Stan "${target.name}" spadł poniżej progu (${formatStockAmount(newAmount, target.unit)} / min. ${formatStockAmount(target.minAmount, target.unit)}). Wymagane zamówienie!`,
+        'Niski stan magazynowy'
+      );
+    }
   }
 
   // ==========================================

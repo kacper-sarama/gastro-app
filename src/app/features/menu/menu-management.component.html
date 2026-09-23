@@ -45,45 +45,37 @@
 
   <!-- KPI Metrics Bar -->
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-    <!-- Wszystkie dania -->
-    <div class="gastro-card border border-blue-500/30 bg-blue-500/5 dark:bg-blue-500/10">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Pozycje w menu</span>
-        <span class="material-icons-round text-blue-500 dark:text-blue-400 text-xl">restaurant_menu</span>
-      </div>
-      <p class="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-2">{{ totalDishes() }}</p>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Łącznie w bazie dań</p>
-    </div>
+    <app-stat-card
+      title="Pozycje w menu"
+      [count]="totalDishes()"
+      subtitle="Łącznie w bazie dań"
+      icon="restaurant_menu"
+      color="blue"
+    ></app-stat-card>
 
-    <!-- Dostępne dla gości -->
-    <div class="gastro-card border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Dostępne w lokalu</span>
-        <span class="material-icons-round text-emerald-500 dark:text-emerald-400 text-xl">check_circle</span>
-      </div>
-      <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{{ availableDishes() }}</p>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Aktywne i gotowe do podania</p>
-    </div>
+    <app-stat-card
+      title="Dostępne w lokalu"
+      [count]="availableDishes()"
+      subtitle="Aktywne i gotowe do podania"
+      icon="check_circle"
+      color="emerald"
+    ></app-stat-card>
 
-    <!-- Ukryte ręcznie (Ostrzeżenie / Wyłączone) -->
-    <div class="gastro-card border border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Wyłączone z karty</span>
-        <span class="material-icons-round text-amber-500 dark:text-amber-400 text-xl">visibility_off</span>
-      </div>
-      <p class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2">{{ manuallyHiddenDishes() }}</p>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Ukryte ręcznie przez managera</p>
-    </div>
+    <app-stat-card
+      title="Wyłączone z karty"
+      [count]="manuallyHiddenDishes()"
+      subtitle="Ukryte ręcznie przez managera"
+      icon="visibility_off"
+      color="amber"
+    ></app-stat-card>
 
-    <!-- Wyprzedane z magazynu (Krytyczny brak surowca / Live Sold-out) -->
-    <div class="gastro-card border border-rose-500/30 bg-rose-500/5 dark:bg-rose-500/10">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Brak w magazynie</span>
-        <span class="material-icons-round text-rose-500 dark:text-rose-400 text-xl">production_quantity_limits</span>
-      </div>
-      <p class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2">{{ soldOutDishes() }}</p>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Chwilowo wyprzedane (Sold out)</p>
-    </div>
+    <app-stat-card
+      title="Brak w magazynie"
+      [count]="soldOutDishes()"
+      subtitle="Chwilowo wyprzedane (Sold out)"
+      icon="production_quantity_limits"
+      color="rose"
+    ></app-stat-card>
   </div>
 
   <!-- Search and Categories Filter Bar -->

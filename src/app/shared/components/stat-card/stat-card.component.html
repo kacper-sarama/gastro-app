@@ -1,0 +1,77 @@
+<div
+  (click)="onClick()"
+  class="gastro-card border transition-all"
+  [class.cursor-pointer]="isClickable"
+  [class.hover:border-slate-400]="isClickable"
+  [class.dark:hover:border-slate-600]="isClickable"
+
+  [class.border-blue-500]="isClickable && isActive && color === 'blue'"
+  [class.bg-blue-500/5]="(isClickable && isActive && color === 'blue') || (!isClickable && color === 'blue')"
+  [class.dark:bg-blue-500/10]="(isClickable && isActive && color === 'blue') || (!isClickable && color === 'blue')"
+  [class.border-blue-500/30]="!isClickable && color === 'blue'"
+
+  [class.border-emerald-500]="isClickable && isActive && color === 'emerald'"
+  [class.bg-emerald-500/5]="(isClickable && isActive && color === 'emerald') || (!isClickable && color === 'emerald')"
+  [class.dark:bg-emerald-500/10]="(isClickable && isActive && color === 'emerald') || (!isClickable && color === 'emerald')"
+  [class.border-emerald-500/30]="!isClickable && color === 'emerald'"
+
+  [class.border-amber-500]="isClickable && isActive && color === 'amber'"
+  [class.bg-amber-500/5]="(isClickable && isActive && color === 'amber') || (!isClickable && color === 'amber')"
+  [class.dark:bg-amber-500/10]="(isClickable && isActive && color === 'amber') || (!isClickable && color === 'amber')"
+  [class.border-amber-500/30]="!isClickable && color === 'amber'"
+
+  [class.border-rose-500]="isClickable && isActive && color === 'rose'"
+  [class.bg-rose-500/5]="(isClickable && isActive && color === 'rose') || (!isClickable && color === 'rose')"
+  [class.dark:bg-rose-500/10]="(isClickable && isActive && color === 'rose') || (!isClickable && color === 'rose')"
+  [class.border-rose-500/30]="!isClickable && color === 'rose'"
+>
+  <div class="flex items-center justify-between">
+    <span 
+      class="text-xs font-semibold uppercase tracking-wider transition-colors"
+      [class.text-blue-600]="color === 'blue'"
+      [class.dark:text-blue-400]="color === 'blue'"
+      [class.text-emerald-600]="color === 'emerald'"
+      [class.dark:text-emerald-400]="color === 'emerald'"
+      [class.text-amber-600]="color === 'amber'"
+      [class.dark:text-amber-400]="color === 'amber'"
+      [class.text-rose-600]="color === 'rose'"
+      [class.dark:text-rose-400]="color === 'rose'"
+    >
+      {{ title }}
+    </span>
+
+    <span 
+      class="material-icons-round text-xl transition-colors"
+      [class.text-blue-500]="color === 'blue'"
+      [class.dark:text-blue-400]="color === 'blue'"
+      [class.text-emerald-500]="color === 'emerald'"
+      [class.dark:text-emerald-400]="color === 'emerald'"
+      [class.text-amber-500]="color === 'amber'"
+      [class.dark:text-amber-400]="color === 'amber'"
+      [class.text-rose-500]="color === 'rose'"
+      [class.dark:text-rose-400]="color === 'rose'"
+    >
+      {{ icon }}
+    </span>
+  </div>
+
+  <p 
+    class="text-2xl font-bold mt-2 transition-colors"
+    [class.text-blue-600]="color === 'blue'"
+    [class.dark:text-blue-400]="color === 'blue'"
+    [class.text-emerald-600]="color === 'emerald'"
+    [class.dark:text-emerald-400]="color === 'emerald'"
+    [class.text-amber-600]="color === 'amber'"
+    [class.dark:text-amber-400]="color === 'amber'"
+    [class.text-rose-600]="color === 'rose'"
+    [class.dark:text-rose-400]="color === 'rose'"
+  >
+    {{ count }}
+  </p>
+
+  @if (subtitle) {
+    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+      {{ subtitle }}
+    </p>
+  }
+</div>

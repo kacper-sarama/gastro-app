@@ -14,6 +14,7 @@ import {
 import { AuthService } from './auth.service';
 import { InventoryService } from './inventory.service';
 import { RecipeService } from './recipe.service';
+import { ToastService } from './toast.service';
 import { Order, OrderItem, OrderStatus, CreateOrderDto } from '../models/order.model';
 
 const LOCAL_STORAGE_KEY = 'gastro_orders_fallback';
@@ -26,6 +27,7 @@ export class OrderService {
   private authService = inject(AuthService);
   private inventoryService = inject(InventoryService);
   private recipeService = inject(RecipeService);
+  private toastService = inject(ToastService);
 
   readonly orders = signal<Order[]>([]);
   readonly isLoading = signal<boolean>(false);
@@ -315,11 +317,12 @@ export class OrderService {
     // Oblicz sumę zamówienia
     const totalPrice = dto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
 
+    const tableNumber = dto.tableNumber?.trim() || 'Stolik 1';
     const now = new Date().toISOString();
     const orderData = this.cleanObject({
       restaurantId: user ? user.uid : 'demo-restaurant',
       orderNumber,
-      tableNumber: dto.tableNumber?.trim() || 'Stolik 1',
+      tableNumber,
       items: dto.items,
       totalPrice,
       status: 'pending' as OrderStatus,
@@ -332,6 +335,10 @@ export class OrderService {
       try {
         const col = collection(this.firestore, 'orders');
         const docRef = await addDoc(col, orderData);
+        this.toastService.info(
+          `Zarejestrowano zamówienie #${orderNumber} (${tableNumber}, ${dto.items.length} pozycji).`,
+          'Nowe zamówienie'
+        );
         return { id: docRef.id, ...orderData } as Order;
       } catch (err) {
         console.warn('Błąd zapisu zamówienia do Firestore, używam trybu lokalnego:', err);
@@ -346,6 +353,10 @@ export class OrderService {
     const updated = [localOrder, ...currentOrders];
     this.orders.set(updated);
     this.saveToLocalFallback(updated);
+    this.toastService.info(
+      `Zarejestrowano zamówienie #${orderNumber} (${tableNumber}, ${dto.items.length} pozycji).`,
+      'Nowe zamówienie'
+    );
     return localOrder;
   }
 
@@ -374,18 +385,36 @@ export class OrderService {
       try {
         const docRef = doc(this.firestore, `orders/${orderId}`);
         await updateDoc(docRef, updatedFields);
-        return;
       } catch (err) {
         console.warn('Błąd aktualizacji statusu zamówienia w Firestore:', err);
       }
+    } else {
+      // Aktualizacja lokalna
+      const updated = this.orders().map(o => 
+        o.id === orderId ? { ...o, ...updatedFields } : o
+      );
+      this.orders.set(updated);
+      this.saveToLocalFallback(updated);
     }
 
-    // Aktualizacja lokalna
-    const updated = this.orders().map(o => 
-      o.id === orderId ? { ...o, ...updatedFields } : o
-    );
-    this.orders.set(updated);
-    this.saveToLocalFallback(updated);
+    // Powiadomienia Toast w zależności od nowego statusu
+    const num = target.orderNumber || target.id.slice(-4);
+    if (newStatus === 'completed') {
+      this.toastService.success(
+        `Wydano zamówienie #${num} (${target.tableNumber}). Składniki zostały odpisane z magazynu.`,
+        'Wydano zamówienie'
+      );
+    } else if (newStatus === 'ready') {
+      this.toastService.info(
+        `Zamówienie #${num} (${target.tableNumber}) jest gotowe do wydania przez kelnera.`,
+        'Gotowe do wydania'
+      );
+    } else if (newStatus === 'in_progress') {
+      this.toastService.info(
+        `Zamówienie #${num} (${target.tableNumber}) trafiło na kuchnię.`,
+        'W realizacji'
+      );
+    }
   }
 
   /**

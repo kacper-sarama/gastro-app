@@ -7,11 +7,12 @@ import { InventoryService } from '../../core/services/inventory.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Recipe, RecipeCapacityResult } from '../../core/models/recipe.model';
 import { QrCodeModalComponent } from './qr-code-modal.component';
+import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 
 @Component({
   selector: 'app-menu-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, QrCodeModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, QrCodeModalComponent, StatCardComponent],
   templateUrl: './menu-management.component.html'
 })
 export class MenuManagementComponent {

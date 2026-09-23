@@ -79,3 +79,46 @@ html {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm border border-slate-200 transition-all duration-200 active:scale-[0.98] dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700;
   }
 }
+
+/* Custom Toast SnackBar pane overrides - 100% transparent MDC wrapper */
+.custom-toast-pane,
+.cdk-overlay-pane.custom-toast-pane,
+.mat-mdc-snack-bar-container.custom-toast-pane {
+  --mat-snack-bar-container-color: transparent !important;
+  --mdc-snackbar-container-color: transparent !important;
+  --mat-snack-bar-button-color: inherit !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin-bottom: 1.5rem !important;
+
+  .mdc-snackbar__surface,
+  & .mdc-snackbar__surface {
+    --mat-snack-bar-container-color: transparent !important;
+    --mdc-snackbar-container-color: transparent !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    border-radius: 1rem !important;
+  }
+
+  .mat-mdc-snack-bar-label,
+  .mdc-snackbar__label {
+    padding: 0 !important;
+    width: 100% !important;
+    display: block !important;
+  }
+}
+
+.mat-mdc-snack-bar-container.custom-toast-pane .mdc-snackbar__surface,
+.custom-toast-pane .mdc-snackbar__surface {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+}

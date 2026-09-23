@@ -70,12 +70,19 @@ export class ThemeService {
     if (!this.isBrowser) return;
 
     const root = this.document.documentElement;
+    const body = this.document.body;
     if (theme === 'dark') {
       root.classList.add('dark');
       root.style.colorScheme = 'dark';
+      if (body) {
+        body.classList.add('dark');
+      }
     } else {
       root.classList.remove('dark');
       root.style.colorScheme = 'light';
+      if (body) {
+        body.classList.remove('dark');
+      }
     }
   }
 }

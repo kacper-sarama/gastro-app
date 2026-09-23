@@ -6,6 +6,7 @@ import { InventoryItem, StockStatus, formatStockAmount, getStockStatus } from '.
 import { AddEditIngredientModalComponent } from './add-edit-ingredient-modal.component';
 import { QuickDeliveryModalComponent } from './quick-delivery-modal.component';
 import { ManageInventoryCategoriesModalComponent } from './manage-inventory-categories-modal.component';
+import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 
 @Component({
   selector: 'app-inventory-list',
@@ -15,7 +16,8 @@ import { ManageInventoryCategoriesModalComponent } from './manage-inventory-cate
     FormsModule, 
     AddEditIngredientModalComponent, 
     QuickDeliveryModalComponent,
-    ManageInventoryCategoriesModalComponent
+    ManageInventoryCategoriesModalComponent,
+    StatCardComponent
   ],
   templateUrl: './inventory-list.component.html'
 })

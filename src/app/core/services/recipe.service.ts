@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { AuthService } from './auth.service';
 import { InventoryService } from './inventory.service';
+import { ToastService } from './toast.service';
 import { 
   Recipe, 
   RecipeCapacityResult, 
@@ -32,6 +33,7 @@ export class RecipeService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
   private inventoryService = inject(InventoryService);
+  private toastService = inject(ToastService);
 
   readonly recipes = signal<Recipe[]>([]);
   readonly customCategories = signal<string[]>([]);
@@ -391,6 +393,7 @@ export class RecipeService {
     if (user) {
       try {
         await addDoc(collection(this.firestore, 'recipes'), recipeData);
+        this.toastService.success(`Pomyślnie dodano nową recepturę "${data.name}".`, 'Baza receptur');
         return;
       } catch (err) {
         console.warn('Błąd zapisu receptury do Firestore, używam trybu lokalnego:', err);
@@ -398,6 +401,7 @@ export class RecipeService {
     }
 
     this.addLocalRecipe({ ...recipeData, id: `recipe-local-${Date.now()}` } as Recipe);
+    this.toastService.success(`Pomyślnie dodano nową recepturę "${data.name}".`, 'Baza receptur');
   }
 
   async updateRecipe(id: string, partial: Partial<Recipe>): Promise<void> {
@@ -421,10 +425,12 @@ export class RecipeService {
 
   async deleteRecipe(id: string): Promise<void> {
     const user = this.authService.currentUser();
+    const target = this.recipes().find(r => r.id === id);
 
     if (user && !id.startsWith('recipe-local-')) {
       try {
         await deleteDoc(doc(this.firestore, `recipes/${id}`));
+        this.toastService.danger(`Usunięto recepturę "${target?.name || 'Danie'}".`, 'Baza receptur');
         return;
       } catch (err) {
         console.warn('Błąd usuwania receptury z Firestore:', err);
@@ -432,13 +438,26 @@ export class RecipeService {
     }
 
     this.deleteLocalRecipe(id);
+    this.toastService.danger(`Usunięto recepturę "${target?.name || 'Danie'}".`, 'Baza receptur');
   }
 
   /**
    * Włącza lub wyłącza dostępność dania w karcie menu
    */
   async toggleAvailability(id: string, isAvailable: boolean): Promise<void> {
+    const target = this.recipes().find(r => r.id === id);
     await this.updateRecipe(id, { isAvailable });
+    if (!isAvailable) {
+      this.toastService.danger(
+        `Pozycja "${target?.name || 'Danie'}" została zablokowana i wyłączona z karty menu.`,
+        'Zarządzanie kartą'
+      );
+    } else {
+      this.toastService.success(
+        `Pozycja "${target?.name || 'Danie'}" jest ponownie widoczna dla gości w lokalu.`,
+        'Zarządzanie kartą'
+      );
+    }
   }
 
   /**

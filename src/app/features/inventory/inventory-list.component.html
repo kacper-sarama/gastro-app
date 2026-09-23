@@ -25,69 +25,49 @@
 
   <!-- Quick Status Metric Cards -->
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-    <!-- All Items -->
-    <div
-      (click)="selectedStatusFilter.set('all')"
-      class="gastro-card cursor-pointer border transition-all hover:border-slate-400 dark:hover:border-slate-600"
-      [class.border-blue-500]="selectedStatusFilter() === 'all'"
-      [class.bg-blue-500/5]="selectedStatusFilter() === 'all'"
-      [class.dark:bg-blue-500/10]="selectedStatusFilter() === 'all'"
-    >
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Wszystkie</span>
-        <span class="material-icons-round text-blue-500 dark:text-blue-400 text-xl">inventory_2</span>
-      </div>
-      <p class="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-2">{{ inventoryService.totalItemsCount() }}</p>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Pozycji w magazynie</p>
-    </div>
+    <app-stat-card
+      title="Wszystkie"
+      [count]="inventoryService.totalItemsCount()"
+      subtitle="Pozycji w magazynie"
+      icon="inventory_2"
+      color="blue"
+      [isActive]="selectedStatusFilter() === 'all'"
+      [isClickable]="true"
+      (cardClick)="selectedStatusFilter.set('all')"
+    ></app-stat-card>
 
-    <!-- Healthy Stock -->
-    <div
-      (click)="selectedStatusFilter.set('ok')"
-      class="gastro-card cursor-pointer border transition-all hover:border-slate-400 dark:hover:border-slate-600"
-      [class.border-emerald-500]="selectedStatusFilter() === 'ok'"
-      [class.bg-emerald-500/5]="selectedStatusFilter() === 'ok'"
-      [class.dark:bg-emerald-500/10]="selectedStatusFilter() === 'ok'"
-    >
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Dostępne</span>
-        <span class="material-icons-round text-emerald-500 dark:text-emerald-400 text-xl">check_circle</span>
-      </div>
-      <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{{ inventoryService.healthyStockItems().length }}</p>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Stan powyżej progu</p>
-    </div>
+    <app-stat-card
+      title="Dostępne"
+      [count]="inventoryService.healthyStockItems().length"
+      subtitle="Stan powyżej progu"
+      icon="check_circle"
+      color="emerald"
+      [isActive]="selectedStatusFilter() === 'ok'"
+      [isClickable]="true"
+      (cardClick)="selectedStatusFilter.set('ok')"
+    ></app-stat-card>
 
-    <!-- Low Stock -->
-    <div
-      (click)="selectedStatusFilter.set('low')"
-      class="gastro-card cursor-pointer border transition-all hover:border-slate-400 dark:hover:border-slate-600"
-      [class.border-amber-500]="selectedStatusFilter() === 'low'"
-      [class.bg-amber-500/5]="selectedStatusFilter() === 'low'"
-      [class.dark:bg-amber-500/10]="selectedStatusFilter() === 'low'"
-    >
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Niski stan</span>
-        <span class="material-icons-round text-amber-500 dark:text-amber-400 text-xl">warning_amber</span>
-      </div>
-      <p class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2">{{ inventoryService.lowStockItems().length }}</p>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Wymagają zamówienia</p>
-    </div>
+    <app-stat-card
+      title="Niski stan"
+      [count]="inventoryService.lowStockItems().length"
+      subtitle="Wymagają zamówienia"
+      icon="warning_amber"
+      color="amber"
+      [isActive]="selectedStatusFilter() === 'low'"
+      [isClickable]="true"
+      (cardClick)="selectedStatusFilter.set('low')"
+    ></app-stat-card>
 
-    <!-- Out of Stock -->
-    <div
-      (click)="selectedStatusFilter.set('out')"
-      class="gastro-card cursor-pointer border transition-all hover:border-slate-400 dark:hover:border-slate-600"
-      [class.border-rose-500]="selectedStatusFilter() === 'out'"
-      [class.bg-rose-500/5]="selectedStatusFilter() === 'out'"
-      [class.dark:bg-rose-500/10]="selectedStatusFilter() === 'out'"
-    >
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Brak surowca</span>
-        <span class="material-icons-round text-rose-500 dark:text-rose-400 text-xl">error_outline</span>
-      </div>
-      <p class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2">{{ inventoryService.outOfStockItems().length }}</p>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Zerowy stan magazynu</p>
-    </div>
+    <app-stat-card
+      title="Brak surowca"
+      [count]="inventoryService.outOfStockItems().length"
+      subtitle="Zerowy stan magazynu"
+      icon="error_outline"
+      color="rose"
+      [isActive]="selectedStatusFilter() === 'out'"
+      [isClickable]="true"
+      (cardClick)="selectedStatusFilter.set('out')"
+    ></app-stat-card>
   </div>
 
   <!-- Filter & Search Toolbar -->

@@ -8,6 +8,7 @@ import { Recipe, RecipeCapacityResult, RecipeFormData } from '../../core/models/
 import { AddEditRecipeModalComponent } from './add-edit-recipe-modal.component';
 import { RecipeDetailsModalComponent } from './recipe-details-modal.component';
 import { ManageCategoriesModalComponent } from './manage-categories-modal.component';
+import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 
 @Component({
   selector: 'app-recipes-list',
@@ -17,7 +18,8 @@ import { ManageCategoriesModalComponent } from './manage-categories-modal.compon
     FormsModule, 
     AddEditRecipeModalComponent, 
     RecipeDetailsModalComponent,
-    ManageCategoriesModalComponent
+    ManageCategoriesModalComponent,
+    StatCardComponent
   ],
   templateUrl: './recipes-list.component.html'
 })
