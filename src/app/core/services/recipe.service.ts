@@ -119,6 +119,20 @@ export class RecipeService {
     };
   }
 
+  // Nazwa lokalu pobrana z ustawień (dla karty menu gościa)
+  readonly activeRestaurantName = signal<string>('');
+
+  /**
+   * Pozwala załadować receptury i kategorie wskazanego lokalu (dla gościa z kodu QR)
+   */
+  loadRestaurantData(restaurantId: string): void {
+    if (restaurantId && restaurantId !== 'demo-restaurant') {
+      this.initFirestoreSubscription(restaurantId);
+    } else {
+      this.loadLocalFallback();
+    }
+  }
+
   private initFirestoreSubscription(restaurantId: string): void {
     this.isLoading.set(true);
     if (this.firestoreUnsub) {
@@ -131,11 +145,17 @@ export class RecipeService {
     }
 
     try {
-      // 1. Subskrypcja kategorii z ustawień lokalu
+      // 1. Subskrypcja kategorii i nazwy lokalu z ustawień
       const catDocRef = doc(this.firestore, `restaurant_settings/${restaurantId}`);
       this.categoriesUnsub = onSnapshot(catDocRef, (snap) => {
-        if (snap.exists() && Array.isArray(snap.data()?.['recipeCategories'])) {
-          this.customCategories.set(snap.data()?.['recipeCategories']);
+        if (snap.exists()) {
+          const data = snap.data();
+          if (Array.isArray(data?.['recipeCategories'])) {
+            this.customCategories.set(data['recipeCategories']);
+          }
+          if (typeof data?.['restaurantName'] === 'string') {
+            this.activeRestaurantName.set(data['restaurantName']);
+          }
         }
       }, () => {
         // Fallback jeśli brak dokumentu ustawień
@@ -152,7 +172,13 @@ export class RecipeService {
         } as Recipe));
 
         if (items.length === 0) {
-          this.seedStarterRecipes(restaurantId);
+          // Tylko zalogowany właściciel może seedować startowe receptury do Firestore
+          if (this.authService.currentUser()?.uid === restaurantId) {
+            this.seedStarterRecipes(restaurantId);
+          } else {
+            this.recipes.set([]);
+            this.isLoading.set(false);
+          }
         } else {
           this.recipes.set(items);
           this.isLoading.set(false);

@@ -1,0 +1,268 @@
+<!-- Sekcja 4 Wykresów Operacyjnych Dnia -->
+<div class="space-y-3">
+  <!-- Pasek nagłówkowy z możliwością zwinięcia -->
+  <div class="flex items-center justify-between px-1">
+    <div class="flex items-center gap-2">
+      <span class="material-icons-round text-orange-500 text-lg">insights</span>
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+        Statystyki Operacyjne Dnia
+      </h2>
+      <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold">
+        Dzisiejsza zmiana
+      </span>
+    </div>
+
+    <button
+      type="button"
+      (click)="toggleCollapse()"
+      class="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1 font-medium transition-colors"
+    >
+      <span>{{ isCollapsed() ? 'Pokaż wykresy' : 'Zwiń wykresy' }}</span>
+      <span class="material-icons-round text-base transition-transform" [class.rotate-180]="isCollapsed()">
+        expand_less
+      </span>
+    </button>
+  </div>
+
+  <!-- Siatka 4 Wykresów (układa się idealnie nad 4 kolumnami Kanbanu) -->
+  @if (!isCollapsed()) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 animate-fade-in">
+      
+      <!-- ========================================== -->
+      <!-- WYKRES 1: SŁUPKOWY – WYDANE WG SEKCJI      -->
+      <!-- ========================================== -->
+      <div class="gastro-card p-4 flex flex-col justify-between border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-850">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-1.5">
+              <span class="material-icons-round text-orange-500 text-base">bar_chart</span>
+              <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200">Wydane wg sekcji</h3>
+            </div>
+            <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+              {{ totalCompletedDishesCount() }} dań
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Liczba przygotowanych potraw</p>
+        </div>
+
+        <!-- Słupki pionowe -->
+        <div class="pt-4 pb-1">
+          <div class="flex items-end justify-around gap-2 h-20 px-1">
+            @for (cat of categoryStats(); track cat.category) {
+              <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+                <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                  {{ cat.count }}
+                </span>
+                <div class="w-full max-w-[28px] bg-slate-100 dark:bg-slate-800 rounded-t-md overflow-hidden flex items-end h-14">
+                  <div
+                    class="w-full rounded-t-md transition-all duration-500 group-hover:brightness-110"
+                    [style.height.%]="cat.percentage > 0 ? cat.percentage : 6"
+                    [style.background-color]="cat.color"
+                  ></div>
+                </div>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[48px] text-center font-medium">
+                  {{ cat.category }}
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- WYKRES 2: PIERŚCIENIOWY – CEL OBROTU       -->
+      <!-- ========================================== -->
+      <div class="gastro-card p-4 flex flex-col justify-between border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-850">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-1.5">
+              <span class="material-icons-round text-emerald-500 text-base">pie_chart</span>
+              <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200">Dzienny cel obrotu</h3>
+            </div>
+            <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+              Cel: {{ dailyRevenueTarget() }} zł
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Realizacja planu dziennego</p>
+        </div>
+
+        <!-- Pierścień i statystyki obok siebie -->
+        <div class="flex items-center justify-between gap-3 pt-3">
+          <!-- SVG Donut Chart -->
+          <div class="relative w-20 h-20 shrink-0 flex items-center justify-center">
+            <svg class="w-20 h-20 -rotate-90 transform" viewBox="0 0 80 80">
+              <!-- Tło pierścienia -->
+              <circle
+                cx="40"
+                cy="40"
+                r="34"
+                stroke="currentColor"
+                stroke-width="7"
+                fill="transparent"
+                class="text-slate-100 dark:text-slate-800"
+              />
+              <!-- Wypełnienie postępu -->
+              <circle
+                cx="40"
+                cy="40"
+                r="34"
+                stroke="currentColor"
+                stroke-width="7"
+                stroke-linecap="round"
+                fill="transparent"
+                class="text-emerald-500 transition-all duration-700 ease-out"
+                [style.strokeDasharray]="circleCircumference"
+                [style.strokeDashoffset]="circleDashOffset()"
+              />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <span class="text-xs font-black text-slate-900 dark:text-white leading-none">
+                {{ revenueTargetPercent() }}%
+              </span>
+              <span class="text-[9px] text-slate-400 font-medium">celu</span>
+            </div>
+          </div>
+
+          <!-- Dane liczbowe -->
+          <div class="space-y-1.5 flex-1 min-w-0">
+            <div>
+              <span class="text-[10px] text-slate-400 block uppercase font-medium">Dzisiejszy utarg</span>
+              <span class="text-sm font-extrabold text-slate-900 dark:text-white font-mono">
+                {{ orderService.todaysRevenue().toFixed(2) }} zł
+              </span>
+            </div>
+            <div class="pt-1 border-t border-slate-100 dark:border-slate-800">
+              <span class="text-[10px] text-slate-400 block uppercase font-medium">Średni rachunek</span>
+              <span class="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono">
+                {{ averageOrderValue().toFixed(2) }} zł
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- WYKRES 3: LINIOWY – SZCZYTY W GODZINACH     -->
+      <!-- ========================================== -->
+      <div class="gastro-card p-4 flex flex-col justify-between border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-850">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-1.5">
+              <span class="material-icons-round text-sky-500 text-base">show_chart</span>
+              <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200">Szczyty zamówień</h3>
+            </div>
+            <span class="text-[10px] font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full truncate max-w-[120px]">
+              {{ hourlyStats().peakLabel }}
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Natężenie ruchu w przedziałach</p>
+        </div>
+
+        <!-- SVG Wykres Liniowy z Gradientem -->
+        <div class="pt-2">
+          <svg class="w-full h-14 overflow-visible" viewBox="0 0 220 55" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="hourlyGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.35" />
+                <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            <!-- Gradientowe tło pod wykresem -->
+            <path
+              [attr.d]="hourlyStats().areaPath"
+              fill="url(#hourlyGradient)"
+            />
+
+            <!-- Linia wykresu -->
+            <path
+              [attr.d]="hourlyStats().linePath"
+              fill="none"
+              stroke="#0ea5e9"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+
+            <!-- Punkty pomiarowe na linii -->
+            @for (pt of hourlyStats().points; track pt.label) {
+              <circle
+                [attr.cx]="pt.x"
+                [attr.cy]="pt.y"
+                r="3"
+                class="fill-white dark:fill-slate-900 stroke-sky-500 hover:r-4 transition-all"
+                stroke-width="2"
+              />
+            }
+          </svg>
+
+          <!-- Oznaczenia godzin na osi X -->
+          <div class="flex items-center justify-between text-[9px] text-slate-400 px-0.5 mt-1 font-mono">
+            <span>10:00</span>
+            <span>14:00</span>
+            <span>18:00</span>
+            <span>22:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- WYKRES 4: PASKOWY – TOP 3 BESTSELLERY      -->
+      <!-- ========================================== -->
+      <div class="gastro-card p-4 flex flex-col justify-between border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-850">
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-1.5">
+              <span class="material-icons-round text-amber-500 text-base">military_tech</span>
+              <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200">Top 3 Bestsellery</h3>
+            </div>
+            <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+              Hity dnia
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Najczęściej zamawiane dania</p>
+        </div>
+
+        <!-- Lista rankingowa -->
+        <div class="space-y-2 pt-2">
+          @for (dish of topDishesLeaderboard(); track dish.name) {
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                  <span class="text-xs shrink-0">
+                    {{ dish.rank === 1 ? '🥇' : (dish.rank === 2 ? '🥈' : '🥉') }}
+                  </span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200 truncate text-[11px]">
+                    {{ dish.name }}
+                  </span>
+                </div>
+                <span class="font-extrabold text-orange-600 dark:text-orange-400 shrink-0 text-[11px] font-mono">
+                  {{ dish.count }} szt.
+                </span>
+              </div>
+              <!-- Pasek postępu -->
+              <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div
+                  class="h-full rounded-full transition-all duration-500"
+                  [style.width.%]="dish.percentage"
+                  [class.bg-gradient-to-r]="true"
+                  [class.from-amber-400]="dish.rank === 1"
+                  [class.to-orange-500]="dish.rank === 1"
+                  [class.from-slate-400]="dish.rank === 2"
+                  [class.to-slate-500]="dish.rank === 2"
+                  [class.from-amber-600]="dish.rank === 3"
+                  [class.to-amber-700]="dish.rank === 3"
+                ></div>
+              </div>
+            </div>
+          } @empty {
+            <div class="py-4 text-center text-slate-400 text-xs">
+              Brak zamówień w bieżącej zmianie
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+  }
+</div>

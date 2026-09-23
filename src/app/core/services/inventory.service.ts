@@ -71,6 +71,17 @@ export class InventoryService {
     });
   }
 
+  /**
+   * Pozwala załadować dane magazynowe wskazanego lokalu (np. dla gościa przeglądającego kartę dań)
+   */
+  loadRestaurantData(restaurantId: string): void {
+    if (restaurantId && restaurantId !== 'demo-restaurant') {
+      this.initFirestoreSubscription(restaurantId);
+    } else {
+      this.loadLocalFallback();
+    }
+  }
+
   private initFirestoreSubscription(restaurantId: string): void {
     this.isLoading.set(true);
     if (this.firestoreUnsub) {
@@ -89,8 +100,13 @@ export class InventoryService {
         } as InventoryItem));
 
         if (items.length === 0) {
-          // Jeśli baza użytkownika jest pusta, załaduj składniki startowe do Firestore
-          this.seedStarterIngredientsToFirestore(restaurantId);
+          // Tylko zalogowany właściciel może seedować początkowe składniki do Firestore
+          if (this.authService.currentUser()?.uid === restaurantId) {
+            this.seedStarterIngredientsToFirestore(restaurantId);
+          } else {
+            this.items.set([]);
+            this.isLoading.set(false);
+          }
         } else {
           this.items.set(items);
           this.isLoading.set(false);

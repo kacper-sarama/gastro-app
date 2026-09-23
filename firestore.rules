@@ -1,0 +1,85 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Pomocnicze funkcje autoryzacji
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(restaurantId) {
+      return isAuthenticated() && request.auth.uid == restaurantId;
+    }
+
+    // ========================================================
+    // 1. Magazyn Surowców (inventory)
+    // ========================================================
+    match /inventory/{itemId} {
+      // Właściciel lokalu ma pełne prawa odczytu i zapisu swoich surowców
+      // Goście mogą odczytywać stan magazynowy (potrzebne do wyliczania wydajności dań w publicznym menu)
+      allow read: if true;
+
+      allow create: if isOwner(request.resource.data.restaurantId)
+        && request.resource.data.name is string
+        && request.resource.data.amount is number
+        && request.resource.data.unit in ['g', 'ml', 'szt'];
+
+      allow update: if isOwner(resource.data.restaurantId)
+        && request.resource.data.restaurantId == resource.data.restaurantId
+        && request.resource.data.amount is number;
+
+      allow delete: if isOwner(resource.data.restaurantId);
+    }
+
+    // ========================================================
+    // 2. Księga Receptur (recipes)
+    // ========================================================
+    match /recipes/{recipeId} {
+      // Publiczny odczyt dla karty dań (goście skanujący QR kod oraz restaurator)
+      allow read: if true;
+
+      allow create: if isOwner(request.resource.data.restaurantId)
+        && request.resource.data.name is string;
+
+      allow update: if isOwner(resource.data.restaurantId)
+        && request.resource.data.restaurantId == resource.data.restaurantId;
+
+      allow delete: if isOwner(resource.data.restaurantId);
+    }
+
+    // ========================================================
+    // 3. Ustawienia Lokalu i Kategorie (restaurant_settings)
+    // ========================================================
+    match /restaurant_settings/{restaurantId} {
+      // Odczyt kategorii dań jest publiczny dla karty menu
+      allow read: if true;
+      allow write: if isOwner(restaurantId);
+    }
+
+    // ========================================================
+    // 4. Zamówienia i Kolejka Kuchenna (orders)
+    // ========================================================
+    match /orders/{orderId} {
+      // Odczyt zamówień zarezerwowany dla restauratora
+      allow read: if isOwner(resource.data.restaurantId);
+
+      // Tworzenie zamówienia:
+      // - Przez managera/kelnera (zalogowanego)
+      // - LUB przez gościa ze stolika (status musi być 'pending', restaurantId musi być podany)
+      allow create: if (isAuthenticated() && isOwner(request.resource.data.restaurantId))
+        || (
+          request.resource.data.restaurantId is string
+          && request.resource.data.status == 'pending'
+          && request.resource.data.items is list
+        );
+
+      // Aktualizacja statusu (np. realizacja przez kuchnię, odpis surowców) - tylko właściciel
+      allow update: if isOwner(resource.data.restaurantId)
+        && request.resource.data.restaurantId == resource.data.restaurantId;
+
+      // Usunięcie lub anulowanie zamówienia - tylko właściciel
+      allow delete: if isOwner(resource.data.restaurantId);
+    }
+  }
+}

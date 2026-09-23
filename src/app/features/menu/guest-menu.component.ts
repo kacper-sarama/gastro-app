@@ -21,10 +21,17 @@ export class GuestMenuComponent implements OnInit {
   restaurantId = signal<string>('demo-restaurant');
   selectedCategory = signal<string>('all');
 
+  readonly displayName = computed(() => 
+    this.recipeService.activeRestaurantName() || 'Karta Menu'
+  );
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('restaurantId');
     if (id) {
       this.restaurantId.set(id);
+      // Pobierz na żywo z chmury Firestore menu i stany magazynowe dla danego lokalu
+      this.recipeService.loadRestaurantData(id);
+      this.inventoryService.loadRestaurantData(id);
     }
   }
 

@@ -4,11 +4,12 @@ import { OrderService } from '../../core/services/order.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Order, OrderStatus } from '../../core/models/order.model';
 import { NewOrderModalComponent } from './new-order-modal.component';
+import { OrdersStatsBarComponent } from './orders-stats-bar.component';
 
 @Component({
   selector: 'app-orders-kanban',
   standalone: true,
-  imports: [CommonModule, NewOrderModalComponent],
+  imports: [CommonModule, NewOrderModalComponent, OrdersStatsBarComponent],
   templateUrl: './orders-kanban.component.html'
 })
 export class OrdersKanbanComponent {
