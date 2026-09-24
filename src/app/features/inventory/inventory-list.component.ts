@@ -24,10 +24,12 @@ import { StatCardComponent } from '../../shared/components/stat-card/stat-card.c
 export class InventoryListComponent {
   readonly inventoryService = inject(InventoryService);
 
-  // Filtry
+  // Filtry i sortowanie
   searchQuery = signal<string>('');
   selectedStatusFilter = signal<string>('all'); // 'all' | 'ok' | 'low' | 'out'
   selectedCategory = signal<string>('all');
+  sortColumn = signal<'name' | 'amount' | 'minAmount' | 'status'>('name');
+  sortDirection = signal<'asc' | 'desc'>('asc');
 
   // Stan modali
   isAddEditModalOpen = signal(false);
@@ -43,13 +45,25 @@ export class InventoryListComponent {
   // Unikalne kategorie
   readonly categories = computed(() => this.inventoryService.allCategories());
 
-  // Filtrowane surowce
+  // Przełączanie sortowania kolumn
+  toggleSort(column: 'name' | 'amount' | 'minAmount' | 'status'): void {
+    if (this.sortColumn() === column) {
+      this.sortDirection.update(dir => dir === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortColumn.set(column);
+      this.sortDirection.set('asc');
+    }
+  }
+
+  // Filtrowane i posortowane surowce
   readonly filteredItems = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const statusFilter = this.selectedStatusFilter();
     const categoryFilter = this.selectedCategory();
+    const sortCol = this.sortColumn();
+    const sortDir = this.sortDirection();
 
-    return this.inventoryService.items().filter(item => {
+    const items = this.inventoryService.items().filter(item => {
       // Wyszukiwanie tekstowe
       const matchesSearch = !query || item.name.toLowerCase().includes(query) || (item.category?.toLowerCase().includes(query) ?? false);
 
@@ -61,6 +75,23 @@ export class InventoryListComponent {
       const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
 
       return matchesSearch && matchesStatus && matchesCategory;
+    });
+
+    return items.sort((a, b) => {
+      let comparison = 0;
+
+      if (sortCol === 'name') {
+        comparison = a.name.localeCompare(b.name, 'pl', { sensitivity: 'base' });
+      } else if (sortCol === 'amount') {
+        comparison = a.amount - b.amount;
+      } else if (sortCol === 'minAmount') {
+        comparison = a.minAmount - b.minAmount;
+      } else if (sortCol === 'status') {
+        const order: Record<StockStatus, number> = { 'out': 0, 'low': 1, 'ok': 2 };
+        comparison = order[getStockStatus(a)] - order[getStockStatus(b)];
+      }
+
+      return sortDir === 'asc' ? comparison : -comparison;
     });
   });
 

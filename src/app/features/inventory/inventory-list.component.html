@@ -219,10 +219,98 @@
       <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
         <thead class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800">
           <tr>
-            <th class="py-3.5 px-4 sm:px-6">Nazwa Surowca</th>
-            <th class="py-3.5 px-4">Stan Magazynowy</th>
-            <th class="py-3.5 px-4 hidden md:table-cell">Próg Alertowy</th>
-            <th class="py-3.5 px-4">Status</th>
+            <!-- Nazwa Surowca (Sortowalna) -->
+            <th 
+              (click)="toggleSort('name')"
+              class="py-3.5 px-4 sm:px-6 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors group"
+              title="Kliknij, aby posortować po nazwie"
+            >
+              <div class="flex items-center gap-1.5">
+                <span [class.text-orange-600]="sortColumn() === 'name'" [class.dark:text-orange-400]="sortColumn() === 'name'" [class.font-bold]="sortColumn() === 'name'">
+                  Nazwa Surowca
+                </span>
+                <span 
+                  class="material-icons-round text-sm transition-opacity"
+                  [class.text-orange-500]="sortColumn() === 'name'"
+                  [class.dark:text-orange-400]="sortColumn() === 'name'"
+                  [class.opacity-100]="sortColumn() === 'name'"
+                  [class.opacity-0]="sortColumn() !== 'name'"
+                  [class.group-hover:opacity-60]="sortColumn() !== 'name'"
+                >
+                  {{ sortColumn() === 'name' ? (sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                </span>
+              </div>
+            </th>
+
+            <!-- Stan Magazynowy (Sortowalny) -->
+            <th 
+              (click)="toggleSort('amount')"
+              class="py-3.5 px-4 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors group"
+              title="Kliknij, aby posortować po stanie magazynowym"
+            >
+              <div class="flex items-center gap-1.5">
+                <span [class.text-orange-600]="sortColumn() === 'amount'" [class.dark:text-orange-400]="sortColumn() === 'amount'" [class.font-bold]="sortColumn() === 'amount'">
+                  Stan Magazynowy
+                </span>
+                <span 
+                  class="material-icons-round text-sm transition-opacity"
+                  [class.text-orange-500]="sortColumn() === 'amount'"
+                  [class.dark:text-orange-400]="sortColumn() === 'amount'"
+                  [class.opacity-100]="sortColumn() === 'amount'"
+                  [class.opacity-0]="sortColumn() !== 'amount'"
+                  [class.group-hover:opacity-60]="sortColumn() !== 'amount'"
+                >
+                  {{ sortColumn() === 'amount' ? (sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                </span>
+              </div>
+            </th>
+
+            <!-- Próg Alertowy (Sortowalny) -->
+            <th 
+              (click)="toggleSort('minAmount')"
+              class="py-3.5 px-4 hidden md:table-cell cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors group"
+              title="Kliknij, aby posortować po progu alertu"
+            >
+              <div class="flex items-center gap-1.5">
+                <span [class.text-orange-600]="sortColumn() === 'minAmount'" [class.dark:text-orange-400]="sortColumn() === 'minAmount'" [class.font-bold]="sortColumn() === 'minAmount'">
+                  Próg Alertowy
+                </span>
+                <span 
+                  class="material-icons-round text-sm transition-opacity"
+                  [class.text-orange-500]="sortColumn() === 'minAmount'"
+                  [class.dark:text-orange-400]="sortColumn() === 'minAmount'"
+                  [class.opacity-100]="sortColumn() === 'minAmount'"
+                  [class.opacity-0]="sortColumn() !== 'minAmount'"
+                  [class.group-hover:opacity-60]="sortColumn() !== 'minAmount'"
+                >
+                  {{ sortColumn() === 'minAmount' ? (sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                </span>
+              </div>
+            </th>
+
+            <!-- Status (Sortowalny) -->
+            <th 
+              (click)="toggleSort('status')"
+              class="py-3.5 px-4 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors group"
+              title="Kliknij, aby posortować po statusie"
+            >
+              <div class="flex items-center gap-1.5">
+                <span [class.text-orange-600]="sortColumn() === 'status'" [class.dark:text-orange-400]="sortColumn() === 'status'" [class.font-bold]="sortColumn() === 'status'">
+                  Status
+                </span>
+                <span 
+                  class="material-icons-round text-sm transition-opacity"
+                  [class.text-orange-500]="sortColumn() === 'status'"
+                  [class.dark:text-orange-400]="sortColumn() === 'status'"
+                  [class.opacity-100]="sortColumn() === 'status'"
+                  [class.opacity-0]="sortColumn() !== 'status'"
+                  [class.group-hover:opacity-60]="sortColumn() !== 'status'"
+                >
+                  {{ sortColumn() === 'status' ? (sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                </span>
+              </div>
+            </th>
+
             <th class="py-3.5 px-4 text-center">Szybka Dostawa</th>
             <th class="py-3.5 px-4 sm:px-6 text-right">Akcje</th>
           </tr>
