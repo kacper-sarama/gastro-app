@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row text-slate-800 dark:text-slate-100 transition-colors duration-150">
+<div class="h-screen h-[100dvh] w-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-150">
   <!-- Mobile Backdrop Overlay -->
   @if (isMobileMenuOpen()) {
     <div
@@ -11,79 +11,118 @@
   <aside
     [class.translate-x-0]="isMobileMenuOpen()"
     [class.-translate-x-full]="!isMobileMenuOpen()"
-    class="fixed md:static inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none"
+    [class.w-72]="!isSidebarCollapsed()"
+    [class.w-20]="isSidebarCollapsed()"
+    class="fixed md:static inset-y-0 left-0 z-50 h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none"
   >
     <!-- Brand Header -->
-    <div class="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800/80">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+    <div 
+      class="h-20 flex items-center border-b border-slate-200 dark:border-slate-800/80 shrink-0 transition-all duration-300"
+      [class.justify-between]="!isSidebarCollapsed()"
+      [class.px-6]="!isSidebarCollapsed()"
+      [class.justify-center]="isSidebarCollapsed()"
+      [class.px-2]="isSidebarCollapsed()"
+    >
+      <div class="flex items-center gap-3 overflow-hidden">
+        <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
           <span class="material-icons-round text-white text-xl">restaurant</span>
         </div>
-        <div>
-          <span class="font-bold text-lg tracking-tight text-slate-900 dark:text-white block leading-tight">GastroApp</span>
-          <span class="text-[11px] text-orange-600 dark:text-orange-400 font-medium tracking-wide uppercase">Magazyn & Menu</span>
-        </div>
+        @if (!isSidebarCollapsed()) {
+          <div class="truncate transition-opacity duration-200">
+            <span class="font-bold text-lg tracking-tight text-slate-900 dark:text-white block leading-tight truncate">GastroApp</span>
+            <span class="text-[11px] text-orange-600 dark:text-orange-400 font-medium tracking-wide uppercase truncate">Magazyn & Menu</span>
+          </div>
+        }
       </div>
       <!-- Close button on mobile -->
-      <button
-        (click)="closeMobileMenu()"
-        class="md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-      >
-        <span class="material-icons-round text-2xl">close</span>
-      </button>
+      @if (!isSidebarCollapsed()) {
+        <button
+          (click)="closeMobileMenu()"
+          class="md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+        >
+          <span class="material-icons-round text-2xl">close</span>
+        </button>
+      }
     </div>
 
     <!-- Navigation Links -->
-    <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
-      <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mb-2">
-        Nawigacja Główna
-      </div>
+    <nav class="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
+      @if (!isSidebarCollapsed()) {
+        <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mb-2 truncate">
+          Nawigacja Główna
+        </div>
+      } @else {
+        <div class="h-px bg-slate-200 dark:bg-slate-800 mx-2 my-2"></div>
+      }
+
       @for (item of navItems; track item.route) {
         <a
           [routerLink]="item.route"
           (click)="closeMobileMenu()"
-          routerLinkActive="bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold border-l-4 border-orange-500 shadow-sm shadow-orange-500/5"
+          [title]="isSidebarCollapsed() ? item.label : ''"
+          routerLinkActive="bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold shadow-sm shadow-orange-500/5 active-nav-link"
           [routerLinkActiveOptions]="{ exact: false }"
-          class="flex items-center gap-3.5 px-3.5 py-3 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-150 group"
+          class="flex items-center rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-150 group"
+          [class.px-3.5]="!isSidebarCollapsed()"
+          [class.py-3]="!isSidebarCollapsed()"
+          [class.gap-3.5]="!isSidebarCollapsed()"
+          [class.text-sm]="!isSidebarCollapsed()"
+          [class.border-l-4]="!isSidebarCollapsed()"
+          [class.border-transparent]="!isSidebarCollapsed()"
+          [class.[&.active-nav-link]:border-orange-500]="!isSidebarCollapsed()"
+          [class.justify-center]="isSidebarCollapsed()"
+          [class.p-3]="isSidebarCollapsed()"
         >
-          <span class="material-icons-round text-slate-400 group-hover:text-orange-500 text-xl transition-colors">
+          <span class="material-icons-round text-slate-400 group-hover:text-orange-500 group-[.active-nav-link]:text-orange-500 text-xl transition-colors shrink-0">
             {{ item.icon }}
           </span>
-          <span>{{ item.label }}</span>
+          @if (!isSidebarCollapsed()) {
+            <span class="truncate">{{ item.label }}</span>
+          }
         </a>
       }
     </nav>
 
     <!-- Sidebar Footer / System Badge -->
-    <div class="p-4 border-t border-slate-200 dark:border-slate-800/80 text-center">
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider text-slate-400 dark:text-slate-500 uppercase bg-slate-100 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-        GastroApp v1.0
-      </span>
+    <div class="p-3 border-t border-slate-200 dark:border-slate-800/80 text-center shrink-0">
+      @if (!isSidebarCollapsed()) {
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider text-slate-400 dark:text-slate-500 uppercase bg-slate-100 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50 truncate">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+          GastroApp v1.0
+        </span>
+      } @else {
+        <div class="flex justify-center" title="GastroApp v1.0 (Online)">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20"></span>
+        </div>
+      }
     </div>
   </aside>
 
   <!-- Main Content Column -->
-  <div class="flex-1 flex flex-col min-w-0">
+  <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
     <!-- Top Navbar -->
-    <header class="h-20 bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30 transition-colors duration-150">
+    <header class="h-20 bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between px-4 sm:px-8 shrink-0 transition-colors duration-150 z-30">
       <div class="flex items-center gap-3">
-        <!-- Mobile menu hamburger button -->
+        <!-- Burger menu toggle button (inspired by Berry Dashboard) -->
         <button
-          (click)="toggleMobileMenu()"
-          class="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
+          (click)="toggleSidebar()"
+          type="button"
+          class="w-10 h-10 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/20 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 focus:outline-none cursor-pointer"
+          [title]="isSidebarCollapsed() ? 'Rozwiń menu boczne' : 'Zwiń menu boczne'"
         >
-          <span class="material-icons-round text-2xl">menu</span>
+          <span class="material-icons-round text-2xl transition-transform duration-200">
+            {{ isSidebarCollapsed() ? 'menu' : 'menu_open' }}
+          </span>
         </button>
 
-        <div class="hidden sm:block">
+        <div>
           <h2 class="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <span>{{ authService.restaurantName() }}</span>
             <span class="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
               Online
             </span>
           </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">System kontroli kuchni i stanów magazynowych</p>
+          <p class="hidden sm:block text-xs text-slate-500 dark:text-slate-400">System kontroli kuchni i stanów magazynowych</p>
         </div>
       </div>
 
