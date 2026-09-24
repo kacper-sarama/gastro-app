@@ -189,9 +189,10 @@ export class OrderService {
     try {
       const col = collection(this.firestore, 'orders');
       for (const ord of starterOrders) {
-        await addDoc(col, ord);
+        await addDoc(col, this.cleanObject(ord));
       }
-    } catch {
+    } catch (e) {
+      console.warn('Błąd zapisu zamówień do Firestore:', e);
       this.loadLocalFallback();
     } finally {
       this.isLoading.set(false);

@@ -36,7 +36,12 @@ const STARTER_INGREDIENTS: Omit<InventoryItem, 'id' | 'restaurantId'>[] = [
   { name: 'Świeża ricotta', amount: 1200, unit: 'g', minAmount: 500, category: 'Nabiał' },
   { name: 'Pomidorki koktajlowe', amount: 2000, unit: 'g', minAmount: 800, category: 'Warzywa' },
   { name: 'Świeża rukola', amount: 800, unit: 'g', minAmount: 300, category: 'Warzywa' },
-  { name: 'Świeży rozmaryn', amount: 150, unit: 'g', minAmount: 50, category: 'Zioła' }
+  { name: 'Świeży rozmaryn', amount: 150, unit: 'g', minAmount: 50, category: 'Zioła' },
+  { name: 'Ser Mascarpone', amount: 1500, unit: 'g', minAmount: 500, category: 'Nabiał' },
+  { name: 'Biszkopty Savoiardi', amount: 800, unit: 'g', minAmount: 300, category: 'Suche' },
+  { name: 'Kawa ziarnista Espresso', amount: 1000, unit: 'g', minAmount: 300, category: 'Suche' },
+  { name: 'Śmietanka 36%', amount: 2000, unit: 'ml', minAmount: 600, category: 'Nabiał' },
+  { name: 'Maliny mrożone / sos', amount: 1200, unit: 'g', minAmount: 400, category: 'Przetwory' }
 ];
 
 @Injectable({
@@ -179,13 +184,14 @@ export class InventoryService {
     try {
       const inventoryCol = collection(this.firestore, 'inventory');
       for (const item of STARTER_INGREDIENTS) {
-        await addDoc(inventoryCol, {
+        await addDoc(inventoryCol, this.cleanObject({
           ...item,
           restaurantId,
           updatedAt: new Date().toISOString()
-        });
+        }));
       }
     } catch (e) {
+      console.warn('Błąd zapisu składników do Firestore:', e);
       this.loadLocalFallback();
     } finally {
       this.isLoading.set(false);

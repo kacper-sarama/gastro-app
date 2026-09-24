@@ -60,8 +60,9 @@ export class RecipeService {
     if (set.size === 0) {
       set.add('Pizza Rossa (na czerwono)');
       set.add('Pizza Bianca (na biało)');
-      set.add('Focaccia (włoskie pieczywo)');
       set.add('Calzone (pizza zawijana)');
+      set.add('Focaccia (włoskie pieczywo)');
+      set.add('Desery (włoskie słodkości)');
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'pl'));
   });
@@ -218,6 +219,11 @@ export class RecipeService {
     const tomatoesId = findId('pomidorki');
     const rucolaId = findId('rukola');
     const rosemaryId = findId('rozmaryn');
+    const mascarponeId = findId('mascarpone');
+    const savoiardiId = findId('savoiardi');
+    const coffeeId = findId('kawa');
+    const creamId = findId('śmietanka');
+    const raspberryId = findId('malin');
 
     const now = new Date().toISOString();
 
@@ -246,6 +252,7 @@ export class RecipeService {
         category: 'Pizza Rossa (na czerwono)',
         description: 'Tradycyjna pizza z sosem pomidorowym, mozzarellą fior di latte oraz świeżymi pieczarkami.',
         sellingPrice: 41,
+        isFeatured: false,
         ingredients: [
           { inventoryItemId: flourId, amount: 220 },
           { inventoryItemId: sauceId, amount: 90 },
@@ -279,6 +286,7 @@ export class RecipeService {
         category: 'Pizza Rossa (na czerwono)',
         description: 'Ulubiony klasyk: sos pomidorowy, mozzarella fior di latte, włoska szynka Prosciutto Cotto i pieczarki.',
         sellingPrice: 45,
+        isFeatured: false,
         ingredients: [
           { inventoryItemId: flourId, amount: 220 },
           { inventoryItemId: sauceId, amount: 90 },
@@ -298,6 +306,7 @@ export class RecipeService {
         category: 'Pizza Bianca (na biało)',
         description: 'Wykwintna biała pizza z kompozycją 4 serów: mozzarella fior di latte, gorgonzola DOP, ricotta i Grana Padano.',
         sellingPrice: 47,
+        isFeatured: false,
         ingredients: [
           { inventoryItemId: flourId, amount: 220 },
           { inventoryItemId: cheeseId, amount: 100 },
@@ -336,6 +345,7 @@ export class RecipeService {
         category: 'Calzone (pizza zawijana)',
         description: 'Tradycyjny pieczony pieróg z ciasta na pizzę, nadziewany mozzarellą fior di latte, szynką Prosciutto Cotto, pieczarkami i sosem pomidorowym.',
         sellingPrice: 44,
+        isFeatured: false,
         ingredients: [
           { inventoryItemId: flourId, amount: 220 },
           { inventoryItemId: cheeseId, amount: 120 },
@@ -355,6 +365,7 @@ export class RecipeService {
         category: 'Focaccia (włoskie pieczywo)',
         description: 'Chrupiące włoskie pieczywo drożdżowe, obficie skropione oliwą z oliwek Extra Virgin ze świeżym rozmarynem i solą morską.',
         sellingPrice: 22,
+        isFeatured: false,
         ingredients: [
           { inventoryItemId: flourId, amount: 200 },
           { inventoryItemId: oilId, amount: 25 },
@@ -369,11 +380,41 @@ export class RecipeService {
         category: 'Focaccia (włoskie pieczywo)',
         description: 'Włoska focaccia wypiekana ze słodkimi pomidorkami koktajlowymi, oliwą Extra Virgin i ziołami.',
         sellingPrice: 26,
+        isFeatured: false,
         ingredients: [
           { inventoryItemId: flourId, amount: 200 },
           { inventoryItemId: oilId, amount: 25 },
           { inventoryItemId: tomatoesId, amount: 70 },
           { inventoryItemId: yeastId, amount: 4 }
+        ],
+        updatedAt: now
+      },
+
+      // 5. Desery (włoskie słodkości)
+      {
+        restaurantId,
+        name: 'Tiramisu Klasyczne',
+        category: 'Desery (włoskie słodkości)',
+        description: 'Tradycyjny włoski deser na bazie puszystego kremu z serka mascarpone, biszkoptów nasączonych espresso i gorzkiego kakao.',
+        sellingPrice: 24,
+        isFeatured: true,
+        ingredients: [
+          { inventoryItemId: mascarponeId, amount: 120 },
+          { inventoryItemId: savoiardiId, amount: 40 },
+          { inventoryItemId: coffeeId, amount: 15 }
+        ],
+        updatedAt: now
+      },
+      {
+        restaurantId,
+        name: 'Panna Cotta z Malinami',
+        category: 'Desery (włoskie słodkości)',
+        description: 'Aksamitny deser śmietankowy z nutą wanilii, serwowany ze świeżym musem z leśnych malin.',
+        sellingPrice: 21,
+        isFeatured: false,
+        ingredients: [
+          { inventoryItemId: creamId, amount: 120 },
+          { inventoryItemId: raspberryId, amount: 50 }
         ],
         updatedAt: now
       }
@@ -386,9 +427,13 @@ export class RecipeService {
     try {
       const col = collection(this.firestore, 'recipes');
       for (const r of starterRecipes) {
-        await addDoc(col, r);
+        await addDoc(col, this.cleanObject({
+          ...r,
+          isFeatured: r.isFeatured ?? false
+        }));
       }
-    } catch {
+    } catch (err) {
+      console.warn('Błąd zapisu startowych receptur do Firestore:', err);
       this.loadLocalFallback();
     } finally {
       this.isLoading.set(false);
@@ -406,8 +451,12 @@ export class RecipeService {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (raw) {
       try {
-        this.recipes.set(JSON.parse(raw));
-        return;
+        const parsed = JSON.parse(raw);
+        const isModern = Array.isArray(parsed) && parsed.some((p: any) => p.category?.includes('Rossa') || p.category?.includes('Desery'));
+        if (isModern) {
+          this.recipes.set(parsed);
+          return;
+        }
       } catch {}
     }
 

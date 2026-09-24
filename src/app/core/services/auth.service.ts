@@ -49,7 +49,20 @@ export class AuthService {
       });
       try {
         const docRef = doc(this.firestore, `restaurant_settings/${credential.user.uid}`);
-        await setDoc(docRef, { restaurantName, updatedAt: new Date().toISOString() }, { merge: true });
+        await setDoc(docRef, { 
+          restaurantName, 
+          recipeCategories: [
+            'Pizza Rossa (na czerwono)',
+            'Pizza Bianca (na biało)',
+            'Calzone (pizza zawijana)',
+            'Focaccia (włoskie pieczywo)',
+            'Desery (włoskie słodkości)'
+          ],
+          inventoryCategories: [
+            'Suche', 'Nabiał', 'Przetwory', 'Warzywa', 'Mięso i wędliny', 'Dodatki', 'Tłuszcze', 'Zioła'
+          ],
+          updatedAt: new Date().toISOString() 
+        }, { merge: true });
       } catch (e) {
         console.warn('Nie udało się zapisać nazwy lokalu w ustawieniach Firestore:', e);
       }
