@@ -103,18 +103,10 @@ export class OrdersKanbanComponent {
   }
 
   /**
-   * Wyświetla czytelny czas oczekiwania (np. "3 min temu", "15 min temu")
+   * Wyświetla czytelny czas oczekiwania (np. "3 min temu", "15 min temu").
+   * Korzysta z reaktywnego zegara w OrderService (odświeżanie na żywo).
    */
   getElapsedTime(createdAt: string): string {
-    const diffMs = Date.now() - new Date(createdAt).getTime();
-    const mins = Math.floor(diffMs / 60000);
-    
-    if (mins < 1) return 'Przed chwilą';
-    if (mins === 1) return '1 min temu';
-    if (mins < 60) return `${mins} min temu`;
-    
-    const hours = Math.floor(mins / 60);
-    if (hours === 1) return '1 godz. temu';
-    return `${hours} godz. temu`;
+    return this.orderService.getElapsedTime(createdAt);
   }
 }

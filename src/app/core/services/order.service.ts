@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { Injectable, inject, signal, computed, effect, OnDestroy } from '@angular/core';
 import { Firestore } from '@angular/fire/firestore';
 import { 
   collection, 
@@ -22,7 +22,7 @@ const LOCAL_STORAGE_KEY = 'gastro_orders_fallback';
 @Injectable({
   providedIn: 'root'
 })
-export class OrderService {
+export class OrderService implements OnDestroy {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
   private inventoryService = inject(InventoryService);
@@ -63,7 +63,18 @@ export class OrderService {
       .reduce((sum, o) => sum + (o.totalPrice || 0), 0)
   );
 
+  // Reaktywny zegar aktualizowany co 15 sekund w pamięci (bez ruchu sieciowego)
+  readonly currentTime = signal<number>(Date.now());
+  private timeTickerInterval: any = null;
+
   constructor() {
+    // Uruchomienie cyklicznego odświeżania czasu dla tablicy KDS i dashboardu
+    if (typeof window !== 'undefined') {
+      this.timeTickerInterval = setInterval(() => {
+        this.currentTime.set(Date.now());
+      }, 15000); // co 15 sekund
+    }
+
     // Reaguj na zmiany zalogowanego użytkownika
     effect(() => {
       const user = this.authService.currentUser();
@@ -73,6 +84,24 @@ export class OrderService {
         this.loadLocalFallback();
       }
     });
+  }
+
+  /**
+   * Reaktywne wyliczanie upływu czasu od złożenia zamówienia.
+   * Dzięki odczytowi this.currentTime() Angular automatycznie aktualizuje czas na kafelkach na żywo.
+   */
+  getElapsedTime(createdAt: string): string {
+    const now = this.currentTime();
+    const diffMs = Math.max(0, now - new Date(createdAt).getTime());
+    const mins = Math.floor(diffMs / 60000);
+    
+    if (mins < 1) return 'Przed chwilą';
+    if (mins === 1) return '1 min temu';
+    if (mins < 60) return `${mins} min temu`;
+    
+    const hours = Math.floor(mins / 60);
+    if (hours === 1) return '1 godz. temu';
+    return `${hours} godz. temu`;
   }
 
   private initFirestoreSubscription(restaurantId: string): void {
@@ -456,5 +485,16 @@ export class OrderService {
     const updated = this.orders().filter(o => o.id !== orderId);
     this.orders.set(updated);
     this.saveToLocalFallback(updated);
+  }
+
+  ngOnDestroy(): void {
+    if (this.timeTickerInterval) {
+      clearInterval(this.timeTickerInterval);
+      this.timeTickerInterval = null;
+    }
+    if (this.firestoreUnsub) {
+      this.firestoreUnsub();
+      this.firestoreUnsub = null;
+    }
   }
 }
