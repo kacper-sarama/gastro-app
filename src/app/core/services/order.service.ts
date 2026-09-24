@@ -132,7 +132,7 @@ export class OrderService {
             recipeName: margherita?.name || 'Pizza Margherita 32cm',
             quantity: 2,
             unitPrice: margherita?.sellingPrice || 36,
-            category: 'Pizza'
+            category: margherita?.category || 'Pizza Rossa (na czerwono)'
           }
         ],
         totalPrice: (margherita?.sellingPrice || 36) * 2,
@@ -151,14 +151,14 @@ export class OrderService {
             recipeName: funghi?.name || 'Pizza Funghi 32cm',
             quantity: 1,
             unitPrice: funghi?.sellingPrice || 41,
-            category: 'Pizza'
+            category: funghi?.category || 'Pizza Rossa (na czerwono)'
           },
           {
             recipeId: focaccia?.id || 'recipe-focaccia',
-            recipeName: focaccia?.name || 'Focaccia z Oliwią i Rozmarynem',
+            recipeName: focaccia?.name || 'Focaccia z Rozmarynem i Solą Morską',
             quantity: 1,
             unitPrice: focaccia?.sellingPrice || 22,
-            category: 'Przystawki'
+            category: focaccia?.category || 'Focaccia (włoskie pieczywo)'
           }
         ],
         totalPrice: (funghi?.sellingPrice || 41) + (focaccia?.sellingPrice || 22),
@@ -177,7 +177,7 @@ export class OrderService {
             recipeName: margherita?.name || 'Pizza Margherita 32cm',
             quantity: 1,
             unitPrice: margherita?.sellingPrice || 36,
-            category: 'Pizza'
+            category: margherita?.category || 'Pizza Rossa (na czerwono)'
           }
         ],
         totalPrice: margherita?.sellingPrice || 36,
@@ -230,7 +230,7 @@ export class OrderService {
             recipeName: margherita?.name || 'Pizza Margherita 32cm',
             quantity: 2,
             unitPrice: margherita?.sellingPrice || 36,
-            category: 'Pizza'
+            category: margherita?.category || 'Pizza Rossa (na czerwono)'
           }
         ],
         totalPrice: (margherita?.sellingPrice || 36) * 2,
@@ -250,14 +250,14 @@ export class OrderService {
             recipeName: funghi?.name || 'Pizza Funghi 32cm',
             quantity: 1,
             unitPrice: funghi?.sellingPrice || 41,
-            category: 'Pizza'
+            category: funghi?.category || 'Pizza Rossa (na czerwono)'
           },
           {
             recipeId: focaccia?.id || 'recipe-focaccia',
-            recipeName: focaccia?.name || 'Focaccia z Oliwą i Ziołami',
+            recipeName: focaccia?.name || 'Focaccia z Rozmarynem i Solą Morską',
             quantity: 1,
             unitPrice: focaccia?.sellingPrice || 22,
-            category: 'Przystawki'
+            category: focaccia?.category || 'Focaccia (włoskie pieczywo)'
           }
         ],
         totalPrice: (funghi?.sellingPrice || 41) + (focaccia?.sellingPrice || 22),
@@ -277,7 +277,7 @@ export class OrderService {
             recipeName: margherita?.name || 'Pizza Margherita 32cm',
             quantity: 1,
             unitPrice: margherita?.sellingPrice || 36,
-            category: 'Pizza'
+            category: margherita?.category || 'Pizza Rossa (na czerwono)'
           }
         ],
         totalPrice: margherita?.sellingPrice || 36,

@@ -58,9 +58,10 @@ export class RecipeService {
     }
     // Domyślne jeśli brak
     if (set.size === 0) {
-      set.add('Pizza');
-      set.add('Przystawki');
-      set.add('Makarony');
+      set.add('Pizza Rossa (na czerwono)');
+      set.add('Pizza Bianca (na biało)');
+      set.add('Focaccia (włoskie pieczywo)');
+      set.add('Calzone (pizza zawijana)');
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'pl'));
   });
@@ -197,9 +198,9 @@ export class RecipeService {
     }
   }
 
-  private async seedStarterRecipes(restaurantId: string): Promise<void> {
+  private getStarterRecipes(restaurantId: string): Omit<Recipe, 'id'>[] {
     const inventory = this.inventoryService.items();
-    const findId = (namePart: string) => inventory.find(i => i.name.toLowerCase().includes(namePart.toLowerCase()))?.id;
+    const findId = (namePart: string) => inventory.find(i => i.name.toLowerCase().includes(namePart.toLowerCase()))?.id || 'demo-ing';
 
     const flourId = findId('mąka');
     const cheeseId = findId('mozzarella');
@@ -208,54 +209,179 @@ export class RecipeService {
     const yeastId = findId('drożdże');
     const oilId = findId('oliwa');
     const basilId = findId('bazylia');
+    const salamiId = findId('spianata');
+    const cottoId = findId('cotto');
+    const crudoId = findId('crudo');
+    const gorgonzolaId = findId('gorgonzola');
+    const granaId = findId('grana');
+    const ricottaId = findId('ricotta');
+    const tomatoesId = findId('pomidorki');
+    const rucolaId = findId('rukola');
+    const rosemaryId = findId('rozmaryn');
 
-    const starterRecipes: Omit<Recipe, 'id'>[] = [
+    const now = new Date().toISOString();
+
+    return [
+      // 1. Pizza Rossa (na czerwono)
       {
         restaurantId,
         name: 'Pizza Margherita 32cm',
-        category: 'Pizza',
-        description: 'Klasyczna włoska pizza z sosem San Marzano, mozzarellą i świeżą bazylią.',
+        category: 'Pizza Rossa (na czerwono)',
+        description: 'Klasyczna włoska pizza z sosem z pomidorów San Marzano, mozzarellą fior di latte i świeżą bazylią.',
         sellingPrice: 36,
+        isFeatured: true,
         ingredients: [
-          ...(flourId ? [{ inventoryItemId: flourId, amount: 220 }] : []),
-          ...(sauceId ? [{ inventoryItemId: sauceId, amount: 90 }] : []),
-          ...(cheeseId ? [{ inventoryItemId: cheeseId, amount: 130 }] : []),
-          ...(oilId ? [{ inventoryItemId: oilId, amount: 10 }] : []),
-          ...(yeastId ? [{ inventoryItemId: yeastId, amount: 3 }] : []),
-          ...(basilId ? [{ inventoryItemId: basilId, amount: 1 }] : [])
+          { inventoryItemId: flourId, amount: 220 },
+          { inventoryItemId: sauceId, amount: 90 },
+          { inventoryItemId: cheeseId, amount: 130 },
+          { inventoryItemId: oilId, amount: 10 },
+          { inventoryItemId: yeastId, amount: 3 },
+          { inventoryItemId: basilId, amount: 1 }
         ],
-        updatedAt: new Date().toISOString()
+        updatedAt: now
       },
       {
         restaurantId,
         name: 'Pizza Funghi 32cm',
-        category: 'Pizza',
-        description: 'Chrupiąca pizza z sosem pomidorowym, mozzarellą oraz świeżymi pieczarkami.',
+        category: 'Pizza Rossa (na czerwono)',
+        description: 'Tradycyjna pizza z sosem pomidorowym, mozzarellą fior di latte oraz świeżymi pieczarkami.',
         sellingPrice: 41,
         ingredients: [
-          ...(flourId ? [{ inventoryItemId: flourId, amount: 220 }] : []),
-          ...(sauceId ? [{ inventoryItemId: sauceId, amount: 90 }] : []),
-          ...(cheeseId ? [{ inventoryItemId: cheeseId, amount: 130 }] : []),
-          ...(mushroomsId ? [{ inventoryItemId: mushroomsId, amount: 80 }] : []),
-          ...(oilId ? [{ inventoryItemId: oilId, amount: 10 }] : []),
-          ...(yeastId ? [{ inventoryItemId: yeastId, amount: 3 }] : [])
+          { inventoryItemId: flourId, amount: 220 },
+          { inventoryItemId: sauceId, amount: 90 },
+          { inventoryItemId: cheeseId, amount: 130 },
+          { inventoryItemId: mushroomsId, amount: 80 },
+          { inventoryItemId: oilId, amount: 10 },
+          { inventoryItemId: yeastId, amount: 3 }
         ],
-        updatedAt: new Date().toISOString()
+        updatedAt: now
       },
       {
         restaurantId,
-        name: 'Focaccia z Oliwią i Rozmarynem',
-        category: 'Przystawki',
-        description: 'Włoskie pieczywo drożdżowe z oliwą z oliwek extra virgin i solą morską.',
+        name: 'Pizza Diavola 32cm',
+        category: 'Pizza Rossa (na czerwono)',
+        description: 'Pikantna kompozycja z sosem San Marzano, mozzarellą fior di latte i włoskim salami Spianata Piccante.',
+        sellingPrice: 44,
+        isFeatured: true,
+        ingredients: [
+          { inventoryItemId: flourId, amount: 220 },
+          { inventoryItemId: sauceId, amount: 90 },
+          { inventoryItemId: cheeseId, amount: 130 },
+          { inventoryItemId: salamiId, amount: 60 },
+          { inventoryItemId: oilId, amount: 10 },
+          { inventoryItemId: yeastId, amount: 3 }
+        ],
+        updatedAt: now
+      },
+      {
+        restaurantId,
+        name: 'Pizza Prosciutto e Funghi 32cm',
+        category: 'Pizza Rossa (na czerwono)',
+        description: 'Ulubiony klasyk: sos pomidorowy, mozzarella fior di latte, włoska szynka Prosciutto Cotto i pieczarki.',
+        sellingPrice: 45,
+        ingredients: [
+          { inventoryItemId: flourId, amount: 220 },
+          { inventoryItemId: sauceId, amount: 90 },
+          { inventoryItemId: cheeseId, amount: 130 },
+          { inventoryItemId: cottoId, amount: 70 },
+          { inventoryItemId: mushroomsId, amount: 60 },
+          { inventoryItemId: oilId, amount: 10 },
+          { inventoryItemId: yeastId, amount: 3 }
+        ],
+        updatedAt: now
+      },
+
+      // 2. Pizza Bianca (na biało)
+      {
+        restaurantId,
+        name: 'Pizza Quattro Formaggi Bianca 32cm',
+        category: 'Pizza Bianca (na biało)',
+        description: 'Wykwintna biała pizza z kompozycją 4 serów: mozzarella fior di latte, gorgonzola DOP, ricotta i Grana Padano.',
+        sellingPrice: 47,
+        ingredients: [
+          { inventoryItemId: flourId, amount: 220 },
+          { inventoryItemId: cheeseId, amount: 100 },
+          { inventoryItemId: gorgonzolaId, amount: 50 },
+          { inventoryItemId: ricottaId, amount: 40 },
+          { inventoryItemId: granaId, amount: 25 },
+          { inventoryItemId: oilId, amount: 10 },
+          { inventoryItemId: yeastId, amount: 3 }
+        ],
+        updatedAt: now
+      },
+      {
+        restaurantId,
+        name: 'Pizza Prosciutto Crudo e Rucola 32cm',
+        category: 'Pizza Bianca (na biało)',
+        description: 'Biała baza z mozzarellą, po upieczeniu zwieńczona szynką dojrzewającą Crudo, świeżą rukolą, pomidorkami i Grana Padano.',
+        sellingPrice: 49,
+        isFeatured: true,
+        ingredients: [
+          { inventoryItemId: flourId, amount: 220 },
+          { inventoryItemId: cheeseId, amount: 120 },
+          { inventoryItemId: crudoId, amount: 60 },
+          { inventoryItemId: rucolaId, amount: 25 },
+          { inventoryItemId: tomatoesId, amount: 40 },
+          { inventoryItemId: granaId, amount: 20 },
+          { inventoryItemId: oilId, amount: 10 },
+          { inventoryItemId: yeastId, amount: 3 }
+        ],
+        updatedAt: now
+      },
+
+      // 3. Calzone (pizza zawijana)
+      {
+        restaurantId,
+        name: 'Calzone Classico',
+        category: 'Calzone (pizza zawijana)',
+        description: 'Tradycyjny pieczony pieróg z ciasta na pizzę, nadziewany mozzarellą fior di latte, szynką Prosciutto Cotto, pieczarkami i sosem pomidorowym.',
+        sellingPrice: 44,
+        ingredients: [
+          { inventoryItemId: flourId, amount: 220 },
+          { inventoryItemId: cheeseId, amount: 120 },
+          { inventoryItemId: cottoId, amount: 60 },
+          { inventoryItemId: mushroomsId, amount: 50 },
+          { inventoryItemId: sauceId, amount: 40 },
+          { inventoryItemId: oilId, amount: 10 },
+          { inventoryItemId: yeastId, amount: 3 }
+        ],
+        updatedAt: now
+      },
+
+      // 4. Focaccia (włoskie pieczywo)
+      {
+        restaurantId,
+        name: 'Focaccia z Rozmarynem i Solą Morską',
+        category: 'Focaccia (włoskie pieczywo)',
+        description: 'Chrupiące włoskie pieczywo drożdżowe, obficie skropione oliwą z oliwek Extra Virgin ze świeżym rozmarynem i solą morską.',
         sellingPrice: 22,
         ingredients: [
-          ...(flourId ? [{ inventoryItemId: flourId, amount: 200 }] : []),
-          ...(oilId ? [{ inventoryItemId: oilId, amount: 25 }] : []),
-          ...(yeastId ? [{ inventoryItemId: yeastId, amount: 4 }] : [])
+          { inventoryItemId: flourId, amount: 200 },
+          { inventoryItemId: oilId, amount: 25 },
+          { inventoryItemId: rosemaryId, amount: 5 },
+          { inventoryItemId: yeastId, amount: 4 }
         ],
-        updatedAt: new Date().toISOString()
+        updatedAt: now
+      },
+      {
+        restaurantId,
+        name: 'Focaccia z Pomidorkami Koktajlowymi',
+        category: 'Focaccia (włoskie pieczywo)',
+        description: 'Włoska focaccia wypiekana ze słodkimi pomidorkami koktajlowymi, oliwą Extra Virgin i ziołami.',
+        sellingPrice: 26,
+        ingredients: [
+          { inventoryItemId: flourId, amount: 200 },
+          { inventoryItemId: oilId, amount: 25 },
+          { inventoryItemId: tomatoesId, amount: 70 },
+          { inventoryItemId: yeastId, amount: 4 }
+        ],
+        updatedAt: now
       }
     ];
+  }
+
+  private async seedStarterRecipes(restaurantId: string): Promise<void> {
+    const starterRecipes = this.getStarterRecipes(restaurantId);
 
     try {
       const col = collection(this.firestore, 'recipes');
@@ -285,59 +411,11 @@ export class RecipeService {
       } catch {}
     }
 
-    const inventory = this.inventoryService.items();
-    const findId = (namePart: string) => inventory.find(i => i.name.toLowerCase().includes(namePart.toLowerCase()))?.id || 'demo-ing';
-
-    const demoRecipes: Recipe[] = [
-      {
-        id: 'recipe-margherita',
-        restaurantId: 'demo-restaurant',
-        name: 'Pizza Margherita 32cm',
-        category: 'Pizza',
-        description: 'Klasyczna włoska pizza z sosem San Marzano, mozzarellą i świeżą bazylią.',
-        sellingPrice: 36,
-        ingredients: [
-          { inventoryItemId: findId('mąka'), amount: 220 },
-          { inventoryItemId: findId('sos pomidorowy'), amount: 90 },
-          { inventoryItemId: findId('mozzarella'), amount: 130 },
-          { inventoryItemId: findId('oliwa'), amount: 10 },
-          { inventoryItemId: findId('drożdże'), amount: 3 },
-          { inventoryItemId: findId('bazylia'), amount: 1 }
-        ],
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 'recipe-funghi',
-        restaurantId: 'demo-restaurant',
-        name: 'Pizza Funghi 32cm',
-        category: 'Pizza',
-        description: 'Chrupiąca pizza z sosem pomidorowym, mozzarellą oraz świeżymi pieczarkami.',
-        sellingPrice: 41,
-        ingredients: [
-          { inventoryItemId: findId('mąka'), amount: 220 },
-          { inventoryItemId: findId('sos pomidorowy'), amount: 90 },
-          { inventoryItemId: findId('mozzarella'), amount: 130 },
-          { inventoryItemId: findId('pieczarki'), amount: 80 },
-          { inventoryItemId: findId('oliwa'), amount: 10 },
-          { inventoryItemId: findId('drożdże'), amount: 3 }
-        ],
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 'recipe-focaccia',
-        restaurantId: 'demo-restaurant',
-        name: 'Focaccia z Oliwą i Ziołami',
-        category: 'Przystawki',
-        description: 'Włoskie pieczywo drożdżowe z oliwą z oliwek extra virgin.',
-        sellingPrice: 22,
-        ingredients: [
-          { inventoryItemId: findId('mąka'), amount: 200 },
-          { inventoryItemId: findId('oliwa'), amount: 25 },
-          { inventoryItemId: findId('drożdże'), amount: 4 }
-        ],
-        updatedAt: new Date().toISOString()
-      }
-    ];
+    const starterRecipes = this.getStarterRecipes('demo-restaurant');
+    const demoRecipes: Recipe[] = starterRecipes.map((r, idx) => ({
+      ...r,
+      id: `recipe-starter-${idx + 1}`
+    }));
 
     this.recipes.set(demoRecipes);
     this.saveToLocalFallback(demoRecipes);

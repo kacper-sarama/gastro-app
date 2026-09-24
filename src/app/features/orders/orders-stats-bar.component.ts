@@ -41,6 +41,10 @@ export class OrdersStatsBarComponent {
 
   // Paleta kolorów dla kategorii dań
   private readonly categoryColors: Record<string, string> = {
+    'Pizza Rossa (na czerwono)': '#f97316',      // orange-500
+    'Pizza Bianca (na biało)': '#38bdf8',        // sky-400
+    'Calzone (pizza zawijana)': '#eab308',       // amber-500
+    'Focaccia (włoskie pieczywo)': '#10b981',    // emerald-500
     'Pizza': '#f97316',      // orange-500
     'Makarony': '#0ea5e9',   // sky-500
     'Przystawki': '#eab308', // amber-500
@@ -63,17 +67,17 @@ export class OrdersStatsBarComponent {
     // Zlicz ilości wydanych dań w kategoriach
     for (const order of orders) {
       for (const item of order.items) {
-        const cat = item.category?.trim() || 'Pizza';
+        const cat = item.category?.trim() || 'Pizza Rossa (na czerwono)';
         countsMap.set(cat, (countsMap.get(cat) || 0) + item.quantity);
       }
     }
 
     // Jeśli brak danych wydanych, przygotuj domyślne kategorie
     if (countsMap.size === 0) {
-      countsMap.set('Pizza', 0);
-      countsMap.set('Przystawki', 0);
-      countsMap.set('Makarony', 0);
-      countsMap.set('Napoje', 0);
+      countsMap.set('Pizza Rossa (na czerwono)', 0);
+      countsMap.set('Pizza Bianca (na biało)', 0);
+      countsMap.set('Calzone (pizza zawijana)', 0);
+      countsMap.set('Focaccia (włoskie pieczywo)', 0);
     }
 
     const maxCount = Math.max(...Array.from(countsMap.values()), 1);

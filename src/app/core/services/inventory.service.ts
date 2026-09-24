@@ -18,16 +18,25 @@ import { InventoryItem, formatStockAmount, getStockStatus } from '../models/inve
 
 const LOCAL_STORAGE_KEY = 'gastro_inventory_items_fallback';
 const INVENTORY_CATEGORIES_STORAGE_KEY = 'gastro_inventory_categories_fallback';
-const DEFAULT_INVENTORY_CATEGORIES = ['Suche', 'Nabiał', 'Przetwory', 'Warzywa', 'Dodatki', 'Tłuszcze', 'Zioła'];
+const DEFAULT_INVENTORY_CATEGORIES = ['Suche', 'Nabiał', 'Przetwory', 'Warzywa', 'Mięso i wędliny', 'Dodatki', 'Tłuszcze', 'Zioła'];
 
 const STARTER_INGREDIENTS: Omit<InventoryItem, 'id' | 'restaurantId'>[] = [
-  { name: 'Mąka pszenna (typ 00)', amount: 15000, unit: 'g', minAmount: 5000, category: 'Suche' },
-  { name: 'Ser Mozzarella fior di latte', amount: 4500, unit: 'g', minAmount: 3000, category: 'Nabiał' },
-  { name: 'Sos pomidorowy San Marzano', amount: 6000, unit: 'ml', minAmount: 2000, category: 'Przetwory' },
-  { name: 'Pieczarki świeże', amount: 800, unit: 'g', minAmount: 1500, category: 'Warzywa' }, // Niski stan
-  { name: 'Drożdże piekarnicze', amount: 250, unit: 'g', minAmount: 100, category: 'Dodatki' },
-  { name: 'Oliwa z oliwek Extra Virgin', amount: 2500, unit: 'ml', minAmount: 1000, category: 'Tłuszcze' },
-  { name: 'Świeża bazylia', amount: 0, unit: 'szt', minAmount: 5, category: 'Zioła' } // Brak
+  { name: 'Mąka pszenna (typ 00)', amount: 25000, unit: 'g', minAmount: 5000, category: 'Suche' },
+  { name: 'Drożdże piekarnicze', amount: 500, unit: 'g', minAmount: 100, category: 'Dodatki' },
+  { name: 'Oliwa z oliwek Extra Virgin', amount: 5000, unit: 'ml', minAmount: 1000, category: 'Tłuszcze' },
+  { name: 'Sos pomidorowy San Marzano', amount: 8000, unit: 'ml', minAmount: 2000, category: 'Przetwory' },
+  { name: 'Ser Mozzarella fior di latte', amount: 6500, unit: 'g', minAmount: 3000, category: 'Nabiał' },
+  { name: 'Pieczarki świeże', amount: 900, unit: 'g', minAmount: 1500, category: 'Warzywa' }, // Niski stan ostrzegawczy
+  { name: 'Świeża bazylia', amount: 0, unit: 'szt', minAmount: 5, category: 'Zioła' }, // Brak do alertu
+  { name: 'Salami Spianata Piccante', amount: 1800, unit: 'g', minAmount: 600, category: 'Mięso i wędliny' },
+  { name: 'Szynka Prosciutto Cotto', amount: 2000, unit: 'g', minAmount: 800, category: 'Mięso i wędliny' },
+  { name: 'Szynka Prosciutto Crudo', amount: 1500, unit: 'g', minAmount: 500, category: 'Mięso i wędliny' },
+  { name: 'Ser Gorgonzola DOP', amount: 1200, unit: 'g', minAmount: 400, category: 'Nabiał' },
+  { name: 'Ser Grana Padano DOP', amount: 1500, unit: 'g', minAmount: 500, category: 'Nabiał' },
+  { name: 'Świeża ricotta', amount: 1200, unit: 'g', minAmount: 500, category: 'Nabiał' },
+  { name: 'Pomidorki koktajlowe', amount: 2000, unit: 'g', minAmount: 800, category: 'Warzywa' },
+  { name: 'Świeża rukola', amount: 800, unit: 'g', minAmount: 300, category: 'Warzywa' },
+  { name: 'Świeży rozmaryn', amount: 150, unit: 'g', minAmount: 50, category: 'Zioła' }
 ];
 
 @Injectable({

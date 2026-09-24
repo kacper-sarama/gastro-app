@@ -40,7 +40,7 @@ export class AddEditRecipeModalComponent implements OnInit {
 
     this.form = this.fb.group({
       name: [edit?.name || '', [Validators.required, Validators.minLength(2)]],
-      category: [edit?.category || 'Pizza', [Validators.required]],
+      category: [edit?.category || 'Pizza Rossa (na czerwono)', [Validators.required]],
       description: [edit?.description || ''],
       sellingPrice: [edit?.sellingPrice || null, [Validators.min(0)]],
       ingredients: this.fb.array([])
