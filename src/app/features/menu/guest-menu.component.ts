@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { RecipeService } from '../../core/services/recipe.service';
@@ -21,6 +21,18 @@ export class GuestMenuComponent implements OnInit {
   restaurantId = signal<string>('demo-restaurant');
   selectedCategory = signal<string>('all');
 
+  constructor() {
+    // Jeśli wybrana kategoria przestanie mieć jakiekolwiek pozycje (np. wyłączono jedyne danie),
+    // automatycznie zresetuj widok na "Wszystkie", aby gość nie widział pustej strony.
+    effect(() => {
+      const activeCats = this.categories();
+      const current = this.selectedCategory();
+      if (current !== 'all' && !activeCats.some(c => c.toLowerCase() === current.toLowerCase())) {
+        this.selectedCategory.set('all');
+      }
+    });
+  }
+
   readonly displayName = computed(() => 
     this.recipeService.activeRestaurantName() || 'Karta Menu'
   );
@@ -35,17 +47,34 @@ export class GuestMenuComponent implements OnInit {
     }
   }
 
-  readonly categories = computed(() => this.recipeService.allCategories());
-
-  // Dania widoczne dla gości (zarówno dostępne, jak i chwilowo wyprzedane, ale nie wyłączone manualnie)
+  // Dania widoczne dla gości (tylko włączone manualnie przez restauratora)
   readonly menuDishes = computed(() => {
     return this.recipeService.recipes().filter(r => r.isAvailable !== false);
+  });
+
+  // Pigułki kategorii w menu gościa: TYLKO te kategorie, które mają CO NAJMNIEJ jedno widoczne danie!
+  // Pusta kategoria (np. Calzone gdy wyłączono pozycję) nie pojawia się w menu gościa.
+  readonly categories = computed(() => {
+    const dishes = this.menuDishes();
+    const set = new Set<string>();
+
+    for (const d of dishes) {
+      if (d.category && d.category.trim()) {
+        set.add(d.category.trim());
+      }
+    }
+
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'pl'));
   });
 
   readonly filteredDishes = computed(() => {
     const cat = this.selectedCategory();
     const dishes = this.menuDishes();
-    if (cat === 'all') return dishes;
+    const activeCats = this.categories();
+
+    if (cat === 'all' || !activeCats.some(c => c.toLowerCase() === cat.toLowerCase())) {
+      return dishes;
+    }
     return dishes.filter(d => (d.category || '').toLowerCase() === cat.toLowerCase());
   });
 

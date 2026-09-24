@@ -33,7 +33,16 @@ export class NewOrderModalComponent {
 
   readonly quickTables = ['Stolik 1', 'Stolik 2', 'Stolik 3', 'Stolik 4', 'Stolik 5', 'Bar', 'Wynos'];
 
-  readonly categories = computed(() => this.recipeService.allCategories());
+  readonly categories = computed(() => {
+    const available = this.recipeService.recipes().filter(r => r.isAvailable !== false);
+    const set = new Set<string>();
+    for (const r of available) {
+      if (r.category && r.category.trim()) {
+        set.add(r.category.trim());
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'pl'));
+  });
 
   readonly availableRecipes = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
