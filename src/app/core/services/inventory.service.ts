@@ -70,9 +70,7 @@ export class InventoryService {
         set.add(c.trim());
       }
     }
-    if (set.size === 0) {
-      DEFAULT_INVENTORY_CATEGORIES.forEach(c => set.add(c));
-    }
+    DEFAULT_INVENTORY_CATEGORIES.forEach(c => set.add(c));
     return Array.from(set).sort();
   });
 
@@ -165,7 +163,35 @@ export class InventoryService {
             this.isLoading.set(false);
           }
         } else {
-          this.items.set(items);
+          // Sprawdź czy lokal ma wszystkie surowce ze zdefiniowanego zestawu startowego
+          const existingNames = new Set(items.map(i => i.name.toLowerCase().trim()));
+          const missing = STARTER_INGREDIENTS.filter(s => !existingNames.has(s.name.toLowerCase().trim()));
+
+          if (missing.length > 0) {
+            // Natychmiast syntetyzujemy brakujące surowce w pamięci (signal items),
+            // generując dla nich oficjalne ID dokumentów Firestore. Dzięki temu widok magazynu
+            // i dropdowny w recepturach od razu widzą Prosciutto Cotto, Salami Spianata itp. bez opóźnienia sieciowego.
+            const synthesized: InventoryItem[] = missing.map(m => {
+              const newDocRef = doc(collection(this.firestore, 'inventory'));
+              return {
+                ...m,
+                id: newDocRef.id,
+                restaurantId,
+                updatedAt: new Date().toISOString()
+              };
+            });
+
+            const fullList = [...items, ...synthesized];
+            this.items.set(fullList);
+            this.saveToLocalFallback(fullList);
+
+            if (restaurantId && restaurantId !== 'demo-restaurant') {
+              this.ensureMissingStarterIngredients(restaurantId, synthesized);
+            }
+          } else {
+            this.items.set(items);
+            this.saveToLocalFallback(items);
+          }
           this.isLoading.set(false);
         }
       }, (err) => {
@@ -180,16 +206,47 @@ export class InventoryService {
     }
   }
 
+  private isEnsuringStarter = false;
+
+  private async ensureMissingStarterIngredients(restaurantId: string, itemsToCreate: InventoryItem[]): Promise<void> {
+    if (this.isEnsuringStarter || itemsToCreate.length === 0) return;
+    this.isEnsuringStarter = true;
+
+    try {
+      const user = this.authService.currentUser();
+      if (user && user.uid === restaurantId) {
+        for (const item of itemsToCreate) {
+          try {
+            const itemDoc = doc(this.firestore, `inventory/${item.id}`);
+            await setDoc(itemDoc, this.cleanObject(item));
+          } catch (itemErr) {
+            console.warn(`Błąd zapisu surowca ${item.name} do Firestore:`, itemErr);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Błąd uzupełniania brakujących składników:', e);
+    } finally {
+      this.isEnsuringStarter = false;
+    }
+  }
+
   private async seedStarterIngredientsToFirestore(restaurantId: string): Promise<void> {
     try {
-      const inventoryCol = collection(this.firestore, 'inventory');
+      const createdItems: InventoryItem[] = [];
       for (const item of STARTER_INGREDIENTS) {
-        await addDoc(inventoryCol, this.cleanObject({
+        const itemDoc = doc(collection(this.firestore, 'inventory'));
+        const newItem: InventoryItem = {
           ...item,
+          id: itemDoc.id,
           restaurantId,
           updatedAt: new Date().toISOString()
-        }));
+        };
+        createdItems.push(newItem);
+        await setDoc(itemDoc, this.cleanObject(newItem));
       }
+      this.items.set(createdItems);
+      this.saveToLocalFallback(createdItems);
     } catch (e) {
       console.warn('Błąd zapisu składników do Firestore:', e);
       this.loadLocalFallback();
@@ -211,14 +268,30 @@ export class InventoryService {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (raw) {
       try {
-        this.items.set(JSON.parse(raw));
+        const parsed: InventoryItem[] = JSON.parse(raw);
+        const existingNames = new Set(parsed.map(i => i.name.toLowerCase().trim()));
+        const missing = STARTER_INGREDIENTS.filter(s => !existingNames.has(s.name.toLowerCase().trim()));
+        if (missing.length === 0) {
+          this.items.set(parsed);
+          return;
+        }
+        // Uzupełnij lokalnie brakujące
+        const additional: InventoryItem[] = missing.map((m, idx) => ({
+          ...m,
+          id: `local-item-${parsed.length + idx + 1}`,
+          restaurantId: 'demo-restaurant',
+          updatedAt: new Date().toISOString()
+        }));
+        const combined = [...parsed, ...additional];
+        this.items.set(combined);
+        this.saveToLocalFallback(combined);
         return;
       } catch (e) {
         // Fallback do domyślnych jeśli błąd parsowania
       }
     }
 
-    // Załaduj zestaw demonstracyjny
+    // Załaduj pełny zestaw demonstracyjny (21 surowców)
     const initialWithIds: InventoryItem[] = STARTER_INGREDIENTS.map((item, index) => ({
       ...item,
       id: `local-item-${index + 1}`,

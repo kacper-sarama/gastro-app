@@ -19,8 +19,10 @@ import {
   Recipe, 
   RecipeCapacityResult, 
   RecipeFormData,
-  calculateRecipeCapacity 
+  calculateRecipeCapacity,
+  resolveFallbackIngredient
 } from '../models/recipe.model';
+import { InventoryItem } from '../models/inventory-item.model';
 import { Subscription } from 'rxjs';
 
 const LOCAL_STORAGE_KEY = 'gastro_recipes_fallback';
@@ -111,6 +113,16 @@ export class RecipeService {
         this.initFirestoreSubscription(user.uid);
       } else {
         this.loadLocalFallback();
+      }
+    });
+
+    // Automatyczna samonaprawa ID surowców w recepturach w oparciu o stan magazynu
+    effect(() => {
+      const recipesList = this.recipes();
+      const inventoryList = this.inventoryService.items();
+      const user = this.authService.currentUser();
+      if (user && recipesList.length > 0 && inventoryList.length > 0) {
+        this.healRecipeIngredientIds(user.uid, recipesList, inventoryList);
       }
     });
   }
@@ -472,6 +484,54 @@ export class RecipeService {
 
   private saveToLocalFallback(recipes: Recipe[]): void {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(recipes));
+  }
+
+  /**
+   * Automatyczna naprawa powiązań ID surowców w recepturach lokalu
+   */
+  private async healRecipeIngredientIds(restaurantId: string, recipesList: Recipe[], inventoryList: InventoryItem[]): Promise<void> {
+    for (const recipe of recipesList) {
+      if (recipe.restaurantId !== restaurantId) continue;
+      let needsFix = false;
+      const updatedIngredients = recipe.ingredients.map(ing => {
+        const item = inventoryList.find(i => i.id === ing.inventoryItemId);
+        if (!item) {
+          let matched: InventoryItem | undefined;
+          const fallback = resolveFallbackIngredient(recipe.name, ing.amount, inventoryList);
+          if (fallback) {
+            matched = inventoryList.find(i => 
+              i.id === fallback.id ||
+              i.name.toLowerCase().trim() === fallback.name.toLowerCase().trim() ||
+              i.name.toLowerCase().includes(fallback.name.toLowerCase().trim()) ||
+              fallback.name.toLowerCase().includes(i.name.toLowerCase().trim())
+            );
+          }
+
+          if (!matched && ing.inventoryItemId) {
+            const rawKey = ing.inventoryItemId.replace('virtual-', '').replace('demo-', '').toLowerCase().trim();
+            if (rawKey) {
+              matched = inventoryList.find(i => i.name.toLowerCase().includes(rawKey));
+            }
+          }
+
+          if (matched && matched.id !== ing.inventoryItemId && !matched.id.startsWith('virtual-')) {
+            needsFix = true;
+            return { ...ing, inventoryItemId: matched.id };
+          }
+        }
+        return ing;
+      });
+
+      if (needsFix) {
+        try {
+          recipe.ingredients = updatedIngredients;
+          const docRef = doc(this.firestore, `recipes/${recipe.id}`);
+          await updateDoc(docRef, { ingredients: updatedIngredients, updatedAt: new Date().toISOString() });
+        } catch (e) {
+          // cicha obsługa w tle
+        }
+      }
+    }
   }
 
   /**

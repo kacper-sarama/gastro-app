@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, OnInit, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Recipe, RecipeIngredient, RecipeFormData, calculateRecipeCapacity } from '../../core/models/recipe.model';
+import { Recipe, RecipeIngredient, RecipeFormData, calculateRecipeCapacity, resolveFallbackIngredient } from '../../core/models/recipe.model';
 import { InventoryService } from '../../core/services/inventory.service';
 import { RecipeService } from '../../core/services/recipe.service';
 import { InventoryItem, InventoryUnit } from '../../core/models/inventory-item.model';
@@ -47,8 +47,38 @@ export class AddEditRecipeModalComponent implements OnInit {
     });
 
     if (edit && edit.ingredients && edit.ingredients.length > 0) {
+      const currentItems = this.inventoryService.items();
       for (const ing of edit.ingredients) {
-        this.addIngredient(ing.inventoryItemId, ing.amount);
+        let itemId = ing.inventoryItemId;
+        const exists = currentItems.some(i => i.id === itemId);
+
+        if (!exists) {
+          // 1. Spróbuj dopasować po regule fallback dla dania (np. Calzone -> 60g -> Prosciutto Cotto)
+          let matchedItem: InventoryItem | undefined;
+          const fallback = resolveFallbackIngredient(edit.name, ing.amount, currentItems);
+          if (fallback) {
+            matchedItem = currentItems.find(i => 
+              i.id === fallback.id ||
+              i.name.toLowerCase().trim() === fallback.name.toLowerCase().trim() ||
+              i.name.toLowerCase().includes(fallback.name.toLowerCase().trim()) ||
+              fallback.name.toLowerCase().includes(i.name.toLowerCase().trim())
+            );
+          }
+
+          // 2. Jeśli nadal brak, spróbuj dopasować po keywordzie z inventoryItemId (np. virtual-cotto -> cotto)
+          if (!matchedItem && itemId) {
+            const rawKey = itemId.replace('virtual-', '').replace('demo-', '').toLowerCase().trim();
+            if (rawKey) {
+              matchedItem = currentItems.find(i => i.name.toLowerCase().includes(rawKey));
+            }
+          }
+
+          if (matchedItem) {
+            itemId = matchedItem.id;
+          }
+        }
+
+        this.addIngredient(itemId, ing.amount);
       }
     } else {
       // Domyślnie dodaj 2 puste wiersze składników
