@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ThemeService } from '../services/theme.service';
+import { AccountSettingsModalComponent } from '../../features/account/account-settings-modal.component';
 
 interface NavItem {
   label: string;
@@ -13,7 +14,7 @@ interface NavItem {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, AccountSettingsModalComponent],
   templateUrl: './main-layout.component.html'
 })
 export class MainLayoutComponent {
@@ -22,6 +23,8 @@ export class MainLayoutComponent {
   private router = inject(Router);
 
   isMobileMenuOpen = signal(false);
+  isUserMenuOpen = signal(false);
+  isAccountModalOpen = signal(false);
 
   readonly navItems: NavItem[] = [
     { label: 'Pulpit / Dashboard', route: '/dashboard', icon: 'dashboard' },
@@ -39,7 +42,29 @@ export class MainLayoutComponent {
     this.isMobileMenuOpen.set(false);
   }
 
+  toggleUserMenu(): void {
+    this.isUserMenuOpen.update(v => !v);
+  }
+
+  closeUserMenu(): void {
+    this.isUserMenuOpen.set(false);
+  }
+
+  openAccountModal(): void {
+    this.isUserMenuOpen.set(false);
+    this.isAccountModalOpen.set(true);
+  }
+
+  closeAccountModal(): void {
+    this.isAccountModalOpen.set(false);
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
   async logout(): Promise<void> {
+    this.closeUserMenu();
     await this.authService.logout();
     await this.router.navigate(['/login']);
   }
