@@ -412,8 +412,10 @@ export class InventoryService {
     await this.updateItem(id, { amount: newAmount });
 
     if (deltaAmount > 0) {
+      const deltaStr = formatStockAmount(deltaAmount, target.unit).display;
+      const totalStr = formatStockAmount(newAmount, target.unit).display;
       this.toastService.success(
-        `Przyjęto dostawę +${formatStockAmount(deltaAmount, target.unit)} dla "${target.name}". Stan: ${formatStockAmount(newAmount, target.unit)}.`,
+        `Przyjęto dostawę +${deltaStr} dla "${target.name}". Stan: ${totalStr}.`,
         'Dostawa przyjęta'
       );
     } else if (newAmount === 0) {
@@ -422,8 +424,10 @@ export class InventoryService {
         'Brak surowca w magazynie'
       );
     } else if (newAmount <= target.minAmount) {
+      const currentStr = formatStockAmount(newAmount, target.unit).display;
+      const minStr = formatStockAmount(target.minAmount, target.unit).display;
       this.toastService.warning(
-        `Stan "${target.name}" spadł poniżej progu (${formatStockAmount(newAmount, target.unit)} / min. ${formatStockAmount(target.minAmount, target.unit)}). Wymagane zamówienie!`,
+        `Stan "${target.name}" spadł poniżej progu (${currentStr} / min. ${minStr}). Wymagane zamówienie!`,
         'Niski stan magazynowy'
       );
     }

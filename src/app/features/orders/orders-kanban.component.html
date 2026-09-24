@@ -307,9 +307,9 @@
                   {{ order.tableNumber }}
                 </span>
               </div>
-              <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <span class="material-icons-round text-xs">notifications_active</span>
-                Czeka na odbiór
+              <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono">
+                <span class="material-icons-round text-xs">schedule</span>
+                {{ getElapsedTime(order.createdAt) }}
               </span>
             </div>
 
