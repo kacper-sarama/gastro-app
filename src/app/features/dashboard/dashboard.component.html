@@ -126,7 +126,7 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
-        @for (order of activeOrders(); track order.id) {
+        @for (order of displayedActiveOrders(); track order.id) {
           <div class="p-3 rounded-lg border bg-slate-50/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
@@ -161,6 +161,27 @@
               <span class="font-bold text-slate-700 dark:text-slate-300">{{ order.totalPrice.toFixed(2) }} zł</span>
             </div>
           </div>
+        }
+
+        <!-- 6. Kafelek informujący o pozostałych zamówieniach z szybkim przejściem do KDS -->
+        @if (remainingOrdersCount() > 0) {
+          <a
+            routerLink="/orders"
+            class="p-4 rounded-lg border-2 border-dashed border-orange-300 dark:border-orange-500/30 hover:border-orange-500 bg-orange-50/40 dark:bg-orange-500/5 hover:bg-orange-100/50 dark:hover:bg-orange-500/10 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md min-h-[110px]"
+          >
+            <div class="w-9 h-9 rounded-full bg-orange-500/15 text-orange-600 dark:text-orange-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span class="material-icons-round text-xl">view_kanban</span>
+            </div>
+            <div>
+              <span class="font-extrabold text-sm text-slate-900 dark:text-white block">
+                +{{ remainingOrdersCount() }} więcej w KDS
+              </span>
+              <span class="text-[11px] text-orange-600 dark:text-orange-400 font-semibold flex items-center justify-center gap-1 mt-0.5">
+                <span>Otwórz pełną tablicę kuchni</span>
+                <span class="material-icons-round text-xs group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+              </span>
+            </div>
+          </a>
         }
       </div>
     </div>

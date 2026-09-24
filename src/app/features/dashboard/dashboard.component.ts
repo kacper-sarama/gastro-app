@@ -19,12 +19,25 @@ export class DashboardComponent {
   readonly recipeService = inject(RecipeService);
   readonly orderService = inject(OrderService);
 
-  // Ostatnie aktywne zamówienia w kolejce kuchennej (maksymalnie 5)
-  readonly activeOrders = computed(() => 
+  // Wszystkie aktywne zamówienia w kolejce kuchennej
+  readonly allActiveOrders = computed(() => 
     this.orderService.orders()
       .filter(o => o.status !== 'completed' && o.status !== 'cancelled')
-      .slice(0, 5)
   );
+
+  // Kafelki do wyświetlenia na pulpicie:
+  // Jeśli jest do 6 zamówień: pokazujemy wszystkie
+  // Jeśli jest > 6: pokazujemy 5, a 6. miejsce zajmie interaktywny kafelek "+X więcej w KDS"
+  readonly displayedActiveOrders = computed(() => {
+    const all = this.allActiveOrders();
+    return all.length > 6 ? all.slice(0, 5) : all;
+  });
+
+  // Liczba pozostałych zamówień ukrytych za kafelkiem KDS
+  readonly remainingOrdersCount = computed(() => {
+    const all = this.allActiveOrders();
+    return all.length > 6 ? all.length - 5 : 0;
+  });
 
   formatAmount(amount: number, unit: any) {
     return formatStockAmount(amount, unit);
