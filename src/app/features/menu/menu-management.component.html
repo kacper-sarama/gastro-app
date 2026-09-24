@@ -152,11 +152,10 @@
               @let isManualActive = dish.isAvailable !== false;
 
               <div
-                class="gastro-card border transition-all flex flex-col justify-between"
+                class="gastro-card border transition-all flex flex-col justify-between hover:shadow-md"
                 [ngClass]="{
-                  'opacity-60 bg-slate-50/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800': !isManualActive,
-                  'border-rose-300 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10': isManualActive && isSoldOut,
-                  'hover:border-slate-400 dark:hover:border-slate-600': isManualActive && !isSoldOut
+                  'border-rose-300 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10': isSoldOut,
+                  'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700': !isSoldOut
                 }"
               >
                 <!-- Top Card Info -->
@@ -241,18 +240,36 @@
                       <span class="material-icons-round text-lg">{{ dish.isFeatured ? 'star' : 'star_border' }}</span>
                     </button>
 
-                    <!-- Toggle Availability Button -->
+                    <!-- iOS Style Toggle Switch -->
                     <button
                       type="button"
                       (click)="toggleAvailability(dish)"
-                      class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 border"
-                      [ngClass]="isManualActive 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100' 
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-200'"
-                      title="Przełącz widoczność w karcie gościa"
+                      class="flex items-center gap-2 group/toggle cursor-pointer select-none focus:outline-none p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors shrink-0"
+                      [title]="isManualActive ? 'Danie aktywne w karcie (kliknij, aby ukryć przed gośćmi)' : 'Danie ukryte (kliknij, aby włączyć do karty)'"
                     >
-                      <span class="material-icons-round text-sm">{{ isManualActive ? 'toggle_on' : 'toggle_off' }}</span>
-                      <span>{{ isManualActive ? 'W karcie' : 'Ukryte' }}</span>
+                      <span
+                        class="text-xs font-semibold whitespace-nowrap transition-colors"
+                        [class.text-emerald-600]="isManualActive"
+                        [class.dark:text-emerald-400]="isManualActive"
+                        [class.text-slate-400]="!isManualActive"
+                      >
+                        {{ isManualActive ? 'W karcie' : 'Ukryte' }}
+                      </span>
+
+                      <!-- Switch Track: w-9 (36px), p-0.5 (2px), shrink-0 -->
+                      <div
+                        class="w-9 h-5 rounded-full transition-colors duration-200 ease-in-out relative p-0.5 shrink-0"
+                        [class.bg-emerald-500]="isManualActive"
+                        [class.bg-slate-300]="!isManualActive"
+                        [class.dark:bg-slate-700]="!isManualActive"
+                      >
+                        <!-- Thumb: w-4 h-4 (16px), przesuwa się idealnie o 16px (translate-x-4) -->
+                        <div
+                          class="w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out"
+                          [class.translate-x-4]="isManualActive"
+                          [class.translate-x-0]="!isManualActive"
+                        ></div>
+                      </div>
                     </button>
                   </div>
                 </div>
