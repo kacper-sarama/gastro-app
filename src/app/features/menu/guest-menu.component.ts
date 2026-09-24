@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { RecipeService } from '../../core/services/recipe.service';
 import { InventoryService } from '../../core/services/inventory.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { Recipe, RecipeCapacityResult } from '../../core/models/recipe.model';
+import { Recipe, RecipeCapacityResult, resolveFallbackIngredient } from '../../core/models/recipe.model';
 
 @Component({
   selector: 'app-guest-menu',
@@ -53,10 +53,21 @@ export class GuestMenuComponent implements OnInit {
     const dishes = this.filteredDishes();
     const cats = this.categories();
 
-    return cats.map(cat => ({
+    const groups = cats.map(cat => ({
       category: cat,
       items: dishes.filter(d => (d.category || '').toLowerCase() === cat.toLowerCase())
     })).filter(g => g.items.length > 0);
+
+    // Awaryjne dołączenie pozycji, jeśli którakolwiek nie miała przypisanej kategorii
+    const uncategorized = dishes.filter(d => !d.category || !cats.some(c => c.toLowerCase() === d.category.toLowerCase()));
+    if (uncategorized.length > 0) {
+      groups.push({
+        category: 'Inne',
+        items: uncategorized
+      });
+    }
+
+    return groups;
   });
 
   getCapacity(recipeId: string): RecipeCapacityResult {
@@ -71,7 +82,19 @@ export class GuestMenuComponent implements OnInit {
   getIngredientNames(recipe: Recipe): string[] {
     const items = this.inventoryService.items();
     return (recipe.ingredients || [])
-      .map(ing => items.find(i => i.id === ing.inventoryItemId)?.name)
+      .map(ing => {
+        let item = items.find(i => i.id === ing.inventoryItemId);
+        if (!item) {
+          item = resolveFallbackIngredient(recipe.name, ing.amount, items);
+        }
+        if (!item && ing.inventoryItemId) {
+          const rawKey = ing.inventoryItemId.replace('virtual-', '').replace('demo-', '').toLowerCase().trim();
+          if (rawKey && rawKey !== 'ing') {
+            item = items.find(i => i.name.toLowerCase().includes(rawKey));
+          }
+        }
+        return item?.name;
+      })
       .filter((name): name is string => !!name);
   }
 }
