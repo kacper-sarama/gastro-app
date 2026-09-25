@@ -34,11 +34,65 @@ export class AuthService {
   // Signal określający stan zalogowania
   readonly isLoggedIn = computed(() => !!this.currentUser());
 
+  // Czy zalogowane konto to konto demonstracyjne
+  readonly isDemoAccount = computed(() => {
+    const u = this.currentUser();
+    return u?.email === 'demo@gastroapp.pl';
+  });
+
+  // Identyfikator aktualnego użytkownika (bezpośrednio z Auth SDK lub sygnału)
+  get currentUserId(): string | null {
+    return this.auth.currentUser?.uid || this.currentUser()?.uid || null;
+  }
+
+  constructor() {
+    this.purgeLegacyStorage();
+  }
+
   // Nazwa restauracji lub wyświetlana nazwa
   readonly restaurantName = computed(() => {
     const u = this.currentUser();
     return u?.displayName || 'Mój Lokal';
   });
+
+  /**
+   * Resetuje wszystkie dane konta demo (magazyn, menu, zamówienia, ustawienia)
+   */
+  async resetDemoAccount(
+    inventoryService: { resetToStarter: (id: string) => Promise<void> },
+    recipeService: { resetToStarter: (id: string) => Promise<void> },
+    orderService: { resetToStarter: (id: string) => Promise<void> }
+  ): Promise<void> {
+    const u = this.auth.currentUser;
+    if (!u || u.email !== 'demo@gastroapp.pl') {
+      throw new Error('Tylko konto demonstracyjne może zostać zresetowane.');
+    }
+
+    const defaultName = 'Pizzeria Bella Napoli (Demo)';
+    await updateProfile(u, { displayName: defaultName });
+
+    const settingsDoc = doc(this.firestore, `restaurant_settings/${u.uid}`);
+    await setDoc(settingsDoc, {
+      restaurantName: defaultName,
+      recipeCategories: [
+        'Pizza Rossa (na czerwono)',
+        'Pizza Bianca (na biało)',
+        'Calzone (pizza zawijana)',
+        'Focaccia (włoskie pieczywo)',
+        'Desery (włoskie słodkości)'
+      ],
+      inventoryCategories: [
+        'Suche', 'Nabiał', 'Przetwory', 'Warzywa', 'Mięso i wędliny', 'Dodatki', 'Tłuszcze', 'Zioła'
+      ],
+      updatedAt: new Date().toISOString()
+    });
+
+    await inventoryService.resetToStarter(u.uid);
+    await recipeService.resetToStarter(u.uid);
+    await orderService.resetToStarter(u.uid);
+
+    this.toastService.success('Pomyślnie przywrócono stan fabryczny konta Demo!', 'Reset Demo');
+  }
 
   // Rejestracja nowego restauratora
   async register(email: string, pass: string, restaurantName: string): Promise<User> {
@@ -76,9 +130,39 @@ export class AuthService {
     return credential.user;
   }
 
+  // Szybkie logowanie na konto demonstracyjne (1-kliknięcie)
+  async loginAsDemo(): Promise<User> {
+    const demoEmail = 'demo@gastroapp.pl';
+    const demoPass = 'GastroDemo2026!';
+    try {
+      const cred = await signInWithEmailAndPassword(this.auth, demoEmail, demoPass);
+      return cred.user;
+    } catch (err: any) {
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        return await this.register(demoEmail, demoPass, 'Pizzeria Bella Napoli (Demo)');
+      }
+      throw err;
+    }
+  }
+
   // Wylogowanie
   async logout(): Promise<void> {
+    this.purgeLegacyStorage();
     await signOut(this.auth);
+  }
+
+  // Czyści przestarzałe klucze localStorage (przejście na 100% Firebase)
+  purgeLegacyStorage(): void {
+    const legacyKeys = [
+      'gastro_inventory_items_fallback',
+      'gastro_inventory_categories_fallback',
+      'gastro_recipes_fallback',
+      'gastro_recipe_categories_fallback',
+      'gastro_orders_fallback'
+    ];
+    for (const key of legacyKeys) {
+      localStorage.removeItem(key);
+    }
   }
 
   /**

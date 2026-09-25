@@ -189,19 +189,20 @@
               <circle
                 [attr.cx]="pt.x"
                 [attr.cy]="pt.y"
-                r="3"
-                class="fill-white dark:fill-slate-900 stroke-sky-500 hover:r-4 transition-all"
-                stroke-width="2"
-              />
+                r="3.5"
+                class="fill-white dark:fill-slate-900 stroke-sky-500 hover:r-5 transition-all cursor-pointer"
+                stroke-width="2.5"
+              >
+                <title>{{ pt.label }} – {{ pt.count }} zam.</title>
+              </circle>
             }
           </svg>
 
-          <!-- Oznaczenia godzin na osi X -->
-          <div class="flex items-center justify-between text-[9px] text-slate-400 px-0.5 mt-1 font-mono">
-            <span>10:00</span>
-            <span>14:00</span>
-            <span>18:00</span>
-            <span>22:00</span>
+          <!-- Oznaczenia godzin na osi X (dynamiczne ostatnie 5h + bieżąca) -->
+          <div class="flex items-center justify-between text-[8px] sm:text-[9px] text-slate-400 px-0.5 mt-1 font-mono">
+            @for (pt of hourlyStats().points; track pt.label) {
+              <span>{{ pt.label }}</span>
+            }
           </div>
         </div>
       </div>

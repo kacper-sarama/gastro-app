@@ -1,17 +1,18 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
-import { Firestore } from '@angular/fire/firestore';
 import { 
+  Firestore,
   collection, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
   doc, 
   query, 
-  where,
-  onSnapshot,
-  setDoc,
+  where, 
+  onSnapshot, 
+  setDoc, 
+  getDocs,
   Unsubscribe 
-} from 'firebase/firestore';
+} from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
 import { InventoryService } from './inventory.service';
 import { ToastService } from './toast.service';
@@ -23,10 +24,6 @@ import {
   resolveFallbackIngredient
 } from '../models/recipe.model';
 import { InventoryItem } from '../models/inventory-item.model';
-import { Subscription } from 'rxjs';
-
-const LOCAL_STORAGE_KEY = 'gastro_recipes_fallback';
-const CATEGORIES_STORAGE_KEY = 'gastro_recipe_categories_fallback';
 
 @Injectable({
   providedIn: 'root'
@@ -42,15 +39,23 @@ export class RecipeService {
   readonly isLoading = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
 
-  private firestoreUnsub: Unsubscribe | null = null;
-  private categoriesUnsub: Unsubscribe | null = null;
+  // Nazwa lokalu pobrana z ustawień (dla karty menu gościa)
+  readonly activeRestaurantName = signal<string>('');
 
-  // Wszystkie unikalne kategorie dań (z przepisów oraz zdefiniowane ręcznie)
+  // Unikalne kategorie receptur (z dań oraz zdefiniowane ręcznie)
   readonly allCategories = computed<string[]>(() => {
     const set = new Set<string>();
-    for (const r of this.recipes()) {
-      if (r.category && r.category.trim()) {
-        set.add(r.category.trim());
+    const defaultCats = [
+      'Pizza Rossa (na czerwono)',
+      'Pizza Bianca (na biało)',
+      'Calzone (pizza zawijana)',
+      'Focaccia (włoskie pieczywo)',
+      'Desery (włoskie słodkości)'
+    ];
+
+    for (const recipe of this.recipes()) {
+      if (recipe.category && recipe.category.trim()) {
+        set.add(recipe.category.trim());
       }
     }
     for (const c of this.customCategories()) {
@@ -58,15 +63,8 @@ export class RecipeService {
         set.add(c.trim());
       }
     }
-    // Domyślne jeśli brak
-    if (set.size === 0) {
-      set.add('Pizza Rossa (na czerwono)');
-      set.add('Pizza Bianca (na biało)');
-      set.add('Calzone (pizza zawijana)');
-      set.add('Focaccia (włoskie pieczywo)');
-      set.add('Desery (włoskie słodkości)');
-    }
-    return Array.from(set).sort((a, b) => a.localeCompare(b, 'pl'));
+    defaultCats.forEach(c => set.add(c));
+    return Array.from(set).sort();
   });
 
   // Liczba dań w danej kategorii
@@ -75,20 +73,18 @@ export class RecipeService {
     return this.recipes().filter(r => (r.category || '').trim().toLowerCase() === target).length;
   }
 
-  // Mapa wyliczonej wydajności per ID receptury (reaktywna na zmiany magazynu i receptur)
+  // Reaktywna mapa wydajności [recipeId -> RecipeCapacityResult]
   readonly capacitiesMap = computed<Map<string, RecipeCapacityResult>>(() => {
-    const recipesList = this.recipes();
-    const inventoryList = this.inventoryService.items();
     const map = new Map<string, RecipeCapacityResult>();
+    const inventory = this.inventoryService.items();
+    const recipeList = this.recipes();
 
-    for (const recipe of recipesList) {
-      map.set(recipe.id, calculateRecipeCapacity(recipe, inventoryList));
+    for (const recipe of recipeList) {
+      map.set(recipe.id, calculateRecipeCapacity(recipe, inventory));
     }
-
     return map;
   });
 
-  // Metryki wydajności kuchni
   readonly totalRecipesCount = computed(() => this.recipes().length);
 
   readonly availableRecipesCount = computed(() => {
@@ -106,13 +102,16 @@ export class RecipeService {
     return Array.from(capacities.values()).filter(c => c.status === 'blocked').length;
   });
 
+  private firestoreUnsub: Unsubscribe | null = null;
+  private categoriesUnsub: Unsubscribe | null = null;
+
   constructor() {
     effect(() => {
       const user = this.authService.currentUser();
       if (user) {
         this.initFirestoreSubscription(user.uid);
       } else {
-        this.loadLocalFallback();
+        this.cleanupState();
       }
     });
 
@@ -127,6 +126,21 @@ export class RecipeService {
     });
   }
 
+  private cleanupState(): void {
+    if (this.firestoreUnsub) {
+      this.firestoreUnsub();
+      this.firestoreUnsub = null;
+    }
+    if (this.categoriesUnsub) {
+      this.categoriesUnsub();
+      this.categoriesUnsub = null;
+    }
+    this.recipes.set([]);
+    this.customCategories.set([]);
+    this.activeRestaurantName.set('');
+    this.isLoading.set(false);
+  }
+
   getCapacity(recipeId: string): RecipeCapacityResult {
     return this.capacitiesMap().get(recipeId) || {
       maxPortions: 0,
@@ -135,9 +149,6 @@ export class RecipeService {
     };
   }
 
-  // Nazwa lokalu pobrana z ustawień (dla karty menu gościa)
-  readonly activeRestaurantName = signal<string>('');
-
   /**
    * Pozwala załadować receptury i kategorie wskazanego lokalu (dla gościa z kodu QR)
    */
@@ -145,7 +156,7 @@ export class RecipeService {
     if (restaurantId && restaurantId !== 'demo-restaurant') {
       this.initFirestoreSubscription(restaurantId);
     } else {
-      this.loadLocalFallback();
+      this.cleanupState();
     }
   }
 
@@ -173,8 +184,8 @@ export class RecipeService {
             this.activeRestaurantName.set(data['restaurantName']);
           }
         }
-      }, () => {
-        // Fallback jeśli brak dokumentu ustawień
+      }, (err) => {
+        console.warn('Błąd subskrypcji ustawień lokalu:', err);
       });
 
       // 2. Subskrypcja receptur
@@ -189,7 +200,7 @@ export class RecipeService {
 
         if (items.length === 0) {
           // Tylko zalogowany właściciel może seedować startowe receptury do Firestore
-          if (this.authService.currentUser()?.uid === restaurantId) {
+          if (this.authService.currentUserId === restaurantId) {
             this.seedStarterRecipes(restaurantId);
           } else {
             this.recipes.set([]);
@@ -200,13 +211,12 @@ export class RecipeService {
           this.isLoading.set(false);
         }
       }, (err) => {
-        console.warn('Firestore recipes fallback to local storage:', err);
-        this.loadLocalFallback();
+        console.error('Błąd subskrypcji receptur Firestore:', err);
+        this.errorMessage.set('Błąd połączenia z bazą danych receptur.');
         this.isLoading.set(false);
       });
     } catch (err) {
-      console.warn('Firestore recipes initialization error:', err);
-      this.loadLocalFallback();
+      console.error('Błąd inicjalizacji subskrypcji receptur:', err);
       this.isLoading.set(false);
     }
   }
@@ -445,45 +455,23 @@ export class RecipeService {
         }));
       }
     } catch (err) {
-      console.warn('Błąd zapisu startowych receptur do Firestore:', err);
-      this.loadLocalFallback();
+      console.error('Błąd zapisu startowych receptur do Firestore:', err);
+      this.toastService.danger('Nie udało się utworzyć początkowych receptur.', 'Baza danych');
     } finally {
       this.isLoading.set(false);
     }
   }
 
-  private loadLocalFallback(): void {
-    const rawCats = localStorage.getItem(CATEGORIES_STORAGE_KEY);
-    if (rawCats) {
-      try {
-        this.customCategories.set(JSON.parse(rawCats));
-      } catch {}
+  /**
+   * Resetuje receptury lokalu do stanu fabrycznego (dla konta demo)
+   */
+  async resetToStarter(restaurantId: string): Promise<void> {
+    const q = query(collection(this.firestore, 'recipes'), where('restaurantId', '==', restaurantId));
+    const snap = await getDocs(q);
+    for (const d of snap.docs) {
+      await deleteDoc(d.ref);
     }
-
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        const isModern = Array.isArray(parsed) && parsed.some((p: any) => p.category?.includes('Rossa') || p.category?.includes('Desery'));
-        if (isModern) {
-          this.recipes.set(parsed);
-          return;
-        }
-      } catch {}
-    }
-
-    const starterRecipes = this.getStarterRecipes('demo-restaurant');
-    const demoRecipes: Recipe[] = starterRecipes.map((r, idx) => ({
-      ...r,
-      id: `recipe-starter-${idx + 1}`
-    }));
-
-    this.recipes.set(demoRecipes);
-    this.saveToLocalFallback(demoRecipes);
-  }
-
-  private saveToLocalFallback(recipes: Recipe[]): void {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(recipes));
+    await this.seedStarterRecipes(restaurantId);
   }
 
   /**
@@ -547,85 +535,60 @@ export class RecipeService {
     return result;
   }
 
-  // --- Operacje lokalne (tryb demo / offline) ---
-
-  private addLocalRecipe(recipe: Recipe): void {
-    const updated = [recipe, ...this.recipes()];
-    this.recipes.set(updated);
-    this.saveToLocalFallback(updated);
-  }
-
-  private updateLocalRecipe(id: string, fields: Partial<Recipe>): void {
-    const updated = this.recipes().map(r => r.id === id ? { ...r, ...fields } : r);
-    this.recipes.set(updated);
-    this.saveToLocalFallback(updated);
-  }
-
-  private deleteLocalRecipe(id: string): void {
-    const updated = this.recipes().filter(r => r.id !== id);
-    this.recipes.set(updated);
-    this.saveToLocalFallback(updated);
-  }
-
-  // --- Główne metody CRUD ---
+  // --- Główne metody CRUD (wyłącznie Firebase Firestore) ---
 
   async addRecipe(data: RecipeFormData): Promise<void> {
     const user = this.authService.currentUser();
+    if (!user) {
+      this.toastService.danger('Musisz być zalogowany, aby dodać recepturę.', 'Brak autoryzacji');
+      return;
+    }
+
     const recipeData = this.cleanObject({
       ...data,
-      restaurantId: user ? user.uid : 'demo-restaurant',
+      restaurantId: user.uid,
       updatedAt: new Date().toISOString()
     });
 
-    if (user) {
-      try {
-        await addDoc(collection(this.firestore, 'recipes'), recipeData);
-        this.toastService.success(`Pomyślnie dodano nową recepturę "${data.name}".`, 'Baza receptur');
-        return;
-      } catch (err) {
-        console.warn('Błąd zapisu receptury do Firestore, używam trybu lokalnego:', err);
-      }
+    try {
+      await addDoc(collection(this.firestore, 'recipes'), recipeData);
+      this.toastService.success(`Pomyślnie dodano nową recepturę "${data.name}".`, 'Baza receptur');
+    } catch (err) {
+      console.error('Błąd zapisu receptury do Firestore:', err);
+      this.toastService.danger('Nie udało się zapisać receptury w bazie.', 'Błąd');
     }
-
-    this.addLocalRecipe({ ...recipeData, id: `recipe-local-${Date.now()}` } as Recipe);
-    this.toastService.success(`Pomyślnie dodano nową recepturę "${data.name}".`, 'Baza receptur');
   }
 
   async updateRecipe(id: string, partial: Partial<Recipe>): Promise<void> {
     const user = this.authService.currentUser();
+    if (!user) return;
+
     const fields = this.cleanObject({
       ...partial,
       updatedAt: new Date().toISOString()
     });
 
-    if (user && !id.startsWith('recipe-local-')) {
-      try {
-        await updateDoc(doc(this.firestore, `recipes/${id}`), fields);
-        return;
-      } catch (err) {
-        console.warn('Błąd aktualizacji receptury w Firestore:', err);
-      }
+    try {
+      await updateDoc(doc(this.firestore, `recipes/${id}`), fields);
+    } catch (err) {
+      console.error('Błąd aktualizacji receptury w Firestore:', err);
+      this.toastService.danger('Nie udało się zaktualizować receptury.', 'Błąd');
     }
-
-    this.updateLocalRecipe(id, fields);
   }
 
   async deleteRecipe(id: string): Promise<void> {
     const user = this.authService.currentUser();
+    if (!user) return;
+
     const target = this.recipes().find(r => r.id === id);
 
-    if (user && !id.startsWith('recipe-local-')) {
-      try {
-        await deleteDoc(doc(this.firestore, `recipes/${id}`));
-        this.toastService.danger(`Usunięto recepturę "${target?.name || 'Danie'}".`, 'Baza receptur');
-        return;
-      } catch (err) {
-        console.warn('Błąd usuwania receptury z Firestore:', err);
-      }
+    try {
+      await deleteDoc(doc(this.firestore, `recipes/${id}`));
+      this.toastService.danger(`Usunięto recepturę "${target?.name || 'Danie'}".`, 'Baza receptur');
+    } catch (err) {
+      console.error('Błąd usuwania receptury z Firestore:', err);
+      this.toastService.danger('Nie udało się usunąć receptury.', 'Błąd');
     }
-
-    this.deleteLocalRecipe(id);
-    this.toastService.danger(`Usunięto recepturę "${target?.name || 'Danie'}".`, 'Baza receptur');
   }
 
   /**
@@ -656,10 +619,6 @@ export class RecipeService {
 
   // --- ZARZĄDZANIE KATEGORIAMI DAŃ ---
 
-  private saveCategoriesToStorage(categories: string[]): void {
-    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
-  }
-
   private async syncCategoriesToFirestore(categories: string[]): Promise<void> {
     const user = this.authService.currentUser();
     if (user) {
@@ -687,7 +646,6 @@ export class RecipeService {
 
     const updated = Array.from(new Set([...this.customCategories(), trimmed]));
     this.customCategories.set(updated);
-    this.saveCategoriesToStorage(updated);
     await this.syncCategoriesToFirestore(updated);
     return true;
   }
@@ -708,8 +666,8 @@ export class RecipeService {
     );
 
     // 1. Zaktualizuj przepisy w Firestore
-    for (const r of affected) {
-      if (user && !r.id.startsWith('recipe-local-')) {
+    if (user) {
+      for (const r of affected) {
         try {
           const docRef = doc(this.firestore, `recipes/${r.id}`);
           await updateDoc(docRef, { 
@@ -722,16 +680,7 @@ export class RecipeService {
       }
     }
 
-    // 2. Zaktualizuj stan lokalny przepisów
-    const updatedRecipes = this.recipes().map(r => 
-      (r.category || '').trim().toLowerCase() === trimmedOld.toLowerCase()
-        ? { ...r, category: trimmedNew, updatedAt: new Date().toISOString() } 
-        : r
-    );
-    this.recipes.set(updatedRecipes);
-    this.saveToLocalFallback(updatedRecipes);
-
-    // 3. Zaktualizuj listę zdefiniowanych kategorii
+    // 2. Zaktualizuj listę zdefiniowanych kategorii
     const currentCustom = this.customCategories();
     const newCustom = currentCustom.map(c => 
       c.trim().toLowerCase() === trimmedOld.toLowerCase() ? trimmedNew : c
@@ -741,7 +690,6 @@ export class RecipeService {
     }
     const cleanCustom = Array.from(new Set(newCustom));
     this.customCategories.set(cleanCustom);
-    this.saveCategoriesToStorage(cleanCustom);
     await this.syncCategoriesToFirestore(cleanCustom);
 
     return true;
@@ -760,28 +708,18 @@ export class RecipeService {
     );
 
     // 1. Jeśli kategoria miała przypisane dania, przepisz je na wybraną kategorię docelową
-    if (affected.length > 0) {
+    if (affected.length > 0 && user) {
       for (const r of affected) {
-        if (user && !r.id.startsWith('recipe-local-')) {
-          try {
-            const docRef = doc(this.firestore, `recipes/${r.id}`);
-            await updateDoc(docRef, { 
-              category: fallback, 
-              updatedAt: new Date().toISOString() 
-            });
-          } catch (err) {
-            console.warn(`Error reassigning category for recipe ${r.id}:`, err);
-          }
+        try {
+          const docRef = doc(this.firestore, `recipes/${r.id}`);
+          await updateDoc(docRef, { 
+            category: fallback, 
+            updatedAt: new Date().toISOString() 
+          });
+        } catch (err) {
+          console.warn(`Error reassigning category for recipe ${r.id}:`, err);
         }
       }
-
-      const updatedRecipes = this.recipes().map(r => 
-        (r.category || '').trim().toLowerCase() === trimmed.toLowerCase()
-          ? { ...r, category: fallback, updatedAt: new Date().toISOString() } 
-          : r
-      );
-      this.recipes.set(updatedRecipes);
-      this.saveToLocalFallback(updatedRecipes);
     }
 
     // 2. Usuń kategorię z listy customCategories
@@ -789,7 +727,6 @@ export class RecipeService {
       c => c.trim().toLowerCase() !== trimmed.toLowerCase()
     );
     this.customCategories.set(cleanCustom);
-    this.saveCategoriesToStorage(cleanCustom);
     await this.syncCategoriesToFirestore(cleanCustom);
   }
 }

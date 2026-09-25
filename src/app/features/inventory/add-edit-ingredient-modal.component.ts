@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { InventoryItem, InventoryUnit } from '../../core/models/inventory-item.model';
 import { InventoryService } from '../../core/services/inventory.service';
 import { CategorySelectorComponent } from '../../shared/components/category-selector/category-selector.component';
@@ -38,6 +38,15 @@ export class AddEditIngredientModalComponent implements OnInit {
     return this.form?.get('unit')?.value || 'g';
   }
 
+  private uniqueNameValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return null;
+    const name = control.value.toString().trim().toLowerCase();
+    const existing = this.inventoryService.items().find(i => 
+      i.id !== this.itemToEdit?.id && i.name.trim().toLowerCase() === name
+    );
+    return existing ? { duplicateName: true } : null;
+  }
+
   ngOnInit(): void {
     const edit = this.itemToEdit;
 
@@ -63,7 +72,7 @@ export class AddEditIngredientModalComponent implements OnInit {
     }
 
     this.form = this.fb.group({
-      name: [edit?.name || '', [Validators.required, Validators.minLength(2)]],
+      name: [edit?.name || '', [Validators.required, Validators.minLength(2), (c: AbstractControl) => this.uniqueNameValidator(c)]],
       unit: [edit?.unit || 'g', [Validators.required]],
       category: [edit?.category || ''],
       displayAmount: [displayAmount, [Validators.required, Validators.min(0)]],

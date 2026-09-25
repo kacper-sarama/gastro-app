@@ -121,22 +121,34 @@ export class OrdersStatsBarComponent {
 
   // ========================================================
   // 3. WYKRES LINIOWY: Szczyty zamówień w ciągu dnia (Timeline)
+  // Ostatnie 5 godzin wstecz + bieżąca godzina (np. 18:00, 19:00, 20:00, 21:00, 22:00, 23:00)
   // ========================================================
   readonly hourlyStats = computed(() => {
     const orders = this.orderService.orders();
-    const slots = [
-      { label: '10-12', start: 10, end: 12 },
-      { label: '12-14', start: 12, end: 14 },
-      { label: '14-16', start: 14, end: 16 },
-      { label: '16-18', start: 16, end: 18 },
-      { label: '18-20', start: 18, end: 20 },
-      { label: '20-22', start: 20, end: 22 }
-    ];
+    const nowTime = this.orderService.currentTime();
+    const now = new Date(nowTime);
+    const currentHour = now.getHours();
+
+    // 6 punktów: ostatnie 5 godzin wstecz aż do bieżącej godziny
+    // np. dla 13:00 -> 8:00, 9:00, 10:00, 11:00, 12:00, 13:00
+    // np. dla 23:00 -> 18:00, 19:00, 20:00, 21:00, 22:00, 23:00
+    const slots: { label: string; hour: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const h = (currentHour - i + 24) % 24;
+      slots.push({
+        label: `${h}:00`,
+        hour: h
+      });
+    }
 
     const slotCounts = slots.map(slot => {
       const count = orders.filter(o => {
-        const hour = new Date(o.createdAt).getHours();
-        return hour >= slot.start && hour < slot.end;
+        const orderDate = new Date(o.createdAt);
+        // Uwzględniamy zamówienia z ostatnich 12 godzin (bieżące okno)
+        const diffHours = (nowTime - orderDate.getTime()) / (1000 * 60 * 60);
+        if (diffHours < 0 || diffHours > 12) return false;
+
+        return orderDate.getHours() === slot.hour;
       }).length;
       return { label: slot.label, count };
     });

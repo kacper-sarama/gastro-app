@@ -36,7 +36,11 @@
           [class.border-rose-500]="form.get('name')?.touched && form.get('name')?.invalid"
         />
         @if (form.get('name')?.touched && form.get('name')?.invalid) {
-          <p class="text-rose-600 dark:text-rose-400 text-xs mt-1">Nazwa składnika jest wymagana (min. 2 znaki).</p>
+          @if (form.get('name')?.hasError('duplicateName')) {
+            <p class="text-rose-600 dark:text-rose-400 text-xs mt-1">Surowiec o tej nazwie już istnieje w Twoim magazynie.</p>
+          } @else {
+            <p class="text-rose-600 dark:text-rose-400 text-xs mt-1">Nazwa składnika jest wymagana (min. 2 znaki).</p>
+          }
         }
       </div>
 

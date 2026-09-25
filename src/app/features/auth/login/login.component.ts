@@ -47,4 +47,19 @@ export class LoginComponent {
       this.isLoading.set(false);
     }
   }
+
+  async loginAsDemo(): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    try {
+      await this.authService.loginAsDemo();
+      const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+      await this.router.navigateByUrl(returnUrl);
+    } catch (err: any) {
+      this.errorMessage.set(this.authService.formatFirebaseError(err.code || ''));
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
 }

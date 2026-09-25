@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed, effect, OnDestroy } from '@angular/core';
-import { Firestore } from '@angular/fire/firestore';
 import { 
+  Firestore,
   collection, 
   addDoc, 
   updateDoc, 
@@ -9,15 +9,14 @@ import {
   query, 
   where, 
   onSnapshot, 
+  getDocs,
   Unsubscribe 
-} from 'firebase/firestore';
+} from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
 import { InventoryService } from './inventory.service';
 import { RecipeService } from './recipe.service';
 import { ToastService } from './toast.service';
 import { Order, OrderItem, OrderStatus, CreateOrderDto } from '../models/order.model';
-
-const LOCAL_STORAGE_KEY = 'gastro_orders_fallback';
 
 @Injectable({
   providedIn: 'root'
@@ -81,9 +80,18 @@ export class OrderService implements OnDestroy {
       if (user) {
         this.initFirestoreSubscription(user.uid);
       } else {
-        this.loadLocalFallback();
+        this.cleanupState();
       }
     });
+  }
+
+  private cleanupState(): void {
+    if (this.firestoreUnsub) {
+      this.firestoreUnsub();
+      this.firestoreUnsub = null;
+    }
+    this.orders.set([]);
+    this.isLoading.set(false);
   }
 
   /**
@@ -122,7 +130,12 @@ export class OrderService implements OnDestroy {
         } as Order));
 
         if (items.length === 0) {
-          this.seedStarterOrders(restaurantId);
+          if (this.authService.currentUserId === restaurantId) {
+            this.seedStarterOrders(restaurantId);
+          } else {
+            this.orders.set([]);
+            this.isLoading.set(false);
+          }
         } else {
           // Sortuj od najnowszych
           items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -130,13 +143,12 @@ export class OrderService implements OnDestroy {
           this.isLoading.set(false);
         }
       }, (err) => {
-        console.warn('Błąd subskrypcji zamówień Firestore, używam trybu lokalnego:', err);
-        this.loadLocalFallback();
+        console.error('Błąd subskrypcji zamówień Firestore:', err);
+        this.errorMessage.set('Błąd połączenia z bazą zamówień.');
         this.isLoading.set(false);
       });
     } catch (err) {
-      console.warn('Błąd inicjalizacji zamówień Firestore:', err);
-      this.loadLocalFallback();
+      console.error('Błąd inicjalizacji zamówień Firestore:', err);
       this.isLoading.set(false);
     }
   }
@@ -149,6 +161,25 @@ export class OrderService implements OnDestroy {
 
     const now = Date.now();
     const starterOrders: Omit<Order, 'id'>[] = [
+      {
+        restaurantId,
+        orderNumber: 100,
+        tableNumber: 'Stolik 1',
+        status: 'completed',
+        stockDeducted: true,
+        items: [
+          {
+            recipeId: margherita?.id || 'recipe-margherita',
+            recipeName: margherita?.name || 'Pizza Margherita 32cm',
+            quantity: 1,
+            unitPrice: margherita?.sellingPrice || 36,
+            category: margherita?.category || 'Pizza Rossa (na czerwono)'
+          }
+        ],
+        totalPrice: margherita?.sellingPrice || 36,
+        createdAt: new Date(now - 80 * 60 * 1000).toISOString(),
+        updatedAt: new Date(now - 50 * 60 * 1000).toISOString()
+      },
       {
         restaurantId,
         orderNumber: 101,
@@ -221,107 +252,22 @@ export class OrderService implements OnDestroy {
         await addDoc(col, this.cleanObject(ord));
       }
     } catch (e) {
-      console.warn('Błąd zapisu zamówień do Firestore:', e);
-      this.loadLocalFallback();
+      console.error('Błąd zapisu zamówień startowych do Firestore:', e);
     } finally {
       this.isLoading.set(false);
     }
   }
 
-  private loadLocalFallback(): void {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (raw) {
-      try {
-        const parsed: Order[] = JSON.parse(raw);
-        parsed.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        this.orders.set(parsed);
-        return;
-      } catch {}
+  /**
+   * Resetuje zamówienia lokalu do stanu fabrycznego (dla konta demo)
+   */
+  async resetToStarter(restaurantId: string): Promise<void> {
+    const q = query(collection(this.firestore, 'orders'), where('restaurantId', '==', restaurantId));
+    const snap = await getDocs(q);
+    for (const d of snap.docs) {
+      await deleteDoc(d.ref);
     }
-
-    // Domyślne dane demonstracyjne
-    const recipes = this.recipeService.recipes();
-    const margherita = recipes.find(r => r.name.toLowerCase().includes('margherita'));
-    const funghi = recipes.find(r => r.name.toLowerCase().includes('funghi'));
-    const focaccia = recipes.find(r => r.name.toLowerCase().includes('focaccia'));
-
-    const now = Date.now();
-    const demoOrders: Order[] = [
-      {
-        id: 'order-demo-101',
-        restaurantId: 'demo-restaurant',
-        orderNumber: 101,
-        tableNumber: 'Stolik 2',
-        status: 'in_progress',
-        stockDeducted: false,
-        items: [
-          {
-            recipeId: margherita?.id || 'recipe-margherita',
-            recipeName: margherita?.name || 'Pizza Margherita 32cm',
-            quantity: 2,
-            unitPrice: margherita?.sellingPrice || 36,
-            category: margherita?.category || 'Pizza Rossa (na czerwono)'
-          }
-        ],
-        totalPrice: (margherita?.sellingPrice || 36) * 2,
-        createdAt: new Date(now - 12 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now - 5 * 60 * 1000).toISOString()
-      },
-      {
-        id: 'order-demo-102',
-        restaurantId: 'demo-restaurant',
-        orderNumber: 102,
-        tableNumber: 'Stolik 4',
-        status: 'pending',
-        stockDeducted: false,
-        items: [
-          {
-            recipeId: funghi?.id || 'recipe-funghi',
-            recipeName: funghi?.name || 'Pizza Funghi 32cm',
-            quantity: 1,
-            unitPrice: funghi?.sellingPrice || 41,
-            category: funghi?.category || 'Pizza Rossa (na czerwono)'
-          },
-          {
-            recipeId: focaccia?.id || 'recipe-focaccia',
-            recipeName: focaccia?.name || 'Focaccia z Rozmarynem i Solą Morską',
-            quantity: 1,
-            unitPrice: focaccia?.sellingPrice || 22,
-            category: focaccia?.category || 'Focaccia (włoskie pieczywo)'
-          }
-        ],
-        totalPrice: (funghi?.sellingPrice || 41) + (focaccia?.sellingPrice || 22),
-        createdAt: new Date(now - 4 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now - 4 * 60 * 1000).toISOString()
-      },
-      {
-        id: 'order-demo-103',
-        restaurantId: 'demo-restaurant',
-        orderNumber: 103,
-        tableNumber: 'Wynos',
-        status: 'ready',
-        stockDeducted: false,
-        items: [
-          {
-            recipeId: margherita?.id || 'recipe-margherita',
-            recipeName: margherita?.name || 'Pizza Margherita 32cm',
-            quantity: 1,
-            unitPrice: margherita?.sellingPrice || 36,
-            category: margherita?.category || 'Pizza Rossa (na czerwono)'
-          }
-        ],
-        totalPrice: margherita?.sellingPrice || 36,
-        createdAt: new Date(now - 18 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now - 2 * 60 * 1000).toISOString()
-      }
-    ];
-
-    this.orders.set(demoOrders);
-    this.saveToLocalFallback(demoOrders);
-  }
-
-  private saveToLocalFallback(orders: Order[]): void {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(orders));
+    await this.seedStarterOrders(restaurantId);
   }
 
   private cleanObject(obj: Record<string, any>): Record<string, any> {
@@ -334,10 +280,14 @@ export class OrderService implements OnDestroy {
     return result;
   }
 
-  // --- Tworzenie zamówienia ---
+  // --- Tworzenie zamówienia (wyłącznie Firestore) ---
 
   async createOrder(dto: CreateOrderDto): Promise<Order> {
     const user = this.authService.currentUser();
+    if (!user) {
+      throw new Error('Musisz być zalogowany, aby złożyć zamówienie.');
+    }
+
     const currentOrders = this.orders();
 
     // Wyznacz kolejny numer zamówienia (np. 101, 102...)
@@ -350,7 +300,7 @@ export class OrderService implements OnDestroy {
     const tableNumber = dto.tableNumber?.trim() || 'Stolik 1';
     const now = new Date().toISOString();
     const orderData = this.cleanObject({
-      restaurantId: user ? user.uid : 'demo-restaurant',
+      restaurantId: user.uid,
       orderNumber,
       tableNumber,
       items: dto.items,
@@ -361,33 +311,19 @@ export class OrderService implements OnDestroy {
       updatedAt: now
     });
 
-    if (user) {
-      try {
-        const col = collection(this.firestore, 'orders');
-        const docRef = await addDoc(col, orderData);
-        this.toastService.info(
-          `Zarejestrowano zamówienie #${orderNumber} (${tableNumber}, ${dto.items.length} pozycji).`,
-          'Nowe zamówienie'
-        );
-        return { id: docRef.id, ...orderData } as Order;
-      } catch (err) {
-        console.warn('Błąd zapisu zamówienia do Firestore, używam trybu lokalnego:', err);
-      }
+    try {
+      const col = collection(this.firestore, 'orders');
+      const docRef = await addDoc(col, orderData);
+      this.toastService.info(
+        `Zarejestrowano zamówienie #${orderNumber} (${tableNumber}, ${dto.items.length} pozycji).`,
+        'Nowe zamówienie'
+      );
+      return { id: docRef.id, ...orderData } as Order;
+    } catch (err) {
+      console.error('Błąd zapisu zamówienia do Firestore:', err);
+      this.toastService.danger('Nie udało się zarejestrować zamówienia w bazie.', 'Błąd zamówienia');
+      throw err;
     }
-
-    const localOrder: Order = {
-      ...orderData,
-      id: `order-local-${Date.now()}`
-    } as Order;
-
-    const updated = [localOrder, ...currentOrders];
-    this.orders.set(updated);
-    this.saveToLocalFallback(updated);
-    this.toastService.info(
-      `Zarejestrowano zamówienie #${orderNumber} (${tableNumber}, ${dto.items.length} pozycji).`,
-      'Nowe zamówienie'
-    );
-    return localOrder;
   }
 
   // --- Zmiana statusu zamówienia i automatyczny odpis magazynowy ---
@@ -404,27 +340,19 @@ export class OrderService implements OnDestroy {
       stockDeducted = true;
     }
 
-    const user = this.authService.currentUser();
     const updatedFields = {
       status: newStatus,
       stockDeducted,
       updatedAt: new Date().toISOString()
     };
 
-    if (user && !orderId.startsWith('order-local-') && !orderId.startsWith('order-demo-')) {
-      try {
-        const docRef = doc(this.firestore, `orders/${orderId}`);
-        await updateDoc(docRef, updatedFields);
-      } catch (err) {
-        console.warn('Błąd aktualizacji statusu zamówienia w Firestore:', err);
-      }
-    } else {
-      // Aktualizacja lokalna
-      const updated = this.orders().map(o => 
-        o.id === orderId ? { ...o, ...updatedFields } : o
-      );
-      this.orders.set(updated);
-      this.saveToLocalFallback(updated);
+    try {
+      const docRef = doc(this.firestore, `orders/${orderId}`);
+      await updateDoc(docRef, updatedFields);
+    } catch (err) {
+      console.error('Błąd aktualizacji statusu zamówienia w Firestore:', err);
+      this.toastService.danger('Nie udało się zaktualizować statusu zamówienia.', 'Błąd');
+      return;
     }
 
     // Powiadomienia Toast w zależności od nowego statusu
@@ -470,21 +398,14 @@ export class OrderService implements OnDestroy {
   }
 
   async deleteOrder(orderId: string): Promise<void> {
-    const user = this.authService.currentUser();
-
-    if (user && !orderId.startsWith('order-local-') && !orderId.startsWith('order-demo-')) {
-      try {
-        const docRef = doc(this.firestore, `orders/${orderId}`);
-        await deleteDoc(docRef);
-        return;
-      } catch (err) {
-        console.warn('Błąd usuwania zamówienia z Firestore:', err);
-      }
+    try {
+      const docRef = doc(this.firestore, `orders/${orderId}`);
+      await deleteDoc(docRef);
+      this.toastService.danger('Usunięto zamówienie z bazy.', 'Zamówienia');
+    } catch (err) {
+      console.error('Błąd usuwania zamówienia z Firestore:', err);
+      this.toastService.danger('Nie udało się usunąć zamówienia.', 'Błąd');
     }
-
-    const updated = this.orders().filter(o => o.id !== orderId);
-    this.orders.set(updated);
-    this.saveToLocalFallback(updated);
   }
 
   ngOnDestroy(): void {

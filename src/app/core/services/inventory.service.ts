@@ -1,23 +1,22 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
-import { Firestore } from '@angular/fire/firestore';
 import { 
+  Firestore,
   collection, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
   doc, 
   query, 
-  where,
-  onSnapshot,
-  setDoc,
+  where, 
+  onSnapshot, 
+  setDoc, 
+  getDocs,
   Unsubscribe 
-} from 'firebase/firestore';
+} from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
 import { ToastService } from './toast.service';
 import { InventoryItem, formatStockAmount, getStockStatus } from '../models/inventory-item.model';
 
-const LOCAL_STORAGE_KEY = 'gastro_inventory_items_fallback';
-const INVENTORY_CATEGORIES_STORAGE_KEY = 'gastro_inventory_categories_fallback';
 const DEFAULT_INVENTORY_CATEGORIES = ['Suche', 'Nabiał', 'Przetwory', 'Warzywa', 'Mięso i wędliny', 'Dodatki', 'Tłuszcze', 'Zioła'];
 
 const STARTER_INGREDIENTS: Omit<InventoryItem, 'id' | 'restaurantId'>[] = [
@@ -103,9 +102,23 @@ export class InventoryService {
       if (user) {
         this.initFirestoreSubscription(user.uid);
       } else {
-        this.loadLocalFallback();
+        this.cleanupState();
       }
     });
+  }
+
+  private cleanupState(): void {
+    if (this.firestoreUnsub) {
+      this.firestoreUnsub();
+      this.firestoreUnsub = null;
+    }
+    if (this.categoriesUnsub) {
+      this.categoriesUnsub();
+      this.categoriesUnsub = null;
+    }
+    this.items.set([]);
+    this.customCategories.set([]);
+    this.isLoading.set(false);
   }
 
   /**
@@ -115,7 +128,7 @@ export class InventoryService {
     if (restaurantId && restaurantId !== 'demo-restaurant') {
       this.initFirestoreSubscription(restaurantId);
     } else {
-      this.loadLocalFallback();
+      this.cleanupState();
     }
   }
 
@@ -140,8 +153,8 @@ export class InventoryService {
             this.customCategories.set(data['inventoryCategories']);
           }
         }
-      }, () => {
-        // Fallback do pamięci lokalnej jeśli brak dokumentu
+      }, (err) => {
+        console.warn('Błąd subskrypcji kategorii lokalu:', err);
       });
 
       // 2. Subskrypcja surowców magazynowych
@@ -149,32 +162,63 @@ export class InventoryService {
       const q = query(inventoryCol, where('restaurantId', '==', restaurantId));
 
       this.firestoreUnsub = onSnapshot(q, (snapshot) => {
-        const items = snapshot.docs.map(d => ({
+        const rawItems = snapshot.docs.map(d => ({
           id: d.id,
           ...d.data()
         } as InventoryItem));
 
-        if (items.length === 0) {
+        if (rawItems.length === 0) {
           // Tylko zalogowany właściciel może seedować początkowe składniki do Firestore
-          if (this.authService.currentUser()?.uid === restaurantId) {
+          if (this.authService.currentUserId === restaurantId) {
             this.seedStarterIngredientsToFirestore(restaurantId);
           } else {
             this.items.set([]);
             this.isLoading.set(false);
           }
         } else {
-          this.items.set(items);
-          this.saveToLocalFallback(items);
+          // AUTOMATYCZNA DEDUPLIKACJA SUROWCÓW:
+          // Jeśli w bazie znalazły się zduplikowane surowce (np. 'Świeża bazylia' i 'Świeża bazylia' lub 'Bazylia'),
+          // scalamy je, wybierając wpis z większym stanem magazynowym, a nadmiarowy dokument cicho usuwamy z bazy.
+          const seen = new Map<string, InventoryItem>();
+          const duplicatesToDelete: InventoryItem[] = [];
+          const uniqueItems: InventoryItem[] = [];
+
+          for (const item of rawItems) {
+            const normalized = item.name.toLowerCase().trim();
+            if (seen.has(normalized)) {
+              const existing = seen.get(normalized)!;
+              if (item.amount > existing.amount) {
+                duplicatesToDelete.push(existing);
+                seen.set(normalized, item);
+                const idx = uniqueItems.indexOf(existing);
+                if (idx !== -1) uniqueItems[idx] = item;
+              } else {
+                duplicatesToDelete.push(item);
+              }
+            } else {
+              seen.set(normalized, item);
+              uniqueItems.push(item);
+            }
+          }
+
+          if (duplicatesToDelete.length > 0 && this.authService.currentUser()?.uid === restaurantId) {
+            for (const dup of duplicatesToDelete) {
+              deleteDoc(doc(this.firestore, `inventory/${dup.id}`)).catch(e =>
+                console.warn('Błąd automatycznego usuwania zduplikowanego surowca:', e)
+              );
+            }
+          }
+
+          this.items.set(uniqueItems);
           this.isLoading.set(false);
         }
       }, (err) => {
-        console.warn('Firestore subscription fallback to local storage:', err);
-        this.loadLocalFallback();
+        console.error('Błąd subskrypcji surowców Firestore:', err);
+        this.errorMessage.set('Błąd połączenia z bazą danych magazynu.');
         this.isLoading.set(false);
       });
     } catch (err) {
-      console.warn('Firestore initialization fallback:', err);
-      this.loadLocalFallback();
+      console.error('Błąd inicjalizacji magazynu w Firestore:', err);
       this.isLoading.set(false);
     }
   }
@@ -194,52 +238,24 @@ export class InventoryService {
         await setDoc(itemDoc, this.cleanObject(newItem));
       }
       this.items.set(createdItems);
-      this.saveToLocalFallback(createdItems);
     } catch (e) {
-      console.warn('Błąd zapisu składników do Firestore:', e);
-      this.loadLocalFallback();
+      console.error('Błąd zapisu składników do Firestore:', e);
+      this.toastService.danger('Nie udało się utworzyć początkowych surowców.', 'Baza danych');
     } finally {
       this.isLoading.set(false);
     }
   }
 
-  private loadLocalFallback(): void {
-    const rawCategories = localStorage.getItem(INVENTORY_CATEGORIES_STORAGE_KEY);
-    if (rawCategories) {
-      try {
-        this.customCategories.set(JSON.parse(rawCategories));
-      } catch (e) {
-        // Fallback
-      }
+  /**
+   * Resetuje magazyn lokalu do stanu fabrycznego (dla konta demo)
+   */
+  async resetToStarter(restaurantId: string): Promise<void> {
+    const q = query(collection(this.firestore, 'inventory'), where('restaurantId', '==', restaurantId));
+    const snap = await getDocs(q);
+    for (const d of snap.docs) {
+      await deleteDoc(d.ref);
     }
-
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (raw) {
-      try {
-        const parsed: InventoryItem[] = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          this.items.set(parsed);
-          return;
-        }
-      } catch (e) {
-        // Fallback do domyślnych jeśli błąd parsowania
-      }
-    }
-
-    // Załaduj pełny zestaw demonstracyjny (21 surowców)
-    const initialWithIds: InventoryItem[] = STARTER_INGREDIENTS.map((item, index) => ({
-      ...item,
-      id: `local-item-${index + 1}`,
-      restaurantId: 'demo-restaurant',
-      updatedAt: new Date().toISOString()
-    }));
-
-    this.items.set(initialWithIds);
-    this.saveToLocalFallback(initialWithIds);
-  }
-
-  private saveToLocalFallback(items: InventoryItem[]): void {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
+    await this.seedStarterIngredientsToFirestore(restaurantId);
   }
 
   /**
@@ -255,85 +271,70 @@ export class InventoryService {
     return result;
   }
 
-  // --- Operacje lokalne (tryb demo / offline) ---
-
-  private addLocalItem(item: InventoryItem): void {
-    const updated = [item, ...this.items()];
-    this.items.set(updated);
-    this.saveToLocalFallback(updated);
-  }
-
-  private updateLocalItem(id: string, fields: Partial<InventoryItem>): void {
-    const updated = this.items().map(i => i.id === id ? { ...i, ...fields } : i);
-    this.items.set(updated);
-    this.saveToLocalFallback(updated);
-  }
-
-  private deleteLocalItem(id: string): void {
-    const updated = this.items().filter(i => i.id !== id);
-    this.items.set(updated);
-    this.saveToLocalFallback(updated);
-  }
-
-  // --- Główne metody CRUD ---
+  // --- Główne metody CRUD (wyłącznie Firebase Firestore) ---
 
   async addItem(data: Omit<InventoryItem, 'id' | 'restaurantId'>): Promise<void> {
     const user = this.authService.currentUser();
+    if (!user) {
+      this.toastService.danger('Musisz być zalogowany, aby dodać surowiec.', 'Brak autoryzacji');
+      return;
+    }
+
+    const trimmedName = data.name.trim();
+
+    // Walidacja unikalności nazwy surowca w magazynie
+    const exists = this.items().some(i => i.name.toLowerCase().trim() === trimmedName.toLowerCase());
+    if (exists) {
+      this.toastService.warning(`Surowiec o nazwie "${trimmedName}" już istnieje w magazynie.`, 'Duplikat surowca');
+      return;
+    }
+
     const itemData = this.cleanObject({
       ...data,
-      restaurantId: user ? user.uid : 'demo-restaurant',
+      name: trimmedName,
+      restaurantId: user.uid,
       updatedAt: new Date().toISOString()
     });
 
-    if (user) {
-      try {
-        await addDoc(collection(this.firestore, 'inventory'), itemData);
-        this.toastService.success(`Dodano surowiec "${data.name}" do magazynu.`, 'Magazyn');
-        return;
-      } catch (err) {
-        console.warn('Błąd zapisu do Firestore, używam trybu lokalnego:', err);
-      }
+    try {
+      await addDoc(collection(this.firestore, 'inventory'), itemData);
+      this.toastService.success(`Dodano surowiec "${trimmedName}" do magazynu.`, 'Magazyn');
+    } catch (err) {
+      console.error('Błąd dodawania surowca do Firestore:', err);
+      this.toastService.danger('Nie udało się zapisać surowca w bazie.', 'Błąd magazynu');
     }
-
-    this.addLocalItem({ ...itemData, id: `local-item-${Date.now()}` } as InventoryItem);
-    this.toastService.success(`Dodano surowiec "${data.name}" do magazynu.`, 'Magazyn');
   }
 
   async updateItem(id: string, partial: Partial<InventoryItem>): Promise<void> {
     const user = this.authService.currentUser();
+    if (!user) return;
+
     const fields = this.cleanObject({
       ...partial,
       updatedAt: new Date().toISOString()
     });
 
-    if (user && !id.startsWith('local-item-')) {
-      try {
-        await updateDoc(doc(this.firestore, `inventory/${id}`), fields);
-        return;
-      } catch (err) {
-        console.warn('Błąd aktualizacji w Firestore:', err);
-      }
+    try {
+      await updateDoc(doc(this.firestore, `inventory/${id}`), fields);
+    } catch (err) {
+      console.error('Błąd aktualizacji w Firestore:', err);
+      this.toastService.danger('Nie udało się zaktualizować surowca.', 'Błąd magazynu');
     }
-
-    this.updateLocalItem(id, fields);
   }
 
   async deleteItem(id: string): Promise<void> {
     const user = this.authService.currentUser();
+    if (!user) return;
+
     const target = this.items().find(i => i.id === id);
 
-    if (user && !id.startsWith('local-item-')) {
-      try {
-        await deleteDoc(doc(this.firestore, `inventory/${id}`));
-        this.toastService.danger(`Usunięto surowiec "${target?.name || 'Składnik'}" z magazynu.`, 'Magazyn');
-        return;
-      } catch (err) {
-        console.warn('Błąd usuwania w Firestore:', err);
-      }
+    try {
+      await deleteDoc(doc(this.firestore, `inventory/${id}`));
+      this.toastService.danger(`Usunięto surowiec "${target?.name || 'Składnik'}" z magazynu.`, 'Magazyn');
+    } catch (err) {
+      console.error('Błąd usuwania w Firestore:', err);
+      this.toastService.danger('Nie udało się usunąć surowca.', 'Błąd magazynu');
     }
-
-    this.deleteLocalItem(id);
-    this.toastService.danger(`Usunięto surowiec "${target?.name || 'Składnik'}" z magazynu.`, 'Magazyn');
   }
 
   /**
@@ -385,7 +386,6 @@ export class InventoryService {
 
     const updated = Array.from(new Set([...this.customCategories(), trimmed]));
     this.customCategories.set(updated);
-    this.saveCategoriesToStorage(updated);
     await this.syncCategoriesToFirestore(updated);
     return true;
   }
@@ -404,7 +404,7 @@ export class InventoryService {
 
     // 1. Aktualizacja surowców w Firestore
     for (const item of affected) {
-      if (user && !item.id.startsWith('local-item-')) {
+      if (user) {
         try {
           const docRef = doc(this.firestore, `inventory/${item.id}`);
           await updateDoc(docRef, { 
@@ -417,16 +417,7 @@ export class InventoryService {
       }
     }
 
-    // 2. Aktualizacja stanu lokalnego surowców
-    const updatedItems = this.items().map(i => 
-      (i.category || '').trim().toLowerCase() === trimmedOld.toLowerCase()
-        ? { ...i, category: trimmedNew, updatedAt: new Date().toISOString() } 
-        : i
-    );
-    this.items.set(updatedItems);
-    this.saveToLocalFallback(updatedItems);
-
-    // 3. Aktualizacja listy kategorii
+    // 2. Aktualizacja listy kategorii
     const currentCustom = this.customCategories();
     const newCustom = currentCustom.map(c => 
       c.trim().toLowerCase() === trimmedOld.toLowerCase() ? trimmedNew : c
@@ -436,7 +427,6 @@ export class InventoryService {
     }
     const cleanCustom = Array.from(new Set(newCustom));
     this.customCategories.set(cleanCustom);
-    this.saveCategoriesToStorage(cleanCustom);
     await this.syncCategoriesToFirestore(cleanCustom);
 
     return true;
@@ -451,29 +441,19 @@ export class InventoryService {
       i => (i.category || '').trim().toLowerCase() === trimmed.toLowerCase()
     );
 
-    // 1. Przepięcie surowców do nowej kategorii
-    if (affected.length > 0) {
+    // 1. Przepięcie surowców do nowej kategorii w Firestore
+    if (affected.length > 0 && user) {
       for (const item of affected) {
-        if (user && !item.id.startsWith('local-item-')) {
-          try {
-            const docRef = doc(this.firestore, `inventory/${item.id}`);
-            await updateDoc(docRef, { 
-              category: fallback, 
-              updatedAt: new Date().toISOString() 
-            });
-          } catch (err) {
-            console.warn(`Error reassigning category for item ${item.id}:`, err);
-          }
+        try {
+          const docRef = doc(this.firestore, `inventory/${item.id}`);
+          await updateDoc(docRef, { 
+            category: fallback, 
+            updatedAt: new Date().toISOString() 
+          });
+        } catch (err) {
+          console.warn(`Error reassigning category for item ${item.id}:`, err);
         }
       }
-
-      const updatedItems = this.items().map(i => 
-        (i.category || '').trim().toLowerCase() === trimmed.toLowerCase()
-          ? { ...i, category: fallback, updatedAt: new Date().toISOString() } 
-          : i
-      );
-      this.items.set(updatedItems);
-      this.saveToLocalFallback(updatedItems);
     }
 
     // 2. Usunięcie z customCategories
@@ -481,12 +461,7 @@ export class InventoryService {
       c => c.trim().toLowerCase() !== trimmed.toLowerCase()
     );
     this.customCategories.set(cleanCustom);
-    this.saveCategoriesToStorage(cleanCustom);
     await this.syncCategoriesToFirestore(cleanCustom);
-  }
-
-  private saveCategoriesToStorage(categories: string[]): void {
-    localStorage.setItem(INVENTORY_CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
   }
 
   private async syncCategoriesToFirestore(categories: string[]): Promise<void> {

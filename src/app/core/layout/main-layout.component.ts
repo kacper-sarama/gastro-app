@@ -5,6 +5,10 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../services/auth.service';
 import { ThemeService } from '../services/theme.service';
+import { InventoryService } from '../services/inventory.service';
+import { RecipeService } from '../services/recipe.service';
+import { OrderService } from '../services/order.service';
+import { ToastService } from '../services/toast.service';
 import { AccountSettingsModalComponent } from '../../features/account/account-settings-modal.component';
 
 interface NavItem {
@@ -22,6 +26,11 @@ interface NavItem {
 export class MainLayoutComponent implements OnInit {
   readonly authService = inject(AuthService);
   readonly themeService = inject(ThemeService);
+  readonly inventoryService = inject(InventoryService);
+  readonly recipeService = inject(RecipeService);
+  readonly orderService = inject(OrderService);
+  readonly toastService = inject(ToastService);
+
   private router = inject(Router);
   private breakpointObserver = inject(BreakpointObserver);
   private destroyRef = inject(DestroyRef);
@@ -30,6 +39,7 @@ export class MainLayoutComponent implements OnInit {
   isSidebarCollapsed = signal(false);
   isUserMenuOpen = signal(false);
   isAccountModalOpen = signal(false);
+  isResettingDemo = signal(false);
 
   private userHasManuallyToggled = false;
 
@@ -110,5 +120,25 @@ export class MainLayoutComponent implements OnInit {
     this.closeUserMenu();
     await this.authService.logout();
     await this.router.navigate(['/login']);
+  }
+
+  async resetDemo(): Promise<void> {
+    if (this.isResettingDemo()) return;
+    if (!confirm('Czy na pewno chcesz przywrócić początkowy stan magazynu, dań i zamówień na koncie Demo?')) {
+      return;
+    }
+
+    this.isResettingDemo.set(true);
+    try {
+      await this.authService.resetDemoAccount(
+        this.inventoryService,
+        this.recipeService,
+        this.orderService
+      );
+    } catch (e: any) {
+      this.toastService.danger('Błąd podczas resetowania konta demo: ' + (e?.message || ''), 'Błąd');
+    } finally {
+      this.isResettingDemo.set(false);
+    }
   }
 }
