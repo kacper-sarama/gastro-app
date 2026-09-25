@@ -1,6 +1,5 @@
-import { Component, Inject, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MAT_SNACK_BAR_DATA, MatSnackBarRef } from '@angular/material/snack-bar';
 
 export type ToastType = 'warning' | 'danger' | 'success' | 'info';
 
@@ -12,6 +11,12 @@ export interface ToastData {
   actionText?: string;
   actionCallback?: () => void;
   duration?: number;
+}
+
+export interface ToastItem {
+  id: string;
+  data: ToastData;
+  createdAt: number;
 }
 
 @Component({
@@ -27,21 +32,31 @@ export interface ToastData {
   `]
 })
 export class ToastNotificationComponent implements OnInit, OnDestroy {
+  @Input({ required: true }) toast!: ToastItem;
+  @Output() dismiss = new EventEmitter<string>();
+
   readonly progressWidth = signal<number>(100);
   private progressInterval?: any;
 
-  constructor(
-    @Inject(MAT_SNACK_BAR_DATA) public data: ToastData,
-    public snackBarRef: MatSnackBarRef<ToastNotificationComponent>
-  ) {}
+  get data(): ToastData {
+    return this.toast.data;
+  }
 
   ngOnInit(): void {
-    const duration = this.data.duration || 5000;
-    const intervalMs = 50;
+    const duration = this.data.duration || 4500;
+    const intervalMs = 40;
     const step = (intervalMs / duration) * 100;
 
     this.progressInterval = setInterval(() => {
-      this.progressWidth.update(w => Math.max(0, w - step));
+      this.progressWidth.update(w => {
+        const next = w - step;
+        if (next <= 0) {
+          clearInterval(this.progressInterval);
+          this.dismiss.emit(this.toast.id);
+          return 0;
+        }
+        return next;
+      });
     }, intervalMs);
   }
 
@@ -65,7 +80,7 @@ export class ToastNotificationComponent implements OnInit, OnDestroy {
     if (this.data.title) return this.data.title;
     switch (this.data.type) {
       case 'warning': return 'Ostrzeżenie magazynu';
-      case 'danger': return 'Alert krytyczny';
+      case 'danger': return 'Brak surowca w magazynie';
       case 'success': return 'Sukces';
       case 'info': return 'Powiadomienie';
     }
@@ -75,10 +90,10 @@ export class ToastNotificationComponent implements OnInit, OnDestroy {
     if (this.data.actionCallback) {
       this.data.actionCallback();
     }
-    this.snackBarRef.dismissWithAction();
+    this.dismiss.emit(this.toast.id);
   }
 
   onClose(): void {
-    this.snackBarRef.dismiss();
+    this.dismiss.emit(this.toast.id);
   }
 }

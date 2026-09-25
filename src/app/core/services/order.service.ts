@@ -10,6 +10,7 @@ import {
   where, 
   onSnapshot, 
   getDocs,
+  writeBatch,
   Unsubscribe 
 } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
@@ -17,6 +18,7 @@ import { InventoryService } from './inventory.service';
 import { RecipeService } from './recipe.service';
 import { ToastService } from './toast.service';
 import { Order, OrderItem, OrderStatus, CreateOrderDto } from '../models/order.model';
+import { Recipe } from '../models/recipe.model';
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +29,7 @@ export class OrderService implements OnDestroy {
   private inventoryService = inject(InventoryService);
   private recipeService = inject(RecipeService);
   private toastService = inject(ToastService);
+  private isResetting = false;
 
   readonly orders = signal<Order[]>([]);
   readonly isLoading = signal<boolean>(false);
@@ -124,6 +127,7 @@ export class OrderService implements OnDestroy {
       const q = query(ordersCol, where('restaurantId', '==', restaurantId));
 
       this.firestoreUnsub = onSnapshot(q, (snapshot) => {
+        if (this.isResetting) return;
         const items = snapshot.docs.map(d => ({
           id: d.id,
           ...d.data()
@@ -153,14 +157,14 @@ export class OrderService implements OnDestroy {
     }
   }
 
-  private async seedStarterOrders(restaurantId: string): Promise<void> {
-    const recipes = this.recipeService.recipes();
+  private buildStarterOrders(restaurantId: string, recipesOverride?: Recipe[]): Omit<Order, 'id'>[] {
+    const recipes = (recipesOverride && recipesOverride.length > 0) ? recipesOverride : this.recipeService.recipes();
     const margherita = recipes.find(r => r.name.toLowerCase().includes('margherita'));
     const funghi = recipes.find(r => r.name.toLowerCase().includes('funghi'));
     const focaccia = recipes.find(r => r.name.toLowerCase().includes('focaccia'));
 
     const now = Date.now();
-    const starterOrders: Omit<Order, 'id'>[] = [
+    return [
       {
         restaurantId,
         orderNumber: 100,
@@ -245,12 +249,18 @@ export class OrderService implements OnDestroy {
         updatedAt: new Date(now - 2 * 60 * 1000).toISOString()
       }
     ];
+  }
+
+  private async seedStarterOrders(restaurantId: string): Promise<void> {
+    const starterOrders = this.buildStarterOrders(restaurantId);
 
     try {
-      const col = collection(this.firestore, 'orders');
+      const batch = writeBatch(this.firestore);
       for (const ord of starterOrders) {
-        await addDoc(col, this.cleanObject(ord));
+        const ordDoc = doc(collection(this.firestore, 'orders'));
+        batch.set(ordDoc, this.cleanObject(ord));
       }
+      await batch.commit();
     } catch (e) {
       console.error('Błąd zapisu zamówień startowych do Firestore:', e);
     } finally {
@@ -259,15 +269,29 @@ export class OrderService implements OnDestroy {
   }
 
   /**
-   * Resetuje zamówienia lokalu do stanu fabrycznego (dla konta demo)
+   * Resetuje zamówienia lokalu do stanu fabrycznego (dla konta demo) za pomocą transakcji batch
    */
-  async resetToStarter(restaurantId: string): Promise<void> {
-    const q = query(collection(this.firestore, 'orders'), where('restaurantId', '==', restaurantId));
-    const snap = await getDocs(q);
-    for (const d of snap.docs) {
-      await deleteDoc(d.ref);
+  async resetToStarter(restaurantId: string, recipesOverride?: Recipe[]): Promise<void> {
+    this.isResetting = true;
+    try {
+      const starterOrders = this.buildStarterOrders(restaurantId, recipesOverride);
+      const q = query(collection(this.firestore, 'orders'), where('restaurantId', '==', restaurantId));
+      const snap = await getDocs(q);
+      const batch = writeBatch(this.firestore);
+      for (const d of snap.docs) {
+        batch.delete(d.ref);
+      }
+
+      for (const ord of starterOrders) {
+        const ordDoc = doc(collection(this.firestore, 'orders'));
+        batch.set(ordDoc, this.cleanObject(ord));
+      }
+
+      await batch.commit();
+    } finally {
+      this.isResetting = false;
+      this.isLoading.set(false);
     }
-    await this.seedStarterOrders(restaurantId);
   }
 
   private cleanObject(obj: Record<string, any>): Record<string, any> {
@@ -334,9 +358,11 @@ export class OrderService implements OnDestroy {
 
     let stockDeducted = target.stockDeducted;
 
+    let depletedIngredients: string[] = [];
+
     // AUTOMATYCZNY ODPIS Z MAGAZYNU: następuje, gdy zamówienie zostaje wydane (status: 'completed')
     if (newStatus === 'completed' && !target.stockDeducted) {
-      await this.deductIngredientsForOrder(target);
+      depletedIngredients = await this.deductIngredientsForOrder(target);
       stockDeducted = true;
     }
 
@@ -355,13 +381,22 @@ export class OrderService implements OnDestroy {
       return;
     }
 
-    // Powiadomienia Toast w zależności od nowego statusu
+    // Powiadomienia Toast w zależności od nowego statusu (dwa osobne Toasty, stackujące się pionowo)
     const num = target.orderNumber || target.id.slice(-4);
     if (newStatus === 'completed') {
+      // 1. Toast informacyjny: pomyślne wydanie dania i odpis z magazynu
       this.toastService.success(
         `Wydano zamówienie #${num} (${target.tableNumber}). Składniki zostały odpisane z magazynu.`,
         'Wydano zamówienie'
       );
+
+      // 2. Osobny Toast ostrzegawczy: jeśli jakikolwiek składnik wyczerpał się do zera
+      if (depletedIngredients.length > 0) {
+        this.toastService.danger(
+          `Wyczerpano zapas do zera: ${depletedIngredients.join(', ')}! Powiązane pozycje mogą zostać zablokowane.`,
+          'Brak surowca w magazynie'
+        );
+      }
     } else if (newStatus === 'ready') {
       this.toastService.info(
         `Zamówienie #${num} (${target.tableNumber}) jest gotowe do wydania przez kelnera.`,
@@ -378,23 +413,41 @@ export class OrderService implements OnDestroy {
   /**
    * Automatycznie zdejmuje z magazynu odpowiednie gramatury/ilości składników
    * dla wszystkich dań zawartych w danym zamówieniu.
+   * Agreguje zużycie surowców i wykonuje cichy odpis bez spamu wieloma powiadomieniami.
    */
-  async deductIngredientsForOrder(order: Order): Promise<void> {
+  async deductIngredientsForOrder(order: Order): Promise<string[]> {
     const allRecipes = this.recipeService.recipes();
+    const inventoryItems = this.inventoryService.items();
+    const depletedItems: string[] = [];
+
+    // 1. Zagreguj łączne ilości do odjęcia dla każdego składnika w zamówieniu
+    const deductions = new Map<string, number>();
 
     for (const item of order.items) {
-      // 1. Znajdź recepturę powiązaną z daniem
       const recipe = allRecipes.find(r => r.id === item.recipeId || r.name.toLowerCase() === item.recipeName.toLowerCase());
       if (!recipe || !recipe.ingredients) continue;
 
-      // 2. Dla każdego składnika w recepturze odejmij [ilość na porcję * liczba porcji]
       for (const ing of recipe.ingredients) {
         const totalAmountToDeduct = ing.amount * item.quantity;
-        if (totalAmountToDeduct > 0) {
-          await this.inventoryService.quickAdjustStock(ing.inventoryItemId, -totalAmountToDeduct);
+        if (totalAmountToDeduct > 0 && ing.inventoryItemId) {
+          deductions.set(
+            ing.inventoryItemId, 
+            (deductions.get(ing.inventoryItemId) || 0) + totalAmountToDeduct
+          );
         }
       }
     }
+
+    // 2. Wykonaj cichy odpis magazynowy dla każdego surowca (silent = true)
+    for (const [inventoryItemId, totalAmount] of deductions.entries()) {
+      const item = inventoryItems.find(i => i.id === inventoryItemId);
+      if (item && item.amount - totalAmount <= 0) {
+        depletedItems.push(item.name);
+      }
+      await this.inventoryService.quickAdjustStock(inventoryItemId, -totalAmount, true);
+    }
+
+    return depletedItems;
   }
 
   async deleteOrder(orderId: string): Promise<void> {

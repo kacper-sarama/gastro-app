@@ -11,6 +11,7 @@ import {
   onSnapshot, 
   setDoc, 
   getDocs,
+  writeBatch,
   Unsubscribe 
 } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
@@ -33,6 +34,7 @@ export class RecipeService {
   private authService = inject(AuthService);
   private inventoryService = inject(InventoryService);
   private toastService = inject(ToastService);
+  private isResetting = false;
 
   readonly recipes = signal<Recipe[]>([]);
   readonly customCategories = signal<string[]>([]);
@@ -193,6 +195,7 @@ export class RecipeService {
       const q = query(recipesCol, where('restaurantId', '==', restaurantId));
 
       this.firestoreUnsub = onSnapshot(q, (snapshot) => {
+        if (this.isResetting) return;
         const items = snapshot.docs.map(d => ({
           id: d.id,
           ...d.data()
@@ -221,8 +224,8 @@ export class RecipeService {
     }
   }
 
-  private getStarterRecipes(restaurantId: string): Omit<Recipe, 'id'>[] {
-    const inventory = this.inventoryService.items();
+  private getStarterRecipes(restaurantId: string, inventoryOverride?: InventoryItem[]): Omit<Recipe, 'id'>[] {
+    const inventory = (inventoryOverride && inventoryOverride.length > 0) ? inventoryOverride : this.inventoryService.items();
     const findId = (namePart: string) => inventory.find(i => i.name.toLowerCase().includes(namePart.toLowerCase()))?.id || 'demo-ing';
 
     const flourId = findId('mąka');
@@ -443,35 +446,67 @@ export class RecipeService {
     ];
   }
 
-  private async seedStarterRecipes(restaurantId: string): Promise<void> {
+  private async seedStarterRecipes(restaurantId: string): Promise<Recipe[]> {
     const starterRecipes = this.getStarterRecipes(restaurantId);
 
     try {
-      const col = collection(this.firestore, 'recipes');
+      const batch = writeBatch(this.firestore);
+      const createdRecipes: Recipe[] = [];
       for (const r of starterRecipes) {
-        await addDoc(col, this.cleanObject({
+        const docRef = doc(collection(this.firestore, 'recipes'));
+        const newRec: Recipe = {
           ...r,
+          id: docRef.id,
           isFeatured: r.isFeatured ?? false
-        }));
+        };
+        createdRecipes.push(newRec);
+        batch.set(docRef, this.cleanObject(newRec));
       }
+      await batch.commit();
+      this.recipes.set(createdRecipes);
+      return createdRecipes;
     } catch (err) {
       console.error('Błąd zapisu startowych receptur do Firestore:', err);
       this.toastService.danger('Nie udało się utworzyć początkowych receptur.', 'Baza danych');
+      return [];
     } finally {
       this.isLoading.set(false);
     }
   }
 
   /**
-   * Resetuje receptury lokalu do stanu fabrycznego (dla konta demo)
+   * Resetuje receptury lokalu do stanu fabrycznego (dla konta demo) za pomocą transakcji batch
    */
-  async resetToStarter(restaurantId: string): Promise<void> {
-    const q = query(collection(this.firestore, 'recipes'), where('restaurantId', '==', restaurantId));
-    const snap = await getDocs(q);
-    for (const d of snap.docs) {
-      await deleteDoc(d.ref);
+  async resetToStarter(restaurantId: string, inventoryOverride?: InventoryItem[]): Promise<Recipe[]> {
+    this.isResetting = true;
+    try {
+      const starterRecipes = this.getStarterRecipes(restaurantId, inventoryOverride);
+      const q = query(collection(this.firestore, 'recipes'), where('restaurantId', '==', restaurantId));
+      const snap = await getDocs(q);
+      const batch = writeBatch(this.firestore);
+      for (const d of snap.docs) {
+        batch.delete(d.ref);
+      }
+
+      const createdRecipes: Recipe[] = [];
+      for (const r of starterRecipes) {
+        const docRef = doc(collection(this.firestore, 'recipes'));
+        const newRec: Recipe = {
+          ...r,
+          id: docRef.id,
+          isFeatured: r.isFeatured ?? false
+        };
+        createdRecipes.push(newRec);
+        batch.set(docRef, this.cleanObject(newRec));
+      }
+
+      await batch.commit();
+      this.recipes.set(createdRecipes);
+      return createdRecipes;
+    } finally {
+      this.isResetting = false;
+      this.isLoading.set(false);
     }
-    await this.seedStarterRecipes(restaurantId);
   }
 
   /**

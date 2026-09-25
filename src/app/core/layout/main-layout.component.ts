@@ -130,12 +130,19 @@ export class MainLayoutComponent implements OnInit {
 
     this.isResettingDemo.set(true);
     try {
-      await this.authService.resetDemoAccount(
-        this.inventoryService,
-        this.recipeService,
-        this.orderService
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Przekroczono limit czasu operacji resetu (12s).')), 12000)
       );
+      await Promise.race([
+        this.authService.resetDemoAccount(
+          this.inventoryService,
+          this.recipeService,
+          this.orderService
+        ),
+        timeoutPromise
+      ]);
     } catch (e: any) {
+      console.error('Błąd podczas resetowania konta demo:', e);
       this.toastService.danger('Błąd podczas resetowania konta demo: ' + (e?.message || ''), 'Błąd');
     } finally {
       this.isResettingDemo.set(false);

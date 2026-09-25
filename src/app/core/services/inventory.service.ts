@@ -11,6 +11,7 @@ import {
   onSnapshot, 
   setDoc, 
   getDocs,
+  writeBatch,
   Unsubscribe 
 } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
@@ -50,6 +51,7 @@ export class InventoryService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
+  private isResetting = false;
 
   readonly items = signal<InventoryItem[]>([]);
   readonly customCategories = signal<string[]>([]);
@@ -162,6 +164,7 @@ export class InventoryService {
       const q = query(inventoryCol, where('restaurantId', '==', restaurantId));
 
       this.firestoreUnsub = onSnapshot(q, (snapshot) => {
+        if (this.isResetting) return;
         const rawItems = snapshot.docs.map(d => ({
           id: d.id,
           ...d.data()
@@ -226,6 +229,7 @@ export class InventoryService {
   private async seedStarterIngredientsToFirestore(restaurantId: string): Promise<void> {
     try {
       const createdItems: InventoryItem[] = [];
+      const batch = writeBatch(this.firestore);
       for (const item of STARTER_INGREDIENTS) {
         const itemDoc = doc(collection(this.firestore, 'inventory'));
         const newItem: InventoryItem = {
@@ -235,8 +239,9 @@ export class InventoryService {
           updatedAt: new Date().toISOString()
         };
         createdItems.push(newItem);
-        await setDoc(itemDoc, this.cleanObject(newItem));
+        batch.set(itemDoc, this.cleanObject(newItem));
       }
+      await batch.commit();
       this.items.set(createdItems);
     } catch (e) {
       console.error('Błąd zapisu składników do Firestore:', e);
@@ -247,15 +252,38 @@ export class InventoryService {
   }
 
   /**
-   * Resetuje magazyn lokalu do stanu fabrycznego (dla konta demo)
+   * Resetuje magazyn lokalu do stanu fabrycznego (dla konta demo) za pomocą transakcji batch
    */
-  async resetToStarter(restaurantId: string): Promise<void> {
-    const q = query(collection(this.firestore, 'inventory'), where('restaurantId', '==', restaurantId));
-    const snap = await getDocs(q);
-    for (const d of snap.docs) {
-      await deleteDoc(d.ref);
+  async resetToStarter(restaurantId: string): Promise<InventoryItem[]> {
+    this.isResetting = true;
+    try {
+      const q = query(collection(this.firestore, 'inventory'), where('restaurantId', '==', restaurantId));
+      const snap = await getDocs(q);
+      const batch = writeBatch(this.firestore);
+      for (const d of snap.docs) {
+        batch.delete(d.ref);
+      }
+
+      const createdItems: InventoryItem[] = [];
+      for (const item of STARTER_INGREDIENTS) {
+        const itemDoc = doc(collection(this.firestore, 'inventory'));
+        const newItem: InventoryItem = {
+          ...item,
+          id: itemDoc.id,
+          restaurantId,
+          updatedAt: new Date().toISOString()
+        };
+        createdItems.push(newItem);
+        batch.set(itemDoc, this.cleanObject(newItem));
+      }
+
+      await batch.commit();
+      this.items.set(createdItems);
+      return createdItems;
+    } finally {
+      this.isResetting = false;
+      this.isLoading.set(false);
     }
-    await this.seedStarterIngredientsToFirestore(restaurantId);
   }
 
   /**
@@ -340,12 +368,14 @@ export class InventoryService {
   /**
    * Szybka dostawa lub zużycie (np. + 5000g, - 200g)
    */
-  async quickAdjustStock(id: string, deltaAmount: number): Promise<void> {
+  async quickAdjustStock(id: string, deltaAmount: number, silent: boolean = false): Promise<void> {
     const target = this.items().find(i => i.id === id);
     if (!target) return;
 
     const newAmount = Math.max(0, target.amount + deltaAmount);
     await this.updateItem(id, { amount: newAmount });
+
+    if (silent) return;
 
     if (deltaAmount > 0) {
       const deltaStr = formatStockAmount(deltaAmount, target.unit).display;

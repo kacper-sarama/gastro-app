@@ -1,1 +1,12 @@
 <router-outlet></router-outlet>
+
+<!-- Global Toast Stack Container (Prawy górny róg, stackujący się pionowo) -->
+<div class="fixed top-24 right-4 sm:right-6 z-50 flex flex-col gap-3 pointer-events-none max-w-sm sm:max-w-md w-full">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <app-toast-notification
+      class="pointer-events-auto"
+      [toast]="toast"
+      (dismiss)="toastService.dismiss($event)"
+    />
+  }
+</div>

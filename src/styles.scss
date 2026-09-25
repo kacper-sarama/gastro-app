@@ -92,7 +92,16 @@ html {
   box-shadow: none !important;
   border: none !important;
   padding: 0 !important;
-  margin-bottom: 1.5rem !important;
+  margin-top: 5.5rem !important;
+  margin-right: 1.5rem !important;
+  margin-bottom: 0 !important;
+  pointer-events: auto !important;
+
+  @media (max-width: 640px) {
+    margin-top: 5rem !important;
+    margin-right: 0.75rem !important;
+    margin-left: 0.75rem !important;
+  }
 
   .mdc-snackbar__surface,
   & .mdc-snackbar__surface {
