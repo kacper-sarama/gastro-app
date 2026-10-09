@@ -282,12 +282,19 @@ export class OrderService implements OnDestroy {
         batch.delete(d.ref);
       }
 
+      const createdOrders: Order[] = [];
       for (const ord of starterOrders) {
         const ordDoc = doc(collection(this.firestore, 'orders'));
         batch.set(ordDoc, this.cleanObject(ord));
+        createdOrders.push({ ...ord, id: ordDoc.id } as Order);
       }
 
       await batch.commit();
+
+      // Snapshot z Firestore wyemitowany w trakcie resetu jest ignorowany (isResetting),
+      // więc ręcznie podmieniamy listę – tak samo jak w magazynie i recepturach.
+      createdOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      this.orders.set(createdOrders);
     } finally {
       this.isResetting = false;
       this.isLoading.set(false);

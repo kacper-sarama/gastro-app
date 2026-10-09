@@ -49,9 +49,20 @@ export class AuthService {
     this.purgeLegacyStorage();
   }
 
+  /**
+   * updateProfile() zmienia obiekt User "w miejscu" i nie emituje nowej wartości,
+   * więc computed z currentUser() by się nie przeliczył. Po zmianie nazwy zapisujemy
+   * ją tutaj (powiązaną z uid, żeby nie przeniosła się na inne konto po przelogowaniu).
+   */
+  private readonly displayNameOverride = signal<{ uid: string; name: string } | null>(null);
+
   // Nazwa restauracji lub wyświetlana nazwa
   readonly restaurantName = computed(() => {
     const u = this.currentUser();
+    const override = this.displayNameOverride();
+    if (u && override?.uid === u.uid) {
+      return override.name;
+    }
     return u?.displayName || 'Mój Lokal';
   });
 
@@ -70,6 +81,7 @@ export class AuthService {
 
     const defaultName = 'Pizzeria Bella Napoli (Demo)';
     await updateProfile(u, { displayName: defaultName });
+    this.displayNameOverride.set({ uid: u.uid, name: defaultName });
 
     const settingsDoc = doc(this.firestore, `restaurant_settings/${u.uid}`);
     await setDoc(settingsDoc, {
@@ -176,6 +188,7 @@ export class AuthService {
     if (!trimmed) throw new Error('Nazwa lokalu nie może być pusta');
 
     await updateProfile(u, { displayName: trimmed });
+    this.displayNameOverride.set({ uid: u.uid, name: trimmed });
 
     try {
       const docRef = doc(this.firestore, `restaurant_settings/${u.uid}`);

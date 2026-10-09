@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -10,6 +10,13 @@ import { RecipeService } from '../services/recipe.service';
 import { OrderService } from '../services/order.service';
 import { ToastService } from '../services/toast.service';
 import { AccountSettingsModalComponent } from '../../features/account/account-settings-modal.component';
+
+// Telefon w pionie (wąski ekran)
+const MOBILE_WIDTH_QUERY = '(max-width: 767.98px)';
+// Telefon w poziomie (szeroki, ale bardzo niski ekran)
+const MOBILE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 499.98px)';
+// Tablet / małe okno – automatyczny tryb kompaktowy (same ikony)
+const COMPACT_QUERY = '(max-width: 899.98px)';
 
 interface NavItem {
   label: string;
@@ -37,6 +44,10 @@ export class MainLayoutComponent implements OnInit {
 
   isMobileMenuOpen = signal(false);
   isSidebarCollapsed = signal(false);
+  /** Telefon (pion lub poziom) – menu jako wysuwana szuflada */
+  isMobile = signal(false);
+  /** Tryb samych ikon – tylko poza widokiem mobilnym */
+  readonly isCompact = computed(() => this.isSidebarCollapsed() && !this.isMobile());
   isUserMenuOpen = signal(false);
   isAccountModalOpen = signal(false);
   isResettingDemo = signal(false);
@@ -54,15 +65,22 @@ export class MainLayoutComponent implements OnInit {
   ngOnInit(): void {
     // Oficjalny reaktywny mechanizm Angular CDK BreakpointObserver
     this.breakpointObserver
-      .observe(['(max-width: 899.98px)', '(max-width: 767.98px)'])
+      .observe([COMPACT_QUERY, MOBILE_WIDTH_QUERY, MOBILE_LANDSCAPE_QUERY])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(result => {
-        const isMobile = result.breakpoints['(max-width: 767.98px)'];
-        const isUnder900 = result.breakpoints['(max-width: 899.98px)'];
+        const isMobile =
+          result.breakpoints[MOBILE_WIDTH_QUERY] || result.breakpoints[MOBILE_LANDSCAPE_QUERY];
+        const isUnder900 = result.breakpoints[COMPACT_QUERY];
+
+        // Przy każdej zmianie trybu zamykamy szufladę mobilną
+        if (isMobile !== this.isMobile()) {
+          this.isMobileMenuOpen.set(false);
+        }
+        this.isMobile.set(isMobile);
 
         if (isMobile) {
-          // Na mobilkach domyślnie zamykamy wysuwane menu drawer
-          this.isMobileMenuOpen.set(false);
+          // Na telefonach menu to szuflada z ikonami i tekstem (isCompact = false)
+          return;
         } else if (isUnder900) {
           // Pomiędzy 768px a 900px automatycznie aktywuj tryb kompaktowy (same ikony)
           if (!this.userHasManuallyToggled) {
@@ -78,8 +96,7 @@ export class MainLayoutComponent implements OnInit {
   }
 
   toggleSidebar(): void {
-    const isMobile = this.breakpointObserver.isMatched('(max-width: 767.98px)');
-    if (isMobile) {
+    if (this.isMobile()) {
       this.toggleMobileMenu();
     } else {
       this.userHasManuallyToggled = true;

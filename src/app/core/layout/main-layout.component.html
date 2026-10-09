@@ -1,33 +1,36 @@
 <div class="h-screen h-[100dvh] w-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-150">
   <!-- Mobile Backdrop Overlay -->
-  @if (isMobileMenuOpen()) {
+  @if (isMobile() && isMobileMenuOpen()) {
     <div
       (click)="closeMobileMenu()"
-      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
     ></div>
   }
 
-  <!-- Sidebar Navigation -->
+  <!-- Sidebar Navigation (mobile: wysuwana szuflada, desktop/tablet: stały pasek) -->
   <aside
-    [class.translate-x-0]="isMobileMenuOpen()"
-    [class.-translate-x-full]="!isMobileMenuOpen()"
-    [class.w-72]="!isSidebarCollapsed()"
-    [class.w-20]="isSidebarCollapsed()"
-    class="fixed md:static inset-y-0 left-0 z-50 h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none"
+    [class.fixed]="isMobile()"
+    [class.static]="!isMobile()"
+    [class.shadow-2xl]="isMobile()"
+    [class.translate-x-0]="!isMobile() || isMobileMenuOpen()"
+    [class.-translate-x-full]="isMobile() && !isMobileMenuOpen()"
+    [class.w-72]="!isCompact()"
+    [class.w-20]="isCompact()"
+    class="inset-y-0 left-0 z-50 h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 ease-in-out"
   >
     <!-- Brand Header -->
     <div 
       class="h-20 flex items-center border-b border-slate-200 dark:border-slate-800/80 shrink-0 transition-all duration-300"
-      [class.justify-between]="!isSidebarCollapsed()"
-      [class.px-6]="!isSidebarCollapsed()"
-      [class.justify-center]="isSidebarCollapsed()"
-      [class.px-2]="isSidebarCollapsed()"
+      [class.justify-between]="!isCompact()"
+      [class.px-6]="!isCompact()"
+      [class.justify-center]="isCompact()"
+      [class.px-2]="isCompact()"
     >
       <div class="flex items-center gap-3 overflow-hidden">
         <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
           <span class="material-icons-round text-white text-xl">restaurant</span>
         </div>
-        @if (!isSidebarCollapsed()) {
+        @if (!isCompact()) {
           <div class="truncate transition-opacity duration-200">
             <span class="font-bold text-lg tracking-tight text-slate-900 dark:text-white block leading-tight truncate">GastroApp</span>
             <span class="text-[11px] text-orange-600 dark:text-orange-400 font-medium tracking-wide uppercase truncate">Magazyn & Menu</span>
@@ -35,10 +38,10 @@
         }
       </div>
       <!-- Close button on mobile -->
-      @if (!isSidebarCollapsed()) {
+      @if (isMobile()) {
         <button
           (click)="closeMobileMenu()"
-          class="md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+          class="p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <span class="material-icons-round text-2xl">close</span>
         </button>
@@ -47,7 +50,7 @@
 
     <!-- Navigation Links -->
     <nav class="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
-      @if (!isSidebarCollapsed()) {
+      @if (!isCompact()) {
         <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mb-2 truncate">
           Nawigacja Główna
         </div>
@@ -59,24 +62,24 @@
         <a
           [routerLink]="item.route"
           (click)="closeMobileMenu()"
-          [title]="isSidebarCollapsed() ? item.label : ''"
+          [title]="isCompact() ? item.label : ''"
           routerLinkActive="bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold shadow-sm shadow-orange-500/5 active-nav-link"
           [routerLinkActiveOptions]="{ exact: false }"
           class="flex items-center rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-150 group"
-          [class.px-3.5]="!isSidebarCollapsed()"
-          [class.py-3]="!isSidebarCollapsed()"
-          [class.gap-3.5]="!isSidebarCollapsed()"
-          [class.text-sm]="!isSidebarCollapsed()"
-          [class.border-l-4]="!isSidebarCollapsed()"
-          [class.border-transparent]="!isSidebarCollapsed()"
-          [class.[&.active-nav-link]:border-orange-500]="!isSidebarCollapsed()"
-          [class.justify-center]="isSidebarCollapsed()"
-          [class.p-3]="isSidebarCollapsed()"
+          [class.px-3.5]="!isCompact()"
+          [class.py-3]="!isCompact()"
+          [class.gap-3.5]="!isCompact()"
+          [class.text-sm]="!isCompact()"
+          [class.border-l-4]="!isCompact()"
+          [class.border-transparent]="!isCompact()"
+          [class.[&.active-nav-link]:border-orange-500]="!isCompact()"
+          [class.justify-center]="isCompact()"
+          [class.p-3]="isCompact()"
         >
           <span class="material-icons-round text-slate-400 group-hover:text-orange-500 group-[.active-nav-link]:text-orange-500 text-xl transition-colors shrink-0">
             {{ item.icon }}
           </span>
-          @if (!isSidebarCollapsed()) {
+          @if (!isCompact()) {
             <span class="truncate">{{ item.label }}</span>
           }
         </a>
@@ -85,7 +88,7 @@
 
     <!-- Sidebar Footer / System Badge -->
     <div class="p-3 border-t border-slate-200 dark:border-slate-800/80 text-center shrink-0">
-      @if (!isSidebarCollapsed()) {
+      @if (!isCompact()) {
         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider text-slate-400 dark:text-slate-500 uppercase bg-slate-100 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50 truncate">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
           GastroApp v1.0
@@ -129,10 +132,10 @@
           (click)="toggleSidebar()"
           type="button"
           class="w-10 h-10 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/20 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 focus:outline-none cursor-pointer"
-          [title]="isSidebarCollapsed() ? 'Rozwiń menu boczne' : 'Zwiń menu boczne'"
+          [title]="isMobile() ? (isMobileMenuOpen() ? 'Zamknij menu' : 'Otwórz menu') : (isSidebarCollapsed() ? 'Rozwiń menu boczne' : 'Zwiń menu boczne')"
         >
           <span class="material-icons-round text-2xl transition-transform duration-200">
-            {{ isSidebarCollapsed() ? 'menu' : 'menu_open' }}
+            {{ (isMobile() ? isMobileMenuOpen() : !isSidebarCollapsed()) ? 'menu_open' : 'menu' }}
           </span>
         </button>
 
