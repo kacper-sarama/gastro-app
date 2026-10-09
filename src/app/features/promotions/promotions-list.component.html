@@ -1,0 +1,472 @@
+<div class="space-y-8 animate-fade-in pb-12">
+  <!-- Page Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 uppercase tracking-wider">
+          <span class="material-icons-round text-xs">auto_awesome</span>
+          Moduł Sprzedażowy (Premium)
+        </span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Subskrypcja Aktywna
+        </span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+        Promocje, Vouchery & Smart Deals
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl mt-0.5">
+        Mechanizmy psychologiczne gigantów (McDonald's, KFC, Domino's). Podnoś średnią wartość koszyka, opróżniaj nadmiary z magazynu i zapełniaj martwe godziny.
+      </p>
+    </div>
+
+    <!-- Top Action Buttons -->
+    <div class="flex items-center gap-2.5 shrink-0 flex-wrap">
+      <button
+        type="button"
+        (click)="loadStarterPromotions()"
+        [disabled]="isSeedingStarter()"
+        class="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+        title="Załaduj 4 wzorcowe szablony inspirowane fast-foodami"
+      >
+        <span class="material-icons-round text-sm" [class.animate-spin]="isSeedingStarter()">auto_fix_high</span>
+        <span>{{ isSeedingStarter() ? 'Ładowanie...' : 'Szablony Fast-Food' }}</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="openCreateModal()"
+        class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-bold shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
+      >
+        <span class="material-icons-round text-base">add</span>
+        <span>Nowa Promocja</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Sekcja 1: ROI & Sprzedaż Live Dashboard -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <!-- Karta 1: Wygenerowany obrót -->
+    <div class="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-orange-500/40 transition-colors">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          Obrót z promocjami
+        </span>
+        <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+          <span class="material-icons-round text-lg">trending_up</span>
+        </div>
+      </div>
+      <div class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+        {{ promotionService.totalRevenueGenerated().toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} zł
+      </div>
+      <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-1 flex items-center gap-1">
+        <span class="material-icons-round text-xs">verified</span>
+        <span>Sprzedaż zarejestrowana w kasie</span>
+      </p>
+    </div>
+
+    <!-- Karta 2: Łączne użycia w zamówieniach -->
+    <div class="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-orange-500/40 transition-colors">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          Użycia w zamówieniach
+        </span>
+        <div class="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+          <span class="material-icons-round text-lg">shopping_cart_checkout</span>
+        </div>
+      </div>
+      <div class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+        {{ promotionService.totalUsagesCount() }} razy
+      </div>
+      <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+        Wbitych przez kasjera/kelnera
+      </p>
+    </div>
+
+    <!-- Karta 3: Łączna kwota udzielonych rabatów -->
+    <div class="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-orange-500/40 transition-colors">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          Udzielone rabaty
+        </span>
+        <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+          <span class="material-icons-round text-lg">discount</span>
+        </div>
+      </div>
+      <div class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+        {{ promotionService.totalDiscountGiven().toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} zł
+      </div>
+      <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+        Inwestycja w marketing i wolumen
+      </p>
+    </div>
+
+    <!-- Karta 4: Aktywne akcje w kasie -->
+    <div class="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-orange-500/40 transition-colors">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          Aktywne akcje w kasie
+        </span>
+        <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+          <span class="material-icons-round text-lg">toggle_on</span>
+        </div>
+      </div>
+      <div class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+        {{ promotionService.activePromotionsCount() }} / {{ promotionService.totalPromotionsCount() }}
+      </div>
+      <p class="text-[10px] text-blue-600 dark:text-blue-400 font-medium mt-1">
+        Gotowe do kliknięcia przy zamówieniu
+      </p>
+    </div>
+  </div>
+
+  <!-- Sekcja 2: Inteligentny Asystent Gastro (Smart AI Recommendations) -->
+  <div class="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-slate-50 dark:to-slate-900/40 p-5 sm:p-6 rounded-3xl border border-amber-500/25 relative overflow-hidden">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20 shrink-0">
+          <span class="material-icons-round text-xl">psychology</span>
+        </div>
+        <div>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Inteligentny Asystent Rekomendacji</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-slate-900 uppercase">
+              Live AI
+            </span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Algorytm analizuje Twój magazyn surowców, receptury dań i pory zamówień, aby podpowiadać akcje o najwyższym zysku.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Siatka rekomendacji -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      @for (rec of promotionService.smartRecommendations(); track rec.name) {
+        <div class="p-4 sm:p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-orange-500/40 transition-all group">
+          <div>
+            <!-- Nagłówek rekomendacji -->
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 uppercase tracking-wide">
+                {{ rec.badgeText }}
+              </span>
+              <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                {{ rec.estimatedImpact }}
+              </span>
+            </div>
+
+            <!-- Tytuł i opis -->
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-1 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+              {{ rec.name }}
+            </h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+              {{ rec.description }}
+            </p>
+
+            <!-- Uzasadnienie algorytmu (Dlaczego to działa) -->
+            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 mb-4 text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-2">
+              <span class="material-icons-round text-sm text-amber-500 shrink-0 mt-0.5">lightbulb</span>
+              <span><strong>Dlaczego system to zaleca:</strong> {{ rec.reason }}</span>
+            </div>
+          </div>
+
+          <!-- Przyciski akcji rekomendacji -->
+          <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              (click)="quickActivateRecommendation(rec)"
+              class="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-bold shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span class="material-icons-round text-sm">flash_on</span>
+              <span>Włącz 1 kliknięciem</span>
+            </button>
+            <button
+              type="button"
+              (click)="applyRecommendation(rec)"
+              class="py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+              title="Dostosuj szczegóły przed włączeniem"
+            >
+              <span class="material-icons-round text-sm">tune</span>
+              <span class="hidden sm:inline">Dostosuj</span>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Sekcja 3: Katalog Promocji Lokalu -->
+  <div class="space-y-4">
+    <!-- Filtry i szukajka -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+        <button
+          type="button"
+          (click)="filterType.set('all')"
+          class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+          [class.bg-orange-500]="filterType() === 'all'"
+          [class.text-white]="filterType() === 'all'"
+          [class.bg-slate-100]="filterType() !== 'all'"
+          [class.dark:bg-slate-800]="filterType() !== 'all'"
+          [class.text-slate-600]="filterType() !== 'all'"
+          [class.dark:text-slate-300]="filterType() !== 'all'"
+        >
+          Wszystkie ({{ promotionService.totalPromotionsCount() }})
+        </button>
+
+        <button
+          type="button"
+          (click)="filterType.set('active')"
+          class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+          [class.bg-orange-500]="filterType() === 'active'"
+          [class.text-white]="filterType() === 'active'"
+          [class.bg-slate-100]="filterType() !== 'active'"
+          [class.dark:bg-slate-800]="filterType() !== 'active'"
+          [class.text-slate-600]="filterType() !== 'active'"
+          [class.dark:text-slate-300]="filterType() !== 'active'"
+        >
+          Tylko aktywne ({{ promotionService.activePromotionsCount() }})
+        </button>
+
+        <button
+          type="button"
+          (click)="filterType.set('bogo')"
+          class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+          [class.bg-orange-500]="filterType() === 'bogo'"
+          [class.text-white]="filterType() === 'bogo'"
+          [class.bg-slate-100]="filterType() !== 'bogo'"
+          [class.dark:bg-slate-800]="filterType() !== 'bogo'"
+          [class.text-slate-600]="filterType() !== 'bogo'"
+          [class.dark:text-slate-300]="filterType() !== 'bogo'"
+        >
+          🍕 BOGO (2w1)
+        </button>
+
+        <button
+          type="button"
+          (click)="filterType.set('upsell')"
+          class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+          [class.bg-orange-500]="filterType() === 'upsell'"
+          [class.text-white]="filterType() === 'upsell'"
+          [class.bg-slate-100]="filterType() !== 'upsell'"
+          [class.dark:bg-slate-800]="filterType() !== 'upsell'"
+          [class.text-slate-600]="filterType() !== 'upsell'"
+          [class.dark:text-slate-300]="filterType() !== 'upsell'"
+        >
+          🍟 Upsell / Kombo
+        </button>
+
+        <button
+          type="button"
+          (click)="filterType.set('threshold_bonus')"
+          class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+          [class.bg-orange-500]="filterType() === 'threshold_bonus'"
+          [class.text-white]="filterType() === 'threshold_bonus'"
+          [class.bg-slate-100]="filterType() !== 'threshold_bonus'"
+          [class.dark:bg-slate-800]="filterType() !== 'threshold_bonus'"
+          [class.text-slate-600]="filterType() !== 'threshold_bonus'"
+          [class.dark:text-slate-300]="filterType() !== 'threshold_bonus'"
+        >
+          🚀 Próg koszyka
+        </button>
+
+        <button
+          type="button"
+          (click)="filterType.set('happy_hours')"
+          class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+          [class.bg-orange-500]="filterType() === 'happy_hours'"
+          [class.text-white]="filterType() === 'happy_hours'"
+          [class.bg-slate-100]="filterType() !== 'happy_hours'"
+          [class.dark:bg-slate-800]="filterType() !== 'happy_hours'"
+          [class.text-slate-600]="filterType() !== 'happy_hours'"
+          [class.dark:text-slate-300]="filterType() !== 'happy_hours'"
+        >
+          ⏰ Happy Hours
+        </button>
+      </div>
+
+      <!-- Search Box -->
+      <div class="relative w-full sm:w-64 shrink-0">
+        <span class="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+        <input
+          type="text"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Szukaj po nazwie lub kodzie..."
+          class="w-full pl-9 pr-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+        />
+      </div>
+    </div>
+
+    <!-- Siatka promocji -->
+    @if (filteredPromotions().length > 0) {
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        @for (promo of filteredPromotions(); track promo.id) {
+          <div 
+            class="p-5 rounded-2xl bg-white dark:bg-slate-900 border transition-all duration-200 flex flex-col justify-between group hover:shadow-lg"
+            [class.border-orange-500/50]="promo.isActive"
+            [class.shadow-sm]="promo.isActive"
+            [class.border-slate-200]="!promo.isActive"
+            [class.dark:border-slate-800]="!promo.isActive"
+            [class.opacity-75]="!promo.isActive"
+          >
+            <div>
+              <!-- Karta Header: Badge & Status Switch -->
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 uppercase">
+                    {{ promo.badgeText || 'PROMOCJA' }}
+                  </span>
+                  @if (promo.code) {
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                      {{ promo.code }}
+                    </span>
+                  }
+                </div>
+
+                <!-- Toggle Switch -->
+                <button
+                  type="button"
+                  (click)="togglePromotionStatus(promo)"
+                  class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer"
+                  [class.bg-emerald-500/10]="promo.isActive"
+                  [class.text-emerald-600]="promo.isActive"
+                  [class.dark:text-emerald-400]="promo.isActive"
+                  [class.border-emerald-500/20]="promo.isActive"
+                  [class.bg-slate-100]="!promo.isActive"
+                  [class.text-slate-400]="!promo.isActive"
+                  [class.dark:bg-slate-800]="!promo.isActive"
+                  title="Włącz lub wyłącz dostępność promocji w kasie"
+                >
+                  <span class="w-2 h-2 rounded-full" [class.bg-emerald-500]="promo.isActive" [class.bg-slate-400]="!promo.isActive"></span>
+                  <span>{{ promo.isActive ? 'Aktywna' : 'Wstrzymana' }}</span>
+                </button>
+              </div>
+
+              <!-- Tytuł & Opis -->
+              <h3 class="text-base font-bold text-slate-900 dark:text-white leading-snug mb-1.5 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                {{ promo.name }}
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                {{ promo.description }}
+              </p>
+
+              <!-- Warunki i nagroda tagi -->
+              <div class="space-y-1.5 mb-4">
+                <!-- Korzyść -->
+                <div class="flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
+                  <span class="material-icons-round text-base text-emerald-500">card_giftcard</span>
+                  <span>
+                    @if (promo.reward.rewardType === 'discount_percent') {
+                      Rabat -{{ promo.reward.discountValue }}% na zamówienie/pozycję
+                    } @else if (promo.reward.rewardType === 'discount_amount') {
+                      Zniżka -{{ promo.reward.discountValue }} zł w kasie
+                    } @else if (promo.reward.rewardType === 'special_price_item') {
+                      {{ promo.reward.rewardRecipeName || 'Dodatek' }} za jedyne {{ promo.reward.specialPrice }} zł
+                    } @else {
+                      Darmowy produkt: {{ promo.reward.rewardRecipeName || 'Bonus' }} (0 zł)
+                    }
+                  </span>
+                </div>
+
+                <!-- Warunki -->
+                <div class="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-200/60 dark:border-slate-700/60 flex-wrap">
+                  <span class="material-icons-round text-sm text-slate-400">info_outline</span>
+                  @if (promo.condition.minOrderValue) {
+                    <span>Min. kwota: <strong>{{ promo.condition.minOrderValue }} zł</strong></span>
+                  }
+                  @if (promo.condition.requiredCategory) {
+                    <span>• Kategoria: <strong>{{ promo.condition.requiredCategory }}</strong></span>
+                  }
+                  @if (promo.condition.requiredQuantity && promo.condition.requiredQuantity > 1) {
+                    <span>• Min. ilość: <strong>{{ promo.condition.requiredQuantity }} szt.</strong></span>
+                  }
+                  @if (promo.condition.startTime) {
+                    <span>• Godziny: <strong>{{ promo.condition.startTime }}-{{ promo.condition.endTime }}</strong></span>
+                  }
+                  @if (promo.condition.applicableDays && promo.condition.applicableDays.length > 0) {
+                    <span>• Wybrane dni tygodnia</span>
+                  }
+                  @if (!promo.condition.minOrderValue && !promo.condition.requiredCategory && !promo.condition.startTime) {
+                    <span>Brak restrykcyjnych warunków (zawsze dostępna)</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer: Statystyki i Akcje -->
+            <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <div class="space-y-0.5">
+                <div class="text-[10px] text-slate-400">
+                  Użyto: <strong class="text-slate-700 dark:text-slate-300">{{ promo.usageCount || 0 }}x</strong>
+                </div>
+                <div class="text-[11px] font-bold text-slate-900 dark:text-white">
+                  Obrót: {{ (promo.revenueGenerated || 0).toLocaleString('pl-PL') }} zł
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  (click)="openEditModal(promo)"
+                  class="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  title="Edytuj promocję"
+                >
+                  <span class="material-icons-round text-lg">edit</span>
+                </button>
+                <button
+                  type="button"
+                  (click)="deletePromotion(promo)"
+                  class="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                  title="Usuń promocję"
+                >
+                  <span class="material-icons-round text-lg">delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- Empty State -->
+      <div class="p-10 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-4 max-w-lg mx-auto">
+        <div class="w-16 h-16 rounded-3xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center mx-auto">
+          <span class="material-icons-round text-3xl">local_offer</span>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">Brak promocji w tej kategorii</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+            Stwórz własną promocję lub skorzystaj z gotowych szablonów fast-food, aby zacząć podnosić sprzedaż w kasie.
+          </p>
+        </div>
+        <div class="flex items-center justify-center gap-2 pt-2">
+          <button
+            type="button"
+            (click)="loadStarterPromotions()"
+            class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+          >
+            Załaduj szablony
+          </button>
+          <button
+            type="button"
+            (click)="openCreateModal()"
+            class="px-4 py-2.5 rounded-xl bg-orange-500 text-white text-xs font-bold shadow-md shadow-orange-500/20 hover:bg-orange-600 transition-colors cursor-pointer"
+          >
+            Stwórz promocję
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal tworzenia / edycji -->
+@if (isModalOpen()) {
+  <app-promotion-modal
+    [promotionToEdit]="selectedPromotionToEdit()"
+    [initialRecommendation]="selectedRecommendationToApply()"
+    (close)="isModalOpen.set(false)"
+    (saved)="isModalOpen.set(false)"
+  ></app-promotion-modal>
+}

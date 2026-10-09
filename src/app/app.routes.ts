@@ -9,6 +9,7 @@ import { RecipesListComponent } from './features/recipes/recipes-list.component'
 import { MenuManagementComponent } from './features/menu/menu-management.component';
 import { GuestMenuComponent } from './features/menu/guest-menu.component';
 import { OrdersKanbanComponent } from './features/orders/orders-kanban.component';
+import { PromotionsListComponent } from './features/promotions/promotions-list.component';
 
 export const routes: Routes = [
   // Public auth routes
@@ -47,6 +48,10 @@ export const routes: Routes = [
       {
         path: 'orders',
         component: OrdersKanbanComponent
+      },
+      {
+        path: 'promotions',
+        component: PromotionsListComponent
       },
       {
         path: 'inventory',

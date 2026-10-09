@@ -159,7 +159,14 @@
             <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
               <div>
                 <span class="text-[11px] text-slate-400 block">Razem</span>
-                <span class="font-bold text-slate-900 dark:text-white text-sm">{{ order.totalPrice.toFixed(2) }} zł</span>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-bold text-slate-900 dark:text-white text-sm">{{ order.totalPrice.toFixed(2) }} zł</span>
+                  @if (order.appliedPromotionName) {
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 font-bold border border-orange-500/20 truncate max-w-[120px]" [title]="'Promocja: ' + order.appliedPromotionName">
+                      🏷️ -{{ (order.discountAmount || 0).toFixed(2) }} zł
+                    </span>
+                  }
+                </div>
               </div>
 
               <div class="flex items-center gap-1.5">
@@ -332,7 +339,14 @@
             <div class="pt-2 border-t border-emerald-100 dark:border-emerald-900/40 space-y-2">
               <div class="flex items-center justify-between text-xs">
                 <span class="text-slate-500">Do zapłaty:</span>
-                <span class="font-bold text-slate-900 dark:text-white font-mono">{{ order.totalPrice.toFixed(2) }} zł</span>
+                <div class="flex items-center gap-1.5">
+                  @if (order.appliedPromotionName) {
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 font-bold border border-orange-500/20 truncate max-w-[110px]" [title]="'Promocja: ' + order.appliedPromotionName">
+                      🏷️ -{{ (order.discountAmount || 0).toFixed(2) }} zł
+                    </span>
+                  }
+                  <span class="font-bold text-slate-900 dark:text-white font-mono">{{ order.totalPrice.toFixed(2) }} zł</span>
+                </div>
               </div>
 
               <div class="flex items-center gap-2">
@@ -424,7 +438,14 @@
                 <span class="material-icons-round text-xs">inventory</span>
                 Składniki zdjęte z magazynu
               </span>
-              <span class="font-bold text-slate-800 dark:text-slate-200 font-mono">{{ order.totalPrice.toFixed(2) }} zł</span>
+              <div class="flex items-center gap-1.5">
+                @if (order.appliedPromotionName) {
+                  <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 font-bold border border-orange-500/20 truncate max-w-[100px]" [title]="'Promocja: ' + order.appliedPromotionName">
+                    🏷️ -{{ (order.discountAmount || 0).toFixed(2) }} zł
+                  </span>
+                }
+                <span class="font-bold text-slate-800 dark:text-slate-200 font-mono">{{ order.totalPrice.toFixed(2) }} zł</span>
+              </div>
             </div>
           </div>
         } @empty {

@@ -5,6 +5,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { InventoryService } from '../../core/services/inventory.service';
 import { RecipeService } from '../../core/services/recipe.service';
 import { OrderService } from '../../core/services/order.service';
+import { PromotionService } from '../../core/services/promotion.service';
 import { formatStockAmount } from '../../core/models/inventory-item.model';
 
 @Component({
@@ -18,6 +19,7 @@ export class DashboardComponent {
   readonly inventoryService = inject(InventoryService);
   readonly recipeService = inject(RecipeService);
   readonly orderService = inject(OrderService);
+  readonly promotionService = inject(PromotionService);
 
   // Wszystkie aktywne zamówienia w kolejce kuchennej
   readonly allActiveOrders = computed(() => 

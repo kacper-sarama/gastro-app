@@ -19,6 +19,36 @@
     </div>
   </div>
 
+  <!-- Smart Promocje Banner -->
+  <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-orange-500/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex items-center gap-3.5">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20 shrink-0">
+        <span class="material-icons-round text-2xl">local_offer</span>
+      </div>
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Smart Promocje & Psychologia Fast-Food</h3>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 uppercase">
+            {{ promotionService.activePromotionsCount() }} aktywnych akcji
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Wygenerowany obrót z promkami: <strong class="text-slate-800 dark:text-slate-200">{{ promotionService.totalRevenueGenerated().toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} zł</strong> • Użycia w kasie: <strong class="text-slate-800 dark:text-slate-200">{{ promotionService.totalUsagesCount() }}x</strong>
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a
+        routerLink="/promotions"
+        class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0"
+      >
+        <span>Zarządzaj Promocjami</span>
+        <span class="material-icons-round text-sm">arrow_forward</span>
+      </a>
+    </div>
+  </div>
+
   <!-- ======================================================== -->
   <!-- PODGLĄD STATUSÓW ZAMÓWIEŃ (KANBAN LIVE STATUS BAR)       -->
   <!-- ======================================================== -->

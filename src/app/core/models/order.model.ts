@@ -20,9 +20,17 @@ export interface Order {
   stockDeducted: boolean;     // Zabezpieczenie przed podwójnym odpisaniem składników
   createdAt: string;          // ISO timestamp
   updatedAt: string;          // ISO timestamp
+  appliedPromotionId?: string;
+  appliedPromotionName?: string;
+  discountAmount?: number;
+  originalPrice?: number;
 }
 
 export interface CreateOrderDto {
   tableNumber?: string;
   items: OrderItem[];
+  appliedPromotionId?: string;
+  appliedPromotionName?: string;
+  discountAmount?: number;
+  originalPrice?: number;
 }

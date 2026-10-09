@@ -1,0 +1,487 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-sm overflow-y-auto animate-fade-in">
+  <div 
+    class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto flex flex-col max-h-[92vh]"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Modal Header -->
+    <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/80 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
+          <span class="material-icons-round text-xl">local_offer</span>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">
+            {{ promotionToEdit ? 'Edytuj Promocję' : 'Nowa Promocja & Rabat' }}
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Zwiększ sprzedaż i zapełnij martwe godziny w Twoim lokalu
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="close.emit()"
+        class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        <span class="material-icons-round text-xl">close</span>
+      </button>
+    </div>
+
+    <!-- Modal Body (Scrollable) -->
+    <div class="p-6 space-y-6 overflow-y-auto flex-1">
+      <!-- Error Message -->
+      @if (errorMessage()) {
+        <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2.5">
+          <span class="material-icons-round text-base">error_outline</span>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      <!-- Quick Template Bar (tylko w trybie tworzenia) -->
+      @if (!promotionToEdit) {
+        <div class="bg-gradient-to-br from-orange-500/5 via-amber-500/5 to-transparent p-4 rounded-2xl border border-orange-500/20">
+          <div class="text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <span class="material-icons-round text-sm">auto_awesome</span>
+            <span>Szablony gigantów (1-kliknięcie)</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button
+              type="button"
+              (click)="applyTemplate('bogo')"
+              class="px-2.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-orange-500 hover:shadow-sm text-left transition-all group"
+            >
+              <div class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-orange-600">🍕 2. danie -50%</div>
+              <div class="text-[9px] text-slate-400 truncate">KFC / Pizza BOGO</div>
+            </button>
+
+            <button
+              type="button"
+              (click)="applyTemplate('upsell')"
+              class="px-2.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-orange-500 hover:shadow-sm text-left transition-all group"
+            >
+              <div class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-orange-600">🍟 Dobierz za 4 zł</div>
+              <div class="text-[9px] text-slate-400 truncate">McDonald's Upsell</div>
+            </button>
+
+            <button
+              type="button"
+              (click)="applyTemplate('threshold')"
+              class="px-2.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-orange-500 hover:shadow-sm text-left transition-all group"
+            >
+              <div class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-orange-600">🚀 Od 80 zł rabat</div>
+              <div class="text-[9px] text-slate-400 truncate">Duży koszyk Domino's</div>
+            </button>
+
+            <button
+              type="button"
+              (click)="applyTemplate('happy_hours')"
+              class="px-2.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-orange-500 hover:shadow-sm text-left transition-all group"
+            >
+              <div class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-orange-600">⏰ Happy Hours</div>
+              <div class="text-[9px] text-slate-400 truncate">Dołki sprzedażowe</div>
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Form Grid -->
+      <div class="space-y-4">
+        <!-- Nazwa & Badge -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Nazwa promocji *
+            </label>
+            <input
+              type="text"
+              [ngModel]="name()"
+              (ngModelChange)="name.set($event)"
+              placeholder="np. Wtorkowy Hit: Druga Pizza -50%"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Etykieta / Badge
+            </label>
+            <input
+              type="text"
+              [ngModel]="badgeText()"
+              (ngModelChange)="badgeText.set($event)"
+              placeholder="np. HOT 🔥"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+        </div>
+
+        <!-- Opis & Kod -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Opis akcji dla personelu
+            </label>
+            <input
+              type="text"
+              [ngModel]="description()"
+              (ngModelChange)="description.set($event)"
+              placeholder="np. Kup 2 dowolne pizze, drugą (tańszą) otrzymaj -50%"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Kod (opcjonalny)
+            </label>
+            <input
+              type="text"
+              [ngModel]="code()"
+              (ngModelChange)="code.set($event)"
+              placeholder="np. WTOR50"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 uppercase"
+            />
+          </div>
+        </div>
+
+        <!-- Typ mechanizmu -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Typ mechaniki promocyjnej
+          </label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button
+              type="button"
+              (click)="type.set('bogo')"
+              class="px-3 py-2.5 rounded-xl border text-xs font-medium text-left transition-all"
+              [class.border-orange-500]="type() === 'bogo'"
+              [class.bg-orange-500/10]="type() === 'bogo'"
+              [class.text-orange-600]="type() === 'bogo'"
+              [class.dark:text-orange-400]="type() === 'bogo'"
+              [class.border-slate-200]="type() !== 'bogo'"
+              [class.dark:border-slate-700]="type() !== 'bogo'"
+              [class.text-slate-600]="type() !== 'bogo'"
+              [class.dark:text-slate-300]="type() !== 'bogo'"
+            >
+              <div class="font-bold">🍕 BOGO (2 w 1)</div>
+              <div class="text-[10px] text-slate-400">Drugi za pół ceny / grosze</div>
+            </button>
+
+            <button
+              type="button"
+              (click)="type.set('upsell')"
+              class="px-3 py-2.5 rounded-xl border text-xs font-medium text-left transition-all"
+              [class.border-orange-500]="type() === 'upsell'"
+              [class.bg-orange-500/10]="type() === 'upsell'"
+              [class.text-orange-600]="type() === 'upsell'"
+              [class.dark:text-orange-400]="type() === 'upsell'"
+              [class.border-slate-200]="type() !== 'upsell'"
+              [class.dark:border-slate-700]="type() !== 'upsell'"
+              [class.text-slate-600]="type() !== 'upsell'"
+              [class.dark:text-slate-300]="type() !== 'upsell'"
+            >
+              <div class="font-bold">🍟 Upsell / Kombo</div>
+              <div class="text-[10px] text-slate-400">Dodatek w cenie specjalnej</div>
+            </button>
+
+            <button
+              type="button"
+              (click)="type.set('threshold_bonus')"
+              class="px-3 py-2.5 rounded-xl border text-xs font-medium text-left transition-all"
+              [class.border-orange-500]="type() === 'threshold_bonus'"
+              [class.bg-orange-500/10]="type() === 'threshold_bonus'"
+              [class.text-orange-600]="type() === 'threshold_bonus'"
+              [class.dark:text-orange-400]="type() === 'threshold_bonus'"
+              [class.border-slate-200]="type() !== 'threshold_bonus'"
+              [class.dark:border-slate-700]="type() !== 'threshold_bonus'"
+              [class.text-slate-600]="type() !== 'threshold_bonus'"
+              [class.dark:text-slate-300]="type() !== 'threshold_bonus'"
+            >
+              <div class="font-bold">🚀 Próg Koszyka</div>
+              <div class="text-[10px] text-slate-400">Rabat od min. kwoty</div>
+            </button>
+
+            <button
+              type="button"
+              (click)="type.set('happy_hours')"
+              class="px-3 py-2.5 rounded-xl border text-xs font-medium text-left transition-all"
+              [class.border-orange-500]="type() === 'happy_hours'"
+              [class.bg-orange-500/10]="type() === 'happy_hours'"
+              [class.text-orange-600]="type() === 'happy_hours'"
+              [class.dark:text-orange-400]="type() === 'happy_hours'"
+              [class.border-slate-200]="type() !== 'happy_hours'"
+              [class.dark:border-slate-700]="type() !== 'happy_hours'"
+              [class.text-slate-600]="type() !== 'happy_hours'"
+              [class.dark:text-slate-300]="type() !== 'happy_hours'"
+            >
+              <div class="font-bold">⏰ Happy Hours</div>
+              <div class="text-[10px] text-slate-400">Konkretne pory dnia</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sekcja: Warunki aktywacji -->
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <span class="material-icons-round text-base text-orange-500">rule</span>
+            <span>Warunki aktywacji w zamówieniu</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                Wymagana kategoria dań
+              </label>
+              <select
+                [ngModel]="requiredCategory()"
+                (ngModelChange)="requiredCategory.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="">Wszystkie kategorie</option>
+                @for (cat of availableCategories(); track cat) {
+                  <option [value]="cat">{{ cat }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                Wymagana ilość dań (szt.)
+              </label>
+              <input
+                type="number"
+                min="1"
+                [ngModel]="requiredQuantity()"
+                (ngModelChange)="requiredQuantity.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                Min. wartość zamówienia (PLN)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="5"
+                [ngModel]="minOrderValue()"
+                (ngModelChange)="minOrderValue.set($event)"
+                placeholder="np. 80 zł"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+
+          <!-- Dni tygodnia -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+              Dni obowiązywania (puste = każdy dzień)
+            </label>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              @for (day of daysOfWeek; track day.id) {
+                <button
+                  type="button"
+                  (click)="toggleDay(day.id)"
+                  class="px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors"
+                  [class.bg-orange-500]="isDaySelected(day.id)"
+                  [class.text-white]="isDaySelected(day.id)"
+                  [class.border-orange-500]="isDaySelected(day.id)"
+                  [class.bg-white]="!isDaySelected(day.id)"
+                  [class.dark:bg-slate-800]="!isDaySelected(day.id)"
+                  [class.border-slate-200]="!isDaySelected(day.id)"
+                  [class.dark:border-slate-700]="!isDaySelected(day.id)"
+                  [class.text-slate-600]="!isDaySelected(day.id)"
+                  [class.dark:text-slate-300]="!isDaySelected(day.id)"
+                >
+                  {{ day.label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Godziny Happy Hours -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                Godzina od (np. 14:00)
+              </label>
+              <input
+                type="text"
+                [ngModel]="startTime()"
+                (ngModelChange)="startTime.set($event)"
+                placeholder="14:00"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                Godzina do (np. 17:00)
+              </label>
+              <input
+                type="text"
+                [ngModel]="endTime()"
+                (ngModelChange)="endTime.set($event)"
+                placeholder="17:00"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Sekcja: Nagroda / Korzyść -->
+        <div class="p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 space-y-3">
+          <div class="text-xs font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+            <span class="material-icons-round text-base text-amber-500">card_giftcard</span>
+            <span>Nagroda / Co otrzymuje klient?</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                Rodzaj rabatu / bonusu
+              </label>
+              <select
+                [ngModel]="rewardType()"
+                (ngModelChange)="rewardType.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="discount_percent">Rabat procentowy (%)</option>
+                <option value="discount_amount">Rabat kwotowy (PLN)</option>
+                <option value="special_price_item">Produkt w stałej cenie (np. 4 zł)</option>
+                <option value="free_item">Darmowy produkt (0 zł)</option>
+              </select>
+            </div>
+
+            @if (rewardType() === 'discount_percent' || rewardType() === 'discount_amount') {
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Wartość rabatu ({{ rewardType() === 'discount_percent' ? '%' : 'PLN' }})
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  [ngModel]="discountValue()"
+                  (ngModelChange)="discountValue.set($event)"
+                  class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+            }
+
+            @if (rewardType() === 'special_price_item' || rewardType() === 'free_item') {
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Wybierz produkt z karty dań
+                </label>
+                <select
+                  [ngModel]="rewardRecipeId()"
+                  (ngModelChange)="rewardRecipeId.set($event)"
+                  class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">Wybierz danie...</option>
+                  @for (r of availableRecipes(); track r.id) {
+                    <option [value]="r.id">{{ r.name }} ({{ r.sellingPrice }} zł)</option>
+                  }
+                </select>
+              </div>
+
+              @if (rewardType() === 'special_price_item') {
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Cena promocyjna (PLN)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    [ngModel]="specialPrice()"
+                    (ngModelChange)="specialPrice.set($event)"
+                    placeholder="4.00"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Podgląd na żywo kafelka promocji -->
+        <div class="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+            Podgląd kafelka w oknie zamówienia kasjera:
+          </div>
+          <div class="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-900 border border-orange-500/30 shadow-sm">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+                {{ badgeText() || 'PROMOCJA' }}
+              </span>
+              <div>
+                <p class="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                  {{ name() || 'Nazwa promocji' }}
+                </p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                  {{ description() || 'Opis warunków promocji' }}
+                </p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                @if (rewardType() === 'discount_percent') {
+                  -{{ discountValue() }}%
+                } @else if (rewardType() === 'discount_amount') {
+                  -{{ discountValue() }} zł
+                } @else if (rewardType() === 'special_price_item') {
+                  za {{ specialPrice() }} zł
+                } @else {
+                  GRATIS
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/80 shrink-0">
+      <div class="flex items-center gap-2">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            [ngModel]="isActive()"
+            (ngModelChange)="isActive.set($event)"
+            class="sr-only peer"
+          />
+          <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
+          <span class="ml-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+            {{ isActive() ? 'Aktywna' : 'Wstrzymana' }}
+          </span>
+        </label>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button
+          type="button"
+          (click)="close.emit()"
+          class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          Anuluj
+        </button>
+        <button
+          type="button"
+          (click)="onSave()"
+          [disabled]="isSaving()"
+          class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+        >
+          @if (isSaving()) {
+            <span class="material-icons-round text-sm animate-spin">refresh</span>
+            <span>Zapisywanie...</span>
+          } @else {
+            <span class="material-icons-round text-sm">check</span>
+            <span>{{ promotionToEdit ? 'Zapisz zmiany' : 'Utwórz promocję' }}</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

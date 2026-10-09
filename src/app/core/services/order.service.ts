@@ -17,6 +17,7 @@ import { AuthService } from './auth.service';
 import { InventoryService } from './inventory.service';
 import { RecipeService } from './recipe.service';
 import { ToastService } from './toast.service';
+import { PromotionService } from './promotion.service';
 import { Order, OrderItem, OrderStatus, CreateOrderDto } from '../models/order.model';
 import { Recipe } from '../models/recipe.model';
 
@@ -29,6 +30,7 @@ export class OrderService implements OnDestroy {
   private inventoryService = inject(InventoryService);
   private recipeService = inject(RecipeService);
   private toastService = inject(ToastService);
+  private promotionService = inject(PromotionService);
   private isResetting = false;
 
   readonly orders = signal<Order[]>([]);
@@ -325,8 +327,10 @@ export class OrderService implements OnDestroy {
     const maxNum = currentOrders.reduce((max, o) => Math.max(max, o.orderNumber || 100), 100);
     const orderNumber = maxNum + 1;
 
-    // Oblicz sumę zamówienia
-    const totalPrice = dto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    // Oblicz sumę pierwotną oraz ewentualny rabat promocyjny
+    const originalPrice = dto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    const discountAmount = dto.discountAmount || 0;
+    const totalPrice = Math.max(0, Math.round((originalPrice - discountAmount) * 100) / 100);
 
     const tableNumber = dto.tableNumber?.trim() || 'Stolik 1';
     const now = new Date().toISOString();
@@ -336,6 +340,10 @@ export class OrderService implements OnDestroy {
       tableNumber,
       items: dto.items,
       totalPrice,
+      originalPrice: discountAmount > 0 ? originalPrice : undefined,
+      discountAmount: discountAmount > 0 ? discountAmount : undefined,
+      appliedPromotionId: dto.appliedPromotionId,
+      appliedPromotionName: dto.appliedPromotionName,
       status: 'pending' as OrderStatus,
       stockDeducted: false,
       createdAt: now,
@@ -345,6 +353,12 @@ export class OrderService implements OnDestroy {
     try {
       const col = collection(this.firestore, 'orders');
       const docRef = await addDoc(col, orderData);
+
+      // Zarejestruj użycie promocji w statystykach ROI
+      if (dto.appliedPromotionId) {
+        this.promotionService.recordPromotionUsage(dto.appliedPromotionId, discountAmount, totalPrice);
+      }
+
       this.toastService.info(
         `Zarejestrowano zamówienie #${orderNumber} (${tableNumber}, ${dto.items.length} pozycji).`,
         'Nowe zamówienie'

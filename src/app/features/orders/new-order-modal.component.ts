@@ -3,8 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RecipeService } from '../../core/services/recipe.service';
 import { OrderService } from '../../core/services/order.service';
-import { Recipe } from '../../core/models/recipe.model';
+import { PromotionService } from '../../core/services/promotion.service';
+import { Recipe, RecipeCapacityResult } from '../../core/models/recipe.model';
 import { OrderItem } from '../../core/models/order.model';
+import { Promotion } from '../../core/models/promotion.model';
+
+export interface QuickTableOption {
+  name: string;
+  icon: string;
+  type?: 'table' | 'bar' | 'takeout' | 'outdoor';
+}
 
 @Component({
   selector: 'app-new-order-modal',
@@ -15,23 +23,42 @@ import { OrderItem } from '../../core/models/order.model';
 export class NewOrderModalComponent {
   readonly recipeService = inject(RecipeService);
   readonly orderService = inject(OrderService);
+  readonly promotionService = inject(PromotionService);
 
   @Output() close = new EventEmitter<void>();
   @Output() created = new EventEmitter<void>();
 
+  // 3-krokowy Stepper: 1 (Menu) -> 2 (Promocje) -> 3 (Stolik)
+  currentStep = signal<1 | 2 | 3>(1);
+
+  // Krok w widoku mobilnym w Kroku 1: 'menu' (dania) lub 'cart' (koszyk)
+  mobileTab = signal<'menu' | 'cart'>('menu');
+
   tableNumber = signal<string>('Stolik 1');
   searchQuery = signal<string>('');
   selectedCategory = signal<string>('all');
-
-  // Krok w widoku mobilnym: 'menu' (wybór dań) lub 'summary' (stolik i podsumowanie)
-  mobileStep = signal<'menu' | 'summary'>('menu');
 
   // Mapa wybranych pozycji: [recipeId -> quantity]
   quantities = signal<Record<string, number>>({});
   isSubmitting = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
 
-  readonly quickTables = ['Stolik 1', 'Stolik 2', 'Stolik 3', 'Stolik 4', 'Stolik 5', 'Bar', 'Wynos'];
+  // Promocje & Kody
+  selectedPromotionId = signal<string | null>(null);
+  promoCodeInput = signal<string>('');
+  promoCodeMessage = signal<{ text: string; isError: boolean } | null>(null);
+
+  readonly quickTables: QuickTableOption[] = [
+    { name: 'Stolik 1', icon: 'table_restaurant', type: 'table' },
+    { name: 'Stolik 2', icon: 'table_restaurant', type: 'table' },
+    { name: 'Stolik 3', icon: 'table_restaurant', type: 'table' },
+    { name: 'Stolik 4', icon: 'table_restaurant', type: 'table' },
+    { name: 'Stolik 5', icon: 'table_restaurant', type: 'table' },
+    { name: 'Stolik 6', icon: 'table_restaurant', type: 'table' },
+    { name: 'Bar', icon: 'local_bar', type: 'bar' },
+    { name: 'Ogródek', icon: 'deck', type: 'outdoor' },
+    { name: 'Wynos / Odbiór', icon: 'takeout_dining', type: 'takeout' }
+  ];
 
   readonly categories = computed(() => {
     const available = this.recipeService.recipes().filter(r => r.isAvailable !== false);
@@ -92,14 +119,75 @@ export class NewOrderModalComponent {
     return this.selectedItems().reduce((sum, item) => sum + item.quantity, 0);
   });
 
+  // --- Ewaluacja aktywnych promocji względem bieżącego koszyka ---
+  readonly evaluatedPromotions = computed(() => {
+    const promos = this.promotionService.activePromotions();
+    const items = this.selectedItems();
+
+    return promos.map(promo => {
+      const result = this.promotionService.calculateValidationAndDiscount(promo, items);
+      return {
+        promo,
+        ...result
+      };
+    });
+  });
+
+  readonly appliedPromotionData = computed(() => {
+    const pId = this.selectedPromotionId();
+    if (!pId) return null;
+    const match = this.evaluatedPromotions().find(e => e.promo.id === pId);
+    return match || null;
+  });
+
+  readonly discountAmount = computed(() => {
+    const applied = this.appliedPromotionData();
+    if (!applied || !applied.isEligible) return 0;
+    return applied.discountAmount;
+  });
+
+  readonly finalTotalPrice = computed(() => {
+    const subtotal = this.totalPrice();
+    const discount = this.discountAmount();
+    return Math.max(0, Math.round((subtotal - discount) * 100) / 100);
+  });
+
+  getCapacity(recipeId: string): RecipeCapacityResult | undefined {
+    return this.recipeService.capacitiesMap().get(recipeId);
+  }
+
+  getMaxPortions(recipeId: string): number {
+    const cap = this.getCapacity(recipeId);
+    return cap ? cap.maxPortions : 999;
+  }
+
+  isMaxReached(recipeId: string): boolean {
+    const qty = this.getQuantity(recipeId);
+    const max = this.getMaxPortions(recipeId);
+    return qty >= max;
+  }
+
   getQuantity(recipeId: string): number {
     return this.quantities()[recipeId] || 0;
   }
 
   incrementItem(recipeId: string): void {
     const current = this.quantities();
-    const val = (current[recipeId] || 0) + 1;
-    this.quantities.set({ ...current, [recipeId]: val });
+    const currentVal = current[recipeId] || 0;
+    const capacity = this.getCapacity(recipeId);
+    const maxAllowed = capacity ? capacity.maxPortions : 999;
+
+    if (currentVal >= maxAllowed) {
+      const r = this.recipeService.recipes().find(rec => rec.id === recipeId);
+      const bottleneckName = capacity?.bottleneckIngredient?.name;
+      const bottleneckInfo = bottleneckName ? ` (brakujący składnik: ${bottleneckName})` : '';
+      this.errorMessage.set(
+        `Osiągnięto limit surowców w magazynie dla „${r?.name || 'dania'}”: maksymalnie ${maxAllowed} szt.${bottleneckInfo}`
+      );
+      return;
+    }
+
+    this.quantities.set({ ...current, [recipeId]: currentVal + 1 });
     this.errorMessage.set(null);
   }
 
@@ -113,20 +201,110 @@ export class NewOrderModalComponent {
     } else {
       this.quantities.set({ ...current, [recipeId]: val });
     }
+    this.errorMessage.set(null);
+  }
+
+  // --- Nawigacja w Stepperze ---
+
+  goToStep(targetStep: 1 | 2 | 3): void {
+    if (targetStep > 1 && this.selectedItems().length === 0) {
+      this.errorMessage.set('Wybierz co najmniej jedno danie z menu przed przejściem dalej.');
+      return;
+    }
+    this.errorMessage.set(null);
+    this.currentStep.set(targetStep);
+  }
+
+  selectQuickTable(tblName: string): void {
+    this.tableNumber.set(tblName);
+  }
+
+  // --- Akcje modułu promocji ---
+
+  togglePromotion(promoId: string): void {
+    if (this.selectedPromotionId() === promoId) {
+      this.selectedPromotionId.set(null);
+      this.promoCodeMessage.set(null);
+    } else {
+      this.selectedPromotionId.set(promoId);
+      this.promoCodeMessage.set(null);
+    }
+  }
+
+  removeAppliedPromotion(): void {
+    this.selectedPromotionId.set(null);
+    this.promoCodeMessage.set(null);
+  }
+
+  addBonusItem(recipeId: string): void {
+    this.incrementItem(recipeId);
+  }
+
+  applyPromoCode(): void {
+    const code = this.promoCodeInput().trim().toUpperCase();
+    if (!code) {
+      this.promoCodeMessage.set({ text: 'Wpisz kod promocji.', isError: true });
+      return;
+    }
+
+    const match = this.promotionService.activePromotions().find(
+      p => (p.code || '').toUpperCase() === code
+    );
+
+    if (!match) {
+      this.promoCodeMessage.set({ text: 'Nieprawidłowy lub nieaktywny kod promocji.', isError: true });
+      return;
+    }
+
+    this.selectedPromotionId.set(match.id);
+    const evaluation = this.promotionService.calculateValidationAndDiscount(match, this.selectedItems());
+
+    if (evaluation.isEligible) {
+      this.promoCodeMessage.set({ text: `Zastosowano promocję: ${match.name}!`, isError: false });
+    } else {
+      this.promoCodeMessage.set({
+        text: `Kod zaakceptowany: ${evaluation.missingRequirementReason || 'Niespełnione warunki'}`,
+        isError: false
+      });
+    }
+    this.promoCodeInput.set('');
   }
 
   async onSubmitOrder(): Promise<void> {
     const items = this.selectedItems();
     if (items.length === 0) {
       this.errorMessage.set('Wybierz co najmniej jedno danie z menu.');
+      this.currentStep.set(1);
       return;
     }
+
+    // Walidacja stanów magazynowych przed przesłaniem na kuchnię
+    for (const item of items) {
+      const capacity = this.getCapacity(item.recipeId);
+      const maxAllowed = capacity ? capacity.maxPortions : 999;
+      if (item.quantity > maxAllowed) {
+        const bottleneck = capacity?.bottleneckIngredient?.name;
+        const bottleneckText = bottleneck ? ` Brakujący surowiec: ${bottleneck}.` : '';
+        this.errorMessage.set(
+          `Przekroczono limit magazynowy dla „${item.recipeName}” (wybrano ${item.quantity} szt., w magazynie maks. ${maxAllowed} szt.).${bottleneckText}`
+        );
+        this.currentStep.set(1);
+        return;
+      }
+    }
+
+    const applied = this.appliedPromotionData();
+    const isPromoValid = applied && applied.isEligible;
 
     this.isSubmitting.set(true);
     try {
       await this.orderService.createOrder({
-        tableNumber: this.tableNumber(),
-        items
+        tableNumber: this.tableNumber().trim() || 'Stolik 1',
+        items,
+        appliedPromotionId: isPromoValid ? applied.promo.id : undefined,
+        appliedPromotionName: isPromoValid ? applied.promo.name : undefined,
+        discountAmount: isPromoValid ? this.discountAmount() : undefined,
+        originalPrice: this.totalPrice()
       });
       this.created.emit();
       this.close.emit();
