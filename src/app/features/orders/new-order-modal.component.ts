@@ -8,6 +8,7 @@ import { PromotionService } from '../../core/services/promotion.service';
 import { Recipe, RecipeCapacityResult } from '../../core/models/recipe.model';
 import { OrderItem } from '../../core/models/order.model';
 import { Promotion } from '../../core/models/promotion.model';
+import { RestaurantTable } from '../../core/models/table.model';
 
 export interface QuickTableOption {
   name: string;
@@ -29,7 +30,22 @@ export class NewOrderModalComponent {
 
   @Input() set initialTableNumber(val: string | undefined) {
     if (val && val.trim()) {
-      this.tableNumber.set(val.trim());
+      const trimmed = val.trim();
+      this.tableNumber.set(trimmed);
+      if (trimmed.toLowerCase().includes('wynos')) {
+        this.selectedModalZone.set('takeout');
+        const match = trimmed.match(/\((.*?)\)/);
+        if (match && match[1]) {
+          this.takeoutCustomerInfo.set(match[1]);
+        }
+      } else {
+        const found = this.tableService.tables().find(t => t.number.trim().toLowerCase() === trimmed.toLowerCase());
+        if (found?.zone) {
+          this.selectedModalZone.set(found.zone);
+        } else {
+          this.selectedModalZone.set('all');
+        }
+      }
     }
   }
 
@@ -46,6 +62,9 @@ export class NewOrderModalComponent {
   searchQuery = signal<string>('');
   selectedCategory = signal<string>('all');
 
+  // Informacja o kliencie na wynos (np. imię / telefon)
+  takeoutCustomerInfo = signal<string>('');
+
   // Mapa wybranych pozycji: [recipeId -> quantity]
   quantities = signal<Record<string, number>>({});
   isSubmitting = signal<boolean>(false);
@@ -59,6 +78,71 @@ export class NewOrderModalComponent {
   // Notatki / uwagi dla kuchni
   notes = signal<string>('');
 
+  // Wybór strefy stolików w modalu (domyślnie 'all' lub 'takeout' lub nazwa strefy)
+  selectedModalZone = signal<string>('all');
+
+  // Przewidywany numer kolejnego zamówienia (np. #101)
+  readonly nextOrderNumber = computed<number>(() => {
+    const currentOrders = this.orderService.orders();
+    const maxNum = currentOrders.reduce((max, o) => Math.max(max, o.orderNumber || 100), 100);
+    return maxNum + 1;
+  });
+
+  // Liczniki stolików w poszczególnych strefach
+  readonly modalZoneCounts = computed<Record<string, number>>(() => {
+    const counts: Record<string, number> = {};
+    for (const t of this.tableService.tablesWithLiveStatus()) {
+      const z = t.zone?.trim() || 'Inne';
+      counts[z] = (counts[z] || 0) + 1;
+    }
+    return counts;
+  });
+
+  // Dynamiczne stoliki z bazy wg wybranej strefy (posortowane naturalnie)
+  readonly modalTables = computed<RestaurantTable[]>(() => {
+    const zone = this.selectedModalZone();
+    if (zone === 'takeout') return [];
+    const tables = this.tableService.tablesWithLiveStatus();
+    const filtered = zone === 'all' 
+      ? tables 
+      : tables.filter(t => (t.zone || '').trim().toLowerCase() === zone.toLowerCase());
+
+    return [...filtered].sort((a, b) => {
+      return a.number.localeCompare(b.number, 'pl', { numeric: true });
+    });
+  });
+
+  getTableIcon(tbl: RestaurantTable): string {
+    const num = (tbl.number || '').toLowerCase();
+    const zone = (tbl.zone || '').toLowerCase();
+    if (num.includes('bar') || zone.includes('bar')) return 'local_bar';
+    if (num.includes('ogród') || zone.includes('ogród')) return 'deck';
+    return 'table_restaurant';
+  }
+
+  selectModalZone(zone: string): void {
+    this.selectedModalZone.set(zone);
+    if (zone === 'takeout') {
+      const info = this.takeoutCustomerInfo().trim();
+      this.tableNumber.set(info ? `Wynos (${info})` : 'Wynos / Odbiór');
+    } else {
+      if (this.tableNumber().toLowerCase().includes('wynos')) {
+        const first = this.modalTables()[0];
+        this.tableNumber.set(first?.number || 'Stolik 1');
+      }
+    }
+  }
+
+  onTakeoutCustomerChange(val: string): void {
+    this.takeoutCustomerInfo.set(val);
+    const trimmed = val.trim();
+    if (trimmed) {
+      this.tableNumber.set(`Wynos (${trimmed})`);
+    } else {
+      this.tableNumber.set('Wynos / Odbiór');
+    }
+  }
+
   // Czy to domówienie do już zajętego stolika (kolejny bon kuchenny)
   readonly isReorder = computed<boolean>(() => {
     const num = this.tableNumber().trim().toLowerCase();
@@ -66,18 +150,6 @@ export class NewOrderModalComponent {
     const table = this.tableService.tables().find(t => t.number.trim().toLowerCase() === num);
     return !!table && (table.status === 'occupied' || table.status === 'bill_requested');
   });
-
-  readonly quickTables: QuickTableOption[] = [
-    { name: 'Stolik 1', icon: 'table_restaurant', type: 'table' },
-    { name: 'Stolik 2', icon: 'table_restaurant', type: 'table' },
-    { name: 'Stolik 3', icon: 'table_restaurant', type: 'table' },
-    { name: 'Stolik 4', icon: 'table_restaurant', type: 'table' },
-    { name: 'Stolik 5', icon: 'table_restaurant', type: 'table' },
-    { name: 'Stolik 6', icon: 'table_restaurant', type: 'table' },
-    { name: 'Bar', icon: 'local_bar', type: 'bar' },
-    { name: 'Ogródek', icon: 'deck', type: 'outdoor' },
-    { name: 'Wynos / Odbiór', icon: 'takeout_dining', type: 'takeout' }
-  ];
 
   readonly categories = computed(() => {
     const available = this.recipeService.recipes().filter(r => r.isAvailable !== false);

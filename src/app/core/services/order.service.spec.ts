@@ -20,6 +20,12 @@ describe('OrderService (KDS & Automatic Warehouse Stock Deduction)', () => {
   let mockRecipeService: {
     recipes: ReturnType<typeof signal<Recipe[]>>;
   };
+  let mockToastService: {
+    success: jasmine.Spy;
+    info: jasmine.Spy;
+    warning: jasmine.Spy;
+    danger: jasmine.Spy;
+  };
 
   const mockRecipes: Recipe[] = [
     {
@@ -59,7 +65,7 @@ describe('OrderService (KDS & Automatic Warehouse Stock Deduction)', () => {
       currentUserId: 'rest-1',
       isDemoAccount: signal(false)
     };
-    const mockToastService = {
+    mockToastService = {
       success: jasmine.createSpy('success'),
       info: jasmine.createSpy('info'),
       warning: jasmine.createSpy('warning'),
@@ -229,6 +235,30 @@ describe('OrderService (KDS & Automatic Warehouse Stock Deduction)', () => {
 
       // deductIngredientsForOrder NIE powinien zostać wywołany!
       expect(deductSpy).not.toHaveBeenCalled();
+    });
+
+    it('powinien odpisać składniki z magazynu przy przejściu na status ready (Gotowe do wydania)', async () => {
+      const pendingOrder: Order = {
+        id: 'ord-test-5',
+        restaurantId: 'rest-1',
+        orderNumber: 205,
+        tableNumber: 'Stolik 2',
+        items: [
+          { recipeId: 'rec-margherita', recipeName: 'Pizza Margherita', quantity: 1, unitPrice: 35 }
+        ],
+        totalPrice: 35,
+        status: 'in_progress',
+        stockDeducted: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      service.orders.set([pendingOrder]);
+      const deductSpy = spyOn(service, 'deductIngredientsForOrder').and.resolveTo([]);
+
+      await service.updateOrderStatus('ord-test-5', 'ready');
+
+      expect(deductSpy).toHaveBeenCalledWith(pendingOrder);
     });
   });
 });

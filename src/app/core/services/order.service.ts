@@ -411,8 +411,12 @@ export class OrderService implements OnDestroy {
 
     let depletedIngredients: string[] = [];
 
-    // AUTOMATYCZNY ODPIS Z MAGAZYNU: następuje, gdy zamówienie zostaje wydane (status: 'completed')
-    if (newStatus === 'completed' && !target.stockDeducted) {
+    // AUTOMATYCZNY ODPIS Z MAGAZYNU:
+    // Następuje w momencie, gdy kuchnia kończy danie (status: 'ready' - "Gotowe do wydania").
+    // Stanowi też zabezpieczenie (fallback) przy natychmiastowym wydaniu ('completed'),
+    // jeśli dane zamówienie pominęło status 'ready' (np. szybka sprzedaż przy barze).
+    const shouldDeduct = (newStatus === 'ready' || newStatus === 'completed') && !target.stockDeducted;
+    if (shouldDeduct) {
       depletedIngredients = await this.deductIngredientsForOrder(target);
       stockDeducted = true;
     }
@@ -432,27 +436,36 @@ export class OrderService implements OnDestroy {
       return;
     }
 
-    // Powiadomienia Toast w zależności od nowego statusu (dwa osobne Toasty, stackujące się pionowo)
+    // Powiadomienia Toast w zależności od nowego statusu
     const num = target.orderNumber || target.id.slice(-4);
-    if (newStatus === 'completed') {
-      // 1. Toast informacyjny: pomyślne wydanie dania i odpis z magazynu
+    if (newStatus === 'ready') {
+      // 1. Toast informacyjny: danie gotowe i składniki odpisane w kuchni
       this.toastService.success(
-        `Wydano zamówienie #${num} (${target.tableNumber}). Składniki zostały odpisane z magazynu.`,
-        'Wydano zamówienie'
+        `Zamówienie #${num} (${target.tableNumber}) jest gotowe do wydania. Składniki zostały odpisane z magazynu.`,
+        'Gotowe do wydania'
       );
 
-      // 2. Osobny Toast ostrzegawczy: jeśli jakikolwiek składnik wyczerpał się do zera
+      // 2. Alert ostrzegawczy, jeśli jakikolwiek składnik wyczerpał się do zera
       if (depletedIngredients.length > 0) {
         this.toastService.danger(
           `Wyczerpano zapas do zera: ${depletedIngredients.join(', ')}! Powiązane pozycje mogą zostać zablokowane.`,
           'Brak surowca w magazynie'
         );
       }
-    } else if (newStatus === 'ready') {
-      this.toastService.info(
-        `Zamówienie #${num} (${target.tableNumber}) jest gotowe do wydania przez kelnera.`,
-        'Gotowe do wydania'
+    } else if (newStatus === 'completed') {
+      // 1. Toast informacyjny: kelner wydał danie gościom
+      this.toastService.success(
+        `Wydano zamówienie #${num} (${target.tableNumber}).`,
+        'Wydano zamówienie'
       );
+
+      // 2. Alert ostrzegawczy (w przypadku fallbacku odpisu)
+      if (depletedIngredients.length > 0) {
+        this.toastService.danger(
+          `Wyczerpano zapas do zera: ${depletedIngredients.join(', ')}! Powiązane pozycje mogą zostać zablokowane.`,
+          'Brak surowca w magazynie'
+        );
+      }
     } else if (newStatus === 'in_progress') {
       this.toastService.info(
         `Zamówienie #${num} (${target.tableNumber}) trafiło na kuchnię.`,
