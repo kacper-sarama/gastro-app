@@ -276,7 +276,7 @@ export class TableService {
 
           // Jeśli to nowe konto i nie ma stolików, załaduj starter
           if (loaded.length === 0 && !this.isLoading()) {
-            this.resetToStarter(restaurantId);
+            this.resetToStarter(restaurantId, this.authService.isDemoAccount());
           }
         },
         error => {
@@ -497,9 +497,9 @@ export class TableService {
   }
 
   /**
-   * Przywraca wzorcowy układ sali dla konta Demo lub nowego lokalu
+   * Przywraca wzorcowy układ sali dla konta Demo (z aktywnymi stolikami) lub nowego lokalu (czyste stoliki)
    */
-  async resetToStarter(restaurantId: string): Promise<void> {
+  async resetToStarter(restaurantId: string, isDemo: boolean = true): Promise<void> {
     const col = collection(this.firestore, 'tables');
     const existingSnap = await getDocs(query(col, where('restaurantId', '==', restaurantId)));
 
@@ -507,25 +507,83 @@ export class TableService {
     existingSnap.docs.forEach(d => batch.delete(d.ref));
     await batch.commit();
 
-    const now = new Date().toISOString();
+    const now = Date.now();
+    const nowIso = new Date(now).toISOString();
     const starterTables: Omit<RestaurantTable, 'id'>[] = [
       // Sala Główna
-      { restaurantId, number: 'Stolik 1', zone: 'Sala Główna', seats: 4, status: 'free', notes: 'Przy oknie', createdAt: now, updatedAt: now },
-      { restaurantId, number: 'Stolik 2', zone: 'Sala Główna', seats: 2, status: 'free', notes: 'Kącik dla dwojga', createdAt: now, updatedAt: now },
-      { restaurantId, number: 'Stolik 3', zone: 'Sala Główna', seats: 4, status: 'free', notes: 'Środek sali', createdAt: now, updatedAt: now },
-      { restaurantId, number: 'Stolik 4', zone: 'Sala Główna', seats: 6, status: 'free', notes: 'Duży rodzinny', createdAt: now, updatedAt: now },
-      { restaurantId, number: 'Stolik 5', zone: 'Sala Główna', seats: 2, status: 'free', notes: 'Przy witrynie', createdAt: now, updatedAt: now },
-      { restaurantId, number: 'Stolik 6', zone: 'Sala Główna', seats: 4, status: 'free', notes: 'Obok baru', createdAt: now, updatedAt: now },
+      { 
+        restaurantId, 
+        number: 'Stolik 1', 
+        zone: 'Sala Główna', 
+        seats: 4, 
+        status: 'free', 
+        notes: 'Przy oknie', 
+        createdAt: nowIso, 
+        updatedAt: nowIso 
+      },
+      { 
+        restaurantId, 
+        number: 'Stolik 2', 
+        zone: 'Sala Główna', 
+        seats: 2, 
+        status: isDemo ? 'occupied' : 'free', 
+        notes: 'Kącik dla dwojga', 
+        occupiedSince: isDemo ? new Date(now - 15 * 60 * 1000).toISOString() : undefined,
+        createdAt: nowIso, 
+        updatedAt: nowIso 
+      },
+      { 
+        restaurantId, 
+        number: 'Stolik 3', 
+        zone: 'Sala Główna', 
+        seats: 4, 
+        status: 'free', 
+        notes: 'Środek sali', 
+        createdAt: nowIso, 
+        updatedAt: nowIso 
+      },
+      { 
+        restaurantId, 
+        number: 'Stolik 4', 
+        zone: 'Sala Główna', 
+        seats: 6, 
+        status: isDemo ? 'occupied' : 'free', 
+        notes: 'Duży rodzinny', 
+        occupiedSince: isDemo ? new Date(now - 5 * 60 * 1000).toISOString() : undefined,
+        createdAt: nowIso, 
+        updatedAt: nowIso 
+      },
+      { 
+        restaurantId, 
+        number: 'Stolik 5', 
+        zone: 'Sala Główna', 
+        seats: 2, 
+        status: isDemo ? 'bill_requested' : 'free', 
+        notes: 'Przy witrynie', 
+        occupiedSince: isDemo ? new Date(now - 50 * 60 * 1000).toISOString() : undefined,
+        createdAt: nowIso, 
+        updatedAt: nowIso 
+      },
+      { 
+        restaurantId, 
+        number: 'Stolik 6', 
+        zone: 'Sala Główna', 
+        seats: 4, 
+        status: isDemo ? 'dirty' : 'free', 
+        notes: isDemo ? 'Do posprzątania po gościach' : 'Obok baru', 
+        createdAt: nowIso, 
+        updatedAt: nowIso 
+      },
 
       // Ogródek Letni
-      { restaurantId, number: 'Ogródek 1', zone: 'Ogródek Letni', seats: 4, status: 'free', notes: 'Pod parasolem', createdAt: now, updatedAt: now },
-      { restaurantId, number: 'Ogródek 2', zone: 'Ogródek Letni', seats: 4, status: 'free', notes: 'Z widokiem', createdAt: now, updatedAt: now },
-      { restaurantId, number: 'Ogródek 3', zone: 'Ogródek Letni', seats: 2, status: 'free', notes: 'Stolik wysoki', createdAt: now, updatedAt: now },
-      { restaurantId, number: 'Ogródek 4', zone: 'Ogródek Letni', seats: 6, status: 'free', notes: 'Lawa ogrodowa', createdAt: now, updatedAt: now },
+      { restaurantId, number: 'Ogródek 1', zone: 'Ogródek Letni', seats: 4, status: 'free', notes: 'Pod parasolem', createdAt: nowIso, updatedAt: nowIso },
+      { restaurantId, number: 'Ogródek 2', zone: 'Ogródek Letni', seats: 4, status: 'free', notes: 'Z widokiem', createdAt: nowIso, updatedAt: nowIso },
+      { restaurantId, number: 'Ogródek 3', zone: 'Ogródek Letni', seats: 2, status: 'free', notes: 'Stolik wysoki', createdAt: nowIso, updatedAt: nowIso },
+      { restaurantId, number: 'Ogródek 4', zone: 'Ogródek Letni', seats: 6, status: 'free', notes: 'Lawa ogrodowa', createdAt: nowIso, updatedAt: nowIso },
 
       // Bar
-      { restaurantId, number: 'Bar 1', zone: 'Bar', seats: 2, status: 'free', notes: 'Hokery barowe', createdAt: now, updatedAt: now },
-      { restaurantId, number: 'Bar 2', zone: 'Bar', seats: 2, status: 'free', notes: 'Przy ekspresie', createdAt: now, updatedAt: now }
+      { restaurantId, number: 'Bar 1', zone: 'Bar', seats: 2, status: 'free', notes: 'Hokery barowe', createdAt: nowIso, updatedAt: nowIso },
+      { restaurantId, number: 'Bar 2', zone: 'Bar', seats: 2, status: 'free', notes: 'Przy ekspresie', createdAt: nowIso, updatedAt: nowIso }
     ];
 
     const newBatch = writeBatch(this.firestore);

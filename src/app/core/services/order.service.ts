@@ -136,7 +136,9 @@ export class OrderService implements OnDestroy {
         } as Order));
 
         if (items.length === 0) {
-          if (this.authService.currentUserId === restaurantId) {
+          // Starter przykładowych zamówień seedujemy TYLKO dla konta demonstracyjnego.
+          // Nowo zarejestrowany restaurator (SaaS) zaczyna z czystą kasą i pustą kolejką w kuchni.
+          if (this.authService.currentUserId === restaurantId && this.authService.isDemoAccount()) {
             this.seedStarterOrders(restaurantId);
           } else {
             this.orders.set([]);
@@ -164,6 +166,7 @@ export class OrderService implements OnDestroy {
     const margherita = recipes.find(r => r.name.toLowerCase().includes('margherita'));
     const funghi = recipes.find(r => r.name.toLowerCase().includes('funghi'));
     const focaccia = recipes.find(r => r.name.toLowerCase().includes('focaccia'));
+    const tiramisu = recipes.find(r => r.name.toLowerCase().includes('tiramisu'));
 
     const now = Date.now();
     return [
@@ -249,6 +252,32 @@ export class OrderService implements OnDestroy {
         totalPrice: margherita?.sellingPrice || 36,
         createdAt: new Date(now - 18 * 60 * 1000).toISOString(),
         updatedAt: new Date(now - 2 * 60 * 1000).toISOString()
+      },
+      {
+        restaurantId,
+        orderNumber: 104,
+        tableNumber: 'Stolik 5',
+        status: 'completed',
+        stockDeducted: true,
+        items: [
+          {
+            recipeId: margherita?.id || 'recipe-margherita',
+            recipeName: margherita?.name || 'Pizza Margherita 32cm',
+            quantity: 1,
+            unitPrice: margherita?.sellingPrice || 36,
+            category: margherita?.category || 'Pizza Rossa (na czerwono)'
+          },
+          {
+            recipeId: tiramisu?.id || 'recipe-tiramisu',
+            recipeName: tiramisu?.name || 'Klasyczne Włoskie Tiramisu',
+            quantity: 1,
+            unitPrice: tiramisu?.sellingPrice || 24,
+            category: tiramisu?.category || 'Desery (włoskie słodkości)'
+          }
+        ],
+        totalPrice: (margherita?.sellingPrice || 36) + (tiramisu?.sellingPrice || 24),
+        createdAt: new Date(now - 48 * 60 * 1000).toISOString(),
+        updatedAt: new Date(now - 30 * 60 * 1000).toISOString()
       }
     ];
   }

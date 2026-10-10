@@ -4,6 +4,9 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractContro
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { InventoryService } from '../../../core/services/inventory.service';
+import { RecipeService } from '../../../core/services/recipe.service';
+import { TableService } from '../../../core/services/table.service';
 
 function passwordMatchValidator(control: AbstractControl): { [key: string]: boolean } | null {
   const password = control.get('password');
@@ -23,6 +26,9 @@ function passwordMatchValidator(control: AbstractControl): { [key: string]: bool
 export class RegisterComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private inventoryService = inject(InventoryService);
+  private recipeService = inject(RecipeService);
+  private tableService = inject(TableService);
   readonly themeService = inject(ThemeService);
   private router = inject(Router);
 
@@ -48,7 +54,15 @@ export class RegisterComponent {
     const { email, password, restaurantName } = this.registerForm.value;
 
     try {
-      await this.authService.register(email, password, restaurantName);
+      const user = await this.authService.register(email, password, restaurantName);
+      if (user) {
+        await this.authService.onboardNewRestaurant(
+          user.uid,
+          this.inventoryService,
+          this.recipeService,
+          this.tableService
+        );
+      }
       await this.router.navigate(['/dashboard']);
     } catch (err: any) {
       this.errorMessage.set(this.authService.formatFirebaseError(err.code || ''));

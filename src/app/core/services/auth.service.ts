@@ -74,7 +74,7 @@ export class AuthService {
     recipeService: { resetToStarter: (id: string, inv?: any[]) => Promise<any[]> },
     orderService: { resetToStarter: (id: string, rec?: any[]) => Promise<void> },
     promotionService?: { resetToStarter: (id: string, rec?: any[]) => Promise<void> },
-    tableService?: { resetToStarter: (id: string) => Promise<void> }
+    tableService?: { resetToStarter: (id: string, isDemo?: boolean) => Promise<void> }
   ): Promise<void> {
     const u = this.auth.currentUser;
     if (!u || u.email !== 'demo@gastroapp.pl') {
@@ -108,10 +108,32 @@ export class AuthService {
       await promotionService.resetToStarter(u.uid, newRecipes);
     }
     if (tableService) {
-      await tableService.resetToStarter(u.uid);
+      await tableService.resetToStarter(u.uid, true);
     }
 
     this.toastService.success('Pomyślnie przywrócono stan fabryczny konta Demo!', 'Reset Demo');
+  }
+
+  /**
+   * Sekwencyjny proces powitalny nowego lokalu (onboarding SaaS):
+   * 1. Tworzy surowce w magazynie i pobiera ich realne ID
+   * 2. Tworzy startowe receptury z prawidłowymi powiązaniami ID z magazynu
+   * 3. Tworzy czysty układ stolików (wszystkie wolne)
+   * 4. Czysta kasa i brak zamówień na starcie (0 zamówień)
+   */
+  async onboardNewRestaurant(
+    restaurantId: string,
+    inventoryService: { resetToStarter: (id: string) => Promise<any[]> },
+    recipeService: { resetToStarter: (id: string, inv?: any[]) => Promise<any[]> },
+    tableService: { resetToStarter: (id: string, isDemo?: boolean) => Promise<void> }
+  ): Promise<void> {
+    try {
+      const newInventory = await inventoryService.resetToStarter(restaurantId);
+      await recipeService.resetToStarter(restaurantId, newInventory);
+      await tableService.resetToStarter(restaurantId, false);
+    } catch (err) {
+      console.error('Błąd podczas onboardingu nowego lokalu:', err);
+    }
   }
 
   // Rejestracja nowego restauratora

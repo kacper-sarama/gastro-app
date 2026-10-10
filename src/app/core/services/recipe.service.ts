@@ -203,8 +203,11 @@ export class RecipeService {
 
         if (items.length === 0) {
           // Tylko zalogowany właściciel może seedować startowe receptury do Firestore
+          // Zabezpieczenie przed wyścigiem: jeśli magazyn jest jeszcze pusty, czekamy na załadowanie surowców
           if (this.authService.currentUserId === restaurantId) {
-            this.seedStarterRecipes(restaurantId);
+            if (this.inventoryService.items().length > 0) {
+              this.seedStarterRecipes(restaurantId);
+            }
           } else {
             this.recipes.set([]);
             this.isLoading.set(false);
