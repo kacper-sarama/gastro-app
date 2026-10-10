@@ -15,6 +15,19 @@
         Tablica realizacji zamówień. Zmiana statusu na <strong>Wydane</strong> automatycznie odejmuje gramatury składników z magazynu.
       </p>
     </div>
+
+    @if (authService.currentUserRole() !== 'kitchen') {
+      <div class="flex items-center gap-3">
+        <button 
+          type="button"
+          (click)="openNewOrderModal()"
+          class="gastro-btn-primary shadow-lg shadow-orange-500/20 py-2.5 px-4 font-semibold text-sm flex items-center gap-2"
+        >
+          <span class="material-icons-round text-lg">add_shopping_cart</span>
+          <span>Nowe zamówienie</span>
+        </button>
+      </div>
+    }
   </div>
 
   <!-- Przełącznik zakładek na ekranach mobilnych (widoczny tylko na małych ekranach) -->
@@ -482,4 +495,12 @@
     </div>
 
   </div>
+
+  <!-- Modal Nowego Zamówienia -->
+  @if (isNewOrderModalOpen()) {
+    <app-new-order-modal
+      (close)="closeNewOrderModal()"
+      (created)="closeNewOrderModal()"
+    ></app-new-order-modal>
+  }
 </div>
