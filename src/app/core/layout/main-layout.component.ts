@@ -9,6 +9,7 @@ import { InventoryService } from '../services/inventory.service';
 import { RecipeService } from '../services/recipe.service';
 import { OrderService } from '../services/order.service';
 import { PromotionService } from '../services/promotion.service';
+import { TableService } from '../services/table.service';
 import { ToastService } from '../services/toast.service';
 import { AccountSettingsModalComponent } from '../../features/account/account-settings-modal.component';
 
@@ -38,6 +39,7 @@ export class MainLayoutComponent implements OnInit {
   readonly recipeService = inject(RecipeService);
   readonly orderService = inject(OrderService);
   readonly promotionService = inject(PromotionService);
+  readonly tableService = inject(TableService);
   readonly toastService = inject(ToastService);
 
   private router = inject(Router);
@@ -58,6 +60,7 @@ export class MainLayoutComponent implements OnInit {
 
   readonly navItems: NavItem[] = [
     { label: 'Pulpit / Dashboard', route: '/dashboard', icon: 'dashboard' },
+    { label: 'Plan Sali & Stoliki', route: '/tables', icon: 'table_restaurant' },
     { label: 'Zamówienia & Kuchnia (KDS)', route: '/orders', icon: 'view_kanban' },
     { label: 'Promocje & Vouchery', route: '/promotions', icon: 'local_offer' },
     { label: 'Magazyn Składników', route: '/inventory', icon: 'inventory_2' },
@@ -158,7 +161,8 @@ export class MainLayoutComponent implements OnInit {
           this.inventoryService,
           this.recipeService,
           this.orderService,
-          this.promotionService
+          this.promotionService,
+          this.tableService
         ),
         timeoutPromise
       ]);

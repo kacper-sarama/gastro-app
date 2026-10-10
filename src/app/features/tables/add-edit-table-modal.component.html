@@ -1,0 +1,173 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+  <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+          <span class="material-icons-round text-xl">table_restaurant</span>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-slate-800 dark:text-white">
+            {{ tableToEdit ? 'Edytuj stolik' : 'Nowy stolik w lokalu' }}
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            {{ tableToEdit ? 'Zmień numer, strefę lub liczbę miejsc' : 'Skonfiguruj oznaczenie i lokalizację na sali' }}
+          </p>
+        </div>
+      </div>
+      <button 
+        type="button" 
+        (click)="close.emit()" 
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors"
+      >
+        <span class="material-icons-round text-xl">close</span>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 space-y-5 overflow-y-auto max-h-[75vh]">
+      <!-- Błąd -->
+      <div *ngIf="errorMessage()" class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-xl text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
+        <span class="material-icons-round text-base">error_outline</span>
+        <span>{{ errorMessage() }}</span>
+      </div>
+
+      <!-- Numer / Nazwa stolika -->
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+          Numer lub nazwa stolika *
+        </label>
+        <input 
+          type="text" 
+          [ngModel]="number()" 
+          (ngModelChange)="number.set($event)"
+          placeholder="np. Stolik 1, Bar 2, Ogródek 4"
+          class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none transition-all"
+        />
+      </div>
+
+      <!-- Strefa sali -->
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+          Strefa sali / Lokalizacja *
+        </label>
+        <div class="flex flex-wrap gap-2 mb-2">
+          <button 
+            type="button" 
+            *ngFor="let z of defaultZones"
+            (click)="setZone(z)"
+            class="px-3 py-1 rounded-lg text-xs font-medium transition-all"
+            [ngClass]="zone() === z 
+              ? 'bg-orange-500 text-white shadow-sm' 
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
+          >
+            {{ z }}
+          </button>
+        </div>
+        <input 
+          type="text" 
+          [ngModel]="zone()" 
+          (ngModelChange)="zone.set($event)"
+          placeholder="Wpisz inną strefę..."
+          class="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none"
+        />
+      </div>
+
+      <!-- Liczba miejsc -->
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+          Liczba miejsc siedzących (osób)
+        </label>
+        <div class="flex flex-wrap gap-2 mb-2">
+          <button 
+            type="button" 
+            *ngFor="let s of seatOptions"
+            (click)="setSeats(s)"
+            class="w-10 h-10 rounded-xl text-sm font-semibold flex items-center justify-center transition-all"
+            [ngClass]="seats() === s 
+              ? 'bg-orange-500 text-white shadow-sm ring-2 ring-orange-500/30' 
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
+          >
+            {{ s }}
+          </button>
+        </div>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="text-xs text-slate-500 dark:text-slate-400">Niestandardowa liczba:</span>
+          <input 
+            type="number" 
+            min="1" 
+            max="50"
+            [ngModel]="seats()" 
+            (ngModelChange)="seats.set($event)"
+            class="w-20 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none"
+          />
+        </div>
+      </div>
+
+      <!-- Notatki / Opis -->
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+          Notatka / Cechy charakterystyczne (opcjonalnie)
+        </label>
+        <input 
+          type="text" 
+          [ngModel]="notes()" 
+          (ngModelChange)="notes.set($event)"
+          placeholder="np. Przy oknie, z klimatyzacją, wysoki stolik, gniazdko 230V"
+          class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none"
+        />
+      </div>
+
+      <!-- Status (jeśli edycja) -->
+      <div *ngIf="tableToEdit">
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+          Status techniczny
+        </label>
+        <select 
+          [ngModel]="status()"
+          (ngModelChange)="status.set($event)"
+          class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none"
+        >
+          <option value="free">🟢 Wolny i przygotowany</option>
+          <option value="occupied">🟣 Zajęty przez gości</option>
+          <option value="bill_requested">🟠 Prośba o rachunek</option>
+          <option value="dirty">🧹 Do posprzątania / przetarcia</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-slate-50/70 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <div>
+        <button 
+          *ngIf="tableToEdit"
+          type="button" 
+          (click)="onDelete()" 
+          class="px-3 py-2 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+        >
+          <span class="material-icons-round text-base">delete</span>
+          <span>Usuń stolik</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button 
+          type="button" 
+          (click)="close.emit()" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          Anuluj
+        </button>
+        <button 
+          type="button" 
+          (click)="onSave()" 
+          [disabled]="isSaving()"
+          class="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-orange-500/20 disabled:opacity-50 flex items-center gap-2 transition-all"
+        >
+          <span *ngIf="isSaving()" class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+          <span>{{ tableToEdit ? 'Zapisz zmiany' : 'Dodaj stolik' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

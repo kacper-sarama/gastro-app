@@ -10,6 +10,7 @@ import { MenuManagementComponent } from './features/menu/menu-management.compone
 import { GuestMenuComponent } from './features/menu/guest-menu.component';
 import { OrdersKanbanComponent } from './features/orders/orders-kanban.component';
 import { PromotionsListComponent } from './features/promotions/promotions-list.component';
+import { TablesFloorPlanComponent } from './features/tables/tables-floor-plan.component';
 
 export const routes: Routes = [
   // Public auth routes
@@ -44,6 +45,10 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         component: DashboardComponent
+      },
+      {
+        path: 'tables',
+        component: TablesFloorPlanComponent
       },
       {
         path: 'orders',

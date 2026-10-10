@@ -1,0 +1,605 @@
+<div class="space-y-6 max-w-7xl mx-auto pb-12">
+  <!-- 1. Header & Quick Actions -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/25">
+        <span class="material-icons-round text-3xl">table_restaurant</span>
+      </div>
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            Plan Sali & Stoliki
+          </h1>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300">
+            Na żywo
+          </span>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Podgląd obłożenia lokalu, otwartych rachunków i gotowości stolików w czasie rzeczywistym.
+        </p>
+      </div>
+    </div>
+
+    <!-- Prawa strona headera: akcje -->
+    <div class="flex items-center gap-2.5 self-start md:self-auto">
+      <button 
+        type="button" 
+        (click)="openAddTableModal()"
+        class="px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+      >
+        <span class="material-icons-round text-base text-orange-500">add</span>
+        <span>Dodaj stolik</span>
+      </button>
+
+      <button 
+        type="button" 
+        (click)="openNewOrderModal()"
+        class="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-2xl text-xs font-bold shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all"
+      >
+        <span class="material-icons-round text-base">add_shopping_cart</span>
+        <span>Nowe zamówienie</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. Live KPI / Floor Metrics (8 kart: 2 rzędy po 4) -->
+  <div class="space-y-3.5">
+    <!-- RZĄD 1: Analityka & Przepływ na sali (Biznes & Kuchnia) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <!-- 1. Obłożenie sali -->
+      <div class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Obłożenie sali</span>
+          <span class="material-icons-round text-orange-500 text-lg">pie_chart</span>
+        </div>
+        <div class="mt-2">
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl font-black text-slate-900 dark:text-white">
+              {{ tableService.occupancyRate() }}%
+            </span>
+            <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              ({{ tableService.occupiedTablesCount() + tableService.billRequestedCount() }}/{{ tableService.totalTablesCount() }})
+            </span>
+          </div>
+          <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+            <div 
+              class="bg-gradient-to-r from-orange-500 to-amber-500 h-full rounded-full transition-all duration-500"
+              [style.width.%]="tableService.occupancyRate()"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Rachunki w toku -->
+      <div class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Rachunki w toku</span>
+          <span class="material-icons-round text-emerald-500 text-lg">account_balance_wallet</span>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-black text-slate-900 dark:text-white">
+            {{ tableService.totalActiveFloorRevenue() | number:'1.2-2' }} zł
+          </div>
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+            Do rozliczenia na sali
+          </span>
+        </div>
+      </div>
+
+      <!-- 3. Średni czas przy stoliku -->
+      <div class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Średni czas stolika</span>
+          <span class="material-icons-round text-blue-500 text-lg">schedule</span>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-black text-slate-900 dark:text-white">
+            {{ tableService.averageOccupiedMinutes() > 0 ? tableService.averageOccupiedMinutes() + ' min' : '—' }}
+          </div>
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+            Średni czas aktywnej wizyty
+          </span>
+        </div>
+      </div>
+
+      <!-- 4. Do odebrania z kuchni (KDS Alert) -->
+      <div 
+        class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border shadow-sm flex flex-col justify-between transition-colors"
+        [ngClass]="tableService.readyToServeTablesCount() > 0 
+          ? 'border-emerald-500/80 ring-2 ring-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/20' 
+          : 'border-slate-200/80 dark:border-slate-800'"
+      >
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Do odebrania z kuchni</span>
+          <span 
+            class="material-icons-round text-lg"
+            [ngClass]="tableService.readyToServeTablesCount() > 0 ? 'text-emerald-500 animate-bounce' : 'text-slate-400'"
+          >
+            notifications_active
+          </span>
+        </div>
+        <div class="mt-2">
+          <div class="flex items-baseline gap-2">
+            <span 
+              class="text-2xl font-black"
+              [ngClass]="tableService.readyToServeTablesCount() > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'"
+            >
+              {{ tableService.readyToServeTablesCount() }}
+            </span>
+            <span *ngIf="tableService.readyToServeTablesCount() > 0" class="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              stolik{{ tableService.readyToServeTablesCount() === 1 ? '' : 'i' }}
+            </span>
+          </div>
+          <span 
+            class="text-xs mt-1 block"
+            [ngClass]="tableService.readyToServeTablesCount() > 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-500 dark:text-slate-400'"
+          >
+            {{ tableService.readyToServeTablesCount() > 0 
+              ? 'Dania czekają na wydawce!' 
+              : (tableService.inProgressKitchenTablesCount() > 0 ? 'Wydane • ' + tableService.inProgressKitchenTablesCount() + ' w kuchni' : 'Wszystko wydane na bieżąco') 
+            }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RZĄD 2: Stan Sali (4 Operacyjne Statusy Stolików) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <!-- 5. Wolne stoliki -->
+      <div class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Wolne stoliki</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+            {{ tableService.freeTablesCount() }}
+          </div>
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+            Gotowe na gości
+          </span>
+        </div>
+      </div>
+
+      <!-- 6. Zajęte / Jedzą -->
+      <div class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Zajęte / Jedzą</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+            {{ tableService.occupiedTablesCount() }}
+          </div>
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+            Aktywna konsumpcja
+          </span>
+        </div>
+      </div>
+
+      <!-- 7. Czekają na rachunek -->
+      <div 
+        class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border shadow-sm flex flex-col justify-between transition-colors"
+        [ngClass]="tableService.billRequestedCount() > 0 
+          ? 'border-amber-400 dark:border-amber-900/60 bg-amber-50/15 dark:bg-amber-950/20' 
+          : 'border-slate-200/80 dark:border-slate-800'"
+      >
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Czekają na rachunek</span>
+          <span 
+            class="material-icons-round text-lg"
+            [ngClass]="tableService.billRequestedCount() > 0 ? 'text-amber-500 animate-pulse' : 'text-slate-400'"
+          >
+            receipt_long
+          </span>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-black text-amber-600 dark:text-amber-400">
+            {{ tableService.billRequestedCount() }}
+          </div>
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+            Prośba o płatność
+          </span>
+        </div>
+      </div>
+
+      <!-- 8. Do posprzątania -->
+      <div 
+        class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border shadow-sm flex flex-col justify-between transition-colors"
+        [ngClass]="tableService.dirtyTablesCount() > 0 
+          ? 'border-yellow-400 dark:border-yellow-900/60 bg-yellow-50/15 dark:bg-yellow-950/20' 
+          : 'border-slate-200/80 dark:border-slate-800'"
+      >
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Do posprzątania</span>
+          <span 
+            class="material-icons-round text-lg"
+            [ngClass]="tableService.dirtyTablesCount() > 0 ? 'text-yellow-500' : 'text-slate-400'"
+          >
+            cleaning_services
+          </span>
+        </div>
+        <div class="mt-2">
+          <div class="text-2xl font-black text-yellow-600 dark:text-yellow-400">
+            {{ tableService.dirtyTablesCount() }}
+          </div>
+          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+            Wymagają przetarcia
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Strefy sali (Pills) & Wyszukiwarka & Filtry statusu -->
+  <div class="space-y-3">
+    <!-- Górny rząd: Zakładki Stref (Sala Główna, Ogródek, Bar...) -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Wszystkie strefy -->
+        <button 
+          type="button"
+          (click)="selectZone('all')"
+          class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+          [ngClass]="tableService.selectedZone() === 'all'
+            ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+            : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'"
+        >
+          <span class="material-icons-round text-base">apps</span>
+          <span>Wszystkie strefy</span>
+          <span 
+            class="px-1.5 py-0.2 rounded-full text-[10px]"
+            [ngClass]="tableService.selectedZone() === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'"
+          >
+            {{ tableService.totalTablesCount() }}
+          </span>
+        </button>
+
+        <!-- Dynamiczne strefy -->
+        <button 
+          *ngFor="let zone of tableService.availableZones()"
+          type="button"
+          (click)="selectZone(zone)"
+          class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+          [ngClass]="tableService.selectedZone() === zone
+            ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+            : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'"
+        >
+          <span>{{ zone }}</span>
+          <span 
+            class="px-1.5 py-0.2 rounded-full text-[10px]"
+            [ngClass]="tableService.selectedZone() === zone ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'"
+          >
+            {{ zoneCounts()[zone] || 0 }}
+          </span>
+        </button>
+      </div>
+
+      <!-- Wyszukiwarka po numerze/strefie -->
+      <div class="relative w-full sm:w-64">
+        <span class="material-icons-round absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
+        <input 
+          type="text" 
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Szukaj stolika..." 
+          class="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+        />
+        <button 
+          *ngIf="searchQuery()" 
+          (click)="searchQuery.set('')"
+          class="material-icons-round absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-sm"
+        >
+          close
+        </button>
+      </div>
+    </div>
+
+    <!-- Dolny rząd: Filtry statusów -->
+    <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
+      <span class="text-slate-400 font-semibold text-[11px] uppercase tracking-wider mr-1">Status:</span>
+
+      <button 
+        type="button" 
+        (click)="setStatusFilter('all')"
+        class="px-3 py-1 rounded-lg font-medium transition-all"
+        [ngClass]="statusFilter() === 'all' 
+          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm' 
+          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'"
+      >
+        Wszystkie
+      </button>
+
+      <button 
+        type="button" 
+        (click)="setStatusFilter('free')"
+        class="px-3 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5"
+        [ngClass]="statusFilter() === 'free' 
+          ? 'bg-emerald-600 text-white shadow-sm' 
+          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'"
+      >
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        Wolne ({{ tableService.freeTablesCount() }})
+      </button>
+
+      <button 
+        type="button" 
+        (click)="setStatusFilter('occupied')"
+        class="px-3 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5"
+        [ngClass]="statusFilter() === 'occupied' 
+          ? 'bg-indigo-600 text-white shadow-sm' 
+          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'"
+      >
+        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+        Zajęte ({{ tableService.occupiedTablesCount() }})
+      </button>
+
+      <button 
+        type="button" 
+        (click)="setStatusFilter('bill_requested')"
+        class="px-3 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5"
+        [ngClass]="statusFilter() === 'bill_requested' 
+          ? 'bg-amber-600 text-white shadow-sm' 
+          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'"
+      >
+        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        Rachunek ({{ tableService.billRequestedCount() }})
+      </button>
+
+      <button 
+        type="button" 
+        (click)="setStatusFilter('dirty')"
+        class="px-3 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5"
+        [ngClass]="statusFilter() === 'dirty' 
+          ? 'bg-yellow-600 text-white shadow-sm' 
+          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'"
+      >
+        <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+        Do posprzątania ({{ tableService.dirtyTablesCount() }})
+      </button>
+    </div>
+  </div>
+
+  <!-- 4. Siatka Kart Stolików (Touch-Friendly Responsive Grid) -->
+  <div *ngIf="displayedTables().length > 0; else noTablesTpl" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div 
+      *ngFor="let tbl of displayedTables()"
+      (click)="onTableClick(tbl)"
+      class="group relative bg-white dark:bg-slate-900 border rounded-3xl p-5 shadow-sm hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden"
+      [ngClass]="{
+        'border-emerald-200 dark:border-emerald-950/60 hover:border-emerald-500': tbl.status === 'free',
+        'border-indigo-200 dark:border-indigo-950/60 hover:border-indigo-500': tbl.status === 'occupied',
+        'border-amber-300 dark:border-amber-900/60 ring-2 ring-amber-500/30 hover:border-amber-500': tbl.status === 'bill_requested',
+        'border-yellow-300 dark:border-yellow-900/60 hover:border-yellow-500': tbl.status === 'dirty'
+      }"
+    >
+      <!-- Subtelny gradientowy pasek na samej górze karty -->
+      <div 
+        class="absolute top-0 left-0 right-0 h-1.5"
+        [ngClass]="{
+          'bg-emerald-500': tbl.status === 'free',
+          'bg-indigo-500': tbl.status === 'occupied',
+          'bg-amber-500 animate-pulse': tbl.status === 'bill_requested',
+          'bg-yellow-500': tbl.status === 'dirty'
+        }"
+      ></div>
+
+      <!-- Karta: Górny wiersz (Numer, Miejsca, Opcje) -->
+      <div>
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-black text-slate-900 dark:text-white group-hover:text-orange-500 transition-colors">
+                {{ tbl.number }}
+              </h3>
+              <!-- Liczba miejsc -->
+              <span class="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center gap-0.5">
+                <span class="material-icons-round text-xs text-slate-400">people</span>
+                {{ tbl.seats || 4 }}
+              </span>
+            </div>
+            <!-- Strefa & notatka -->
+            <p class="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+              <span>{{ tbl.zone || 'Sala Główna' }}</span>
+              <span *ngIf="tbl.notes">• {{ tbl.notes }}</span>
+            </p>
+          </div>
+
+          <!-- Przycisk edycji stolika -->
+          <button 
+            type="button"
+            (click)="$event.stopPropagation(); openEditTableModal(tbl)"
+            title="Edytuj stolik"
+            class="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+          >
+            <span class="material-icons-round text-sm">more_vert</span>
+          </button>
+        </div>
+
+        <!-- ŚRODEK KARTY: Stan Stolika -->
+        <div class="my-4">
+          <!-- 1. STOLIK WOLNY -->
+          <div *ngIf="tbl.status === 'free'" class="py-3 px-3 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300">Wolny</span>
+            </div>
+            <span class="text-[11px] text-emerald-600/80 dark:text-emerald-400/80">Gotowy na gości</span>
+          </div>
+
+          <!-- 2. STOLIK ZAJĘTY -->
+          <div *ngIf="tbl.status === 'occupied'" class="py-3 px-3.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                <span class="text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                  Zam. #{{ tbl.currentOrderNumber }}
+                </span>
+              </div>
+              <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-0.5" *ngIf="tbl.occupiedSince">
+                <span class="material-icons-round text-xs">schedule</span>
+                {{ getElapsedTime(tbl.occupiedSince) }}
+              </span>
+            </div>
+
+            <div class="flex items-baseline justify-between pt-1 border-t border-indigo-100/60 dark:border-indigo-900/40">
+              <span class="text-xs text-indigo-600/80 dark:text-indigo-400/80">
+                {{ tbl.currentOrderItemsCount || 0 }} poz.
+              </span>
+              <span class="text-base font-black text-slate-900 dark:text-white">
+                {{ (tbl.currentOrderTotal || 0) | number:'1.2-2' }} zł
+              </span>
+            </div>
+          </div>
+
+          <!-- 3. PROŚBA O RACHUNEK -->
+          <div *ngIf="tbl.status === 'bill_requested'" class="py-3 px-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                <span class="text-xs font-black text-amber-700 dark:text-amber-300 flex items-center gap-1">
+                  <span class="material-icons-round text-sm">receipt_long</span>
+                  Rachunek!
+                </span>
+              </div>
+              <span class="text-[11px] font-semibold text-amber-600 dark:text-amber-400" *ngIf="tbl.occupiedSince">
+                {{ getElapsedTime(tbl.occupiedSince) }}
+              </span>
+            </div>
+
+            <div class="flex items-baseline justify-between pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
+              <span class="text-xs text-amber-700/80 dark:text-amber-400/80">
+                Do zapłaty:
+              </span>
+              <span class="text-lg font-black text-amber-900 dark:text-amber-200">
+                {{ (tbl.currentOrderTotal || 0) | number:'1.2-2' }} zł
+              </span>
+            </div>
+          </div>
+
+          <!-- 4. DO POSPRZĄTANIA -->
+          <div *ngIf="tbl.status === 'dirty'" class="py-3 px-3.5 rounded-2xl bg-yellow-50/70 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900/40 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-icons-round text-base text-yellow-600 dark:text-yellow-400">cleaning_services</span>
+              <span class="text-xs font-bold text-yellow-800 dark:text-yellow-300">Do posprzątania</span>
+            </div>
+            <span class="text-[11px] text-yellow-700/80 dark:text-yellow-400/80">Czeka</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KARTA: Dolny wiersz / Szybkie akcje (Quick Actions) -->
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+        <!-- Dla wolnego stolika -->
+        <ng-container *ngIf="tbl.status === 'free'">
+          <span class="text-[11px] text-slate-400">Kliknij, aby otworzyć</span>
+          <button 
+            type="button"
+            (click)="quickStartOrder(tbl, $event)"
+            class="px-3 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-500 hover:text-white text-orange-600 dark:text-orange-400 text-xs font-bold transition-all flex items-center gap-1"
+          >
+            <span class="material-icons-round text-xs">add</span>
+            Zamówienie
+          </button>
+        </ng-container>
+
+        <!-- Dla zajętego stolika -->
+        <ng-container *ngIf="tbl.status === 'occupied'">
+          <button 
+            type="button"
+            (click)="quickRequestBill(tbl, $event)"
+            title="Poproś o rachunek"
+            class="text-[11px] font-semibold text-slate-400 hover:text-amber-500 flex items-center gap-1 transition-colors"
+          >
+            <span class="material-icons-round text-xs">receipt</span>
+            Rachunek
+          </button>
+          <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5">
+            Szczegóły
+            <span class="material-icons-round text-sm">chevron_right</span>
+          </span>
+        </ng-container>
+
+        <!-- Dla prośby o rachunek -->
+        <ng-container *ngIf="tbl.status === 'bill_requested'">
+          <span class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">Czeka na płatność</span>
+          <span class="px-3 py-1.5 rounded-xl bg-amber-500 text-white text-xs font-bold shadow-sm flex items-center gap-1">
+            Rozlicz
+            <span class="material-icons-round text-xs">chevron_right</span>
+          </span>
+        </ng-container>
+
+        <!-- Dla do posprzątania -->
+        <ng-container *ngIf="tbl.status === 'dirty'">
+          <span class="text-[11px] text-yellow-700/80 dark:text-yellow-400/80">Wymaga przetarcia</span>
+          <button 
+            type="button"
+            (click)="quickClean(tbl, $event)"
+            class="px-3 py-1.5 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-slate-900 text-xs font-bold shadow-sm transition-all flex items-center gap-1"
+          >
+            <span class="material-icons-round text-xs">check</span>
+            Posprzątano
+          </button>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <!-- Szablon braku wyników -->
+  <ng-template #noTablesTpl>
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center max-w-md mx-auto space-y-4">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
+        <span class="material-icons-round text-3xl">table_restaurant</span>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-800 dark:text-white">Brak stolików dla wybranych kryteriów</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Zmień filtr statusu, wybraną strefę lub wyczyść wyszukiwarkę.
+        </p>
+      </div>
+      <div class="pt-2 flex justify-center gap-2">
+        <button 
+          *ngIf="searchQuery() || statusFilter() !== 'all' || tableService.selectedZone() !== 'all'"
+          type="button"
+          (click)="searchQuery.set(''); setStatusFilter('all'); selectZone('all')"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-colors"
+        >
+          Resetuj filtry
+        </button>
+        <button 
+          type="button"
+          (click)="openAddTableModal()"
+          class="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl text-xs font-bold shadow-sm"
+        >
+          Dodaj nowy stolik
+        </button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- 5. Modale -->
+  <!-- Modal Szczegółów stolika & Rozliczenia -->
+  <app-table-details-modal 
+    *ngIf="selectedTableForDetails() as tbl"
+    [table]="tbl"
+    (close)="closeTableDetails()"
+    (editTable)="openEditTableModal($event)"
+    (openNewOrder)="openNewOrderModal($event)"
+  ></app-table-details-modal>
+
+  <!-- Modal Dodawania / Edycji stolika -->
+  <app-add-edit-table-modal
+    *ngIf="isAddModalOpen()"
+    [tableToEdit]="selectedTableForEdit()"
+    (close)="closeAddEditModal()"
+    (saved)="closeAddEditModal()"
+  ></app-add-edit-table-modal>
+
+  <!-- Modal Nowego Zamówienia (z predefiniowanym numerem stolika) -->
+  <app-new-order-modal
+    *ngIf="isNewOrderModalOpen()"
+    [initialTableNumber]="tableForNewOrder()"
+    (close)="closeNewOrderModal()"
+    (created)="closeNewOrderModal()"
+  ></app-new-order-modal>
+</div>

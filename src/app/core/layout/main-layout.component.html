@@ -1,102 +1,87 @@
-<div class="h-screen h-[100dvh] w-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-150">
+<div
+  class="h-screen h-[100dvh] w-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-150">
   <!-- Mobile Backdrop Overlay -->
   @if (isMobile() && isMobileMenuOpen()) {
-    <div
-      (click)="closeMobileMenu()"
-      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
-    ></div>
+  <div (click)="closeMobileMenu()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"></div>
   }
 
   <!-- Sidebar Navigation (mobile: wysuwana szuflada, desktop/tablet: stały pasek) -->
-  <aside
-    [class.fixed]="isMobile()"
-    [class.static]="!isMobile()"
-    [class.shadow-2xl]="isMobile()"
+  <aside [class.fixed]="isMobile()" [class.static]="!isMobile()" [class.shadow-2xl]="isMobile()"
     [class.translate-x-0]="!isMobile() || isMobileMenuOpen()"
-    [class.-translate-x-full]="isMobile() && !isMobileMenuOpen()"
-    [class.w-72]="!isCompact()"
-    [class.w-20]="isCompact()"
-    class="inset-y-0 left-0 z-50 h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 ease-in-out"
-  >
+    [class.-translate-x-full]="isMobile() && !isMobileMenuOpen()" [class.w-72]="!isCompact()" [class.w-20]="isCompact()"
+    class="inset-y-0 left-0 z-50 h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 ease-in-out">
     <!-- Brand Header -->
-    <div 
+    <div
       class="h-20 flex items-center border-b border-slate-200 dark:border-slate-800/80 shrink-0 transition-all duration-300"
-      [class.justify-between]="!isCompact()"
-      [class.px-6]="!isCompact()"
-      [class.justify-center]="isCompact()"
-      [class.px-2]="isCompact()"
-    >
-      <div class="flex items-center gap-3 overflow-hidden">
-        <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+      [class.justify-between]="!isCompact()" [class.px-6]="!isCompact()" [class.justify-center]="isCompact()"
+      [class.px-2]="isCompact()">
+      <div class="flex items-center gap-3">
+        <div
+          class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
           <span class="material-icons-round text-white text-xl">restaurant</span>
         </div>
         @if (!isCompact()) {
-          <div class="truncate transition-opacity duration-200">
-            <span class="font-bold text-lg tracking-tight text-slate-900 dark:text-white block leading-tight truncate">GastroApp</span>
-            <span class="text-[11px] text-orange-600 dark:text-orange-400 font-medium tracking-wide uppercase truncate">Magazyn & Menu</span>
-          </div>
+        <div class="truncate transition-opacity duration-200">
+          <span
+            class="font-bold text-lg tracking-tight text-slate-900 dark:text-white block leading-tight truncate">GastroApp</span>
+          <span
+            class="text-[11px] text-orange-600 dark:text-orange-400 font-medium tracking-wide uppercase truncate">Magazyn
+            & Menu</span>
+        </div>
         }
       </div>
       <!-- Close button on mobile -->
       @if (isMobile()) {
-        <button
-          (click)="closeMobileMenu()"
-          class="p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-        >
-          <span class="material-icons-round text-2xl">close</span>
-        </button>
+      <button (click)="closeMobileMenu()"
+        class="p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800">
+        <span class="material-icons-round text-2xl">close</span>
+      </button>
       }
     </div>
 
     <!-- Navigation Links -->
     <nav class="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
       @if (!isCompact()) {
-        <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mb-2 truncate">
-          Nawigacja Główna
-        </div>
+      <div
+        class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mb-2 truncate">
+        Nawigacja Główna
+      </div>
       } @else {
-        <div class="h-px bg-slate-200 dark:bg-slate-800 mx-2 my-2"></div>
+      <div class="h-px bg-slate-200 dark:bg-slate-800 mx-2 my-2"></div>
       }
 
       @for (item of navItems; track item.route) {
-        <a
-          [routerLink]="item.route"
-          (click)="closeMobileMenu()"
-          [title]="isCompact() ? item.label : ''"
-          routerLinkActive="bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold shadow-sm shadow-orange-500/5 active-nav-link"
-          [routerLinkActiveOptions]="{ exact: false }"
-          class="flex items-center rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-150 group"
-          [class.px-3.5]="!isCompact()"
-          [class.py-3]="!isCompact()"
-          [class.gap-3.5]="!isCompact()"
-          [class.text-sm]="!isCompact()"
-          [class.border-l-4]="!isCompact()"
-          [class.border-transparent]="!isCompact()"
-          [class.[&.active-nav-link]:border-orange-500]="!isCompact()"
-          [class.justify-center]="isCompact()"
-          [class.p-3]="isCompact()"
-        >
-          <span class="material-icons-round text-slate-400 group-hover:text-orange-500 group-[.active-nav-link]:text-orange-500 text-xl transition-colors shrink-0">
-            {{ item.icon }}
-          </span>
-          @if (!isCompact()) {
-            <span class="truncate">{{ item.label }}</span>
-          }
-        </a>
+      <a [routerLink]="item.route" (click)="closeMobileMenu()" [title]="isCompact() ? item.label : ''"
+        routerLinkActive="bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold shadow-sm shadow-orange-500/5 active-nav-link"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="flex items-center rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-150 group"
+        [class.px-3.5]="!isCompact()" [class.py-3]="!isCompact()" [class.gap-3.5]="!isCompact()"
+        [class.text-sm]="!isCompact()" [class.border-l-4]="!isCompact()" [class.border-transparent]="!isCompact()"
+        [class.[&.active-nav-link]:border-orange-500]="!isCompact()" [class.justify-center]="isCompact()"
+        [class.p-3]="isCompact()">
+        <span
+          class="material-icons-round text-slate-400 group-hover:text-orange-500 group-[.active-nav-link]:text-orange-500 text-xl transition-colors shrink-0">
+          {{ item.icon }}
+        </span>
+        @if (!isCompact()) {
+        <span class="truncate">{{ item.label }}</span>
+        }
+      </a>
       }
     </nav>
 
     <!-- Sidebar Footer / System Badge -->
     <div class="p-3 border-t border-slate-200 dark:border-slate-800/80 text-center shrink-0">
       @if (!isCompact()) {
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider text-slate-400 dark:text-slate-500 uppercase bg-slate-100 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50 truncate">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-          GastroApp v1.0
-        </span>
+      <span
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider text-slate-400 dark:text-slate-500 uppercase bg-slate-100 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50 truncate">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+        GastroApp v1.0
+      </span>
       } @else {
-        <div class="flex justify-center" title="GastroApp v1.0 (Online)">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20"></span>
-        </div>
+      <div class="flex justify-center" title="GastroApp v1.0 (Online)">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20"></span>
+      </div>
       }
     </div>
   </aside>
@@ -105,35 +90,34 @@
   <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
     <!-- Top Demo Banner -->
     @if (authService.isDemoAccount()) {
-      <div class="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200 shrink-0 shadow-sm z-30">
-        <div class="flex items-center gap-2.5 overflow-hidden">
-          <span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
-          <span class="font-bold tracking-wide uppercase text-[11px] bg-amber-500/20 px-2 py-0.5 rounded text-amber-800 dark:text-amber-300 border border-amber-500/30">Konto Prezentacyjne Demo</span>
-          <span class="hidden md:inline text-slate-600 dark:text-slate-300 truncate">Możesz swobodnie modyfikować dane. Zmiany nie wpływają na Twoje prawdziwe konto lokalu.</span>
-        </div>
-        <button
-          type="button"
-          (click)="resetDemo()"
-          [disabled]="isResettingDemo()"
-          class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white dark:text-slate-900 rounded-lg font-semibold hover:bg-amber-600 dark:hover:bg-amber-400 active:scale-95 transition-all shadow-sm disabled:opacity-50 cursor-pointer shrink-0 ml-2"
-          title="Przywróć początkowy stan menu, magazynu i zamówień"
-        >
-          <span class="material-icons-round text-base" [class.animate-spin]="isResettingDemo()">refresh</span>
-          <span>{{ isResettingDemo() ? 'Resetowanie...' : 'Przywróć stan początkowy' }}</span>
-        </button>
+    <div
+      class="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200 shrink-0 shadow-sm z-30">
+      <div class="flex items-center gap-2.5 overflow-hidden">
+        <span
+          class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+        <span
+          class="font-bold tracking-wide uppercase text-[11px] bg-amber-500/20 px-2 py-0.5 rounded text-amber-800 dark:text-amber-300 border border-amber-500/30">Konto
+          Prezentacyjne Demo</span>
+        <span class="hidden md:inline text-slate-600 dark:text-slate-300 truncate">Możesz swobodnie modyfikować dane.
+          Zmiany nie wpływają na Twoje prawdziwe konto lokalu.</span>
       </div>
+      <button type="button" (click)="resetDemo()" [disabled]="isResettingDemo()"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white dark:text-slate-900 rounded-lg font-semibold hover:bg-amber-600 dark:hover:bg-amber-400 active:scale-95 transition-all shadow-sm disabled:opacity-50 cursor-pointer shrink-0 ml-2"
+        title="Przywróć początkowy stan menu, magazynu i zamówień">
+        <span class="material-icons-round text-base" [class.animate-spin]="isResettingDemo()">refresh</span>
+        <span>{{ isResettingDemo() ? 'Resetowanie...' : 'Przywróć stan początkowy' }}</span>
+      </button>
+    </div>
     }
 
     <!-- Top Navbar -->
-    <header class="h-20 bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between px-4 sm:px-8 shrink-0 transition-colors duration-150 z-30">
+    <header
+      class="h-20 bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between px-4 sm:px-8 shrink-0 transition-colors duration-150 z-30">
       <div class="flex items-center gap-3">
         <!-- Burger menu toggle button (inspired by Berry Dashboard) -->
-        <button
-          (click)="toggleSidebar()"
-          type="button"
+        <button (click)="toggleSidebar()" type="button"
           class="w-10 h-10 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/20 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 focus:outline-none cursor-pointer"
-          [title]="isMobile() ? (isMobileMenuOpen() ? 'Zamknij menu' : 'Otwórz menu') : (isSidebarCollapsed() ? 'Rozwiń menu boczne' : 'Zwiń menu boczne')"
-        >
+          [title]="isMobile() ? (isMobileMenuOpen() ? 'Zamknij menu' : 'Otwórz menu') : (isSidebarCollapsed() ? 'Rozwiń menu boczne' : 'Zwiń menu boczne')">
           <span class="material-icons-round text-2xl transition-transform duration-200">
             {{ (isMobile() ? isMobileMenuOpen() : !isSidebarCollapsed()) ? 'menu_open' : 'menu' }}
           </span>
@@ -142,117 +126,96 @@
         <div>
           <h2 class="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <span>{{ authService.restaurantName() }}</span>
-            <span class="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+            <span
+              class="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
               Online
             </span>
           </h2>
-          <p class="hidden sm:block text-xs text-slate-500 dark:text-slate-400">System kontroli kuchni i stanów magazynowych</p>
+          <p class="hidden sm:block text-xs text-slate-500 dark:text-slate-400">System kontroli kuchni i stanów
+            magazynowych</p>
         </div>
       </div>
 
       <!-- User Avatar Profile & Dropdown -->
       <div class="relative">
-        <button
-          type="button"
-          (click)="toggleUserMenu()"
+        <button type="button" (click)="toggleUserMenu()"
           class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white font-bold text-base flex items-center justify-center shadow-md shadow-orange-500/25 hover:shadow-lg hover:shadow-orange-500/35 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none"
-          [class.ring-2]="isUserMenuOpen()"
-          [class.ring-orange-500]="isUserMenuOpen()"
-          [class.ring-offset-2]="isUserMenuOpen()"
-          [class.ring-offset-white]="isUserMenuOpen()"
-          [class.dark:ring-offset-slate-900]="isUserMenuOpen()"
-          aria-expanded="isUserMenuOpen()"
-          aria-haspopup="true"
-          title="Menu profilu"
-        >
+          [class.ring-2]="isUserMenuOpen()" [class.ring-orange-500]="isUserMenuOpen()"
+          [class.ring-offset-2]="isUserMenuOpen()" [class.ring-offset-white]="isUserMenuOpen()"
+          [class.dark:ring-offset-slate-900]="isUserMenuOpen()" aria-expanded="isUserMenuOpen()" aria-haspopup="true"
+          title="Menu profilu">
           {{ authService.restaurantName().charAt(0).toUpperCase() }}
         </button>
 
         <!-- Dropdown Menu -->
         @if (isUserMenuOpen()) {
-          <!-- Click outside backdrop -->
-          <div (click)="closeUserMenu()" class="fixed inset-0 z-40 bg-transparent"></div>
+        <!-- Click outside backdrop -->
+        <div (click)="closeUserMenu()" class="fixed inset-0 z-40 bg-transparent"></div>
 
-          <div class="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl z-50 p-2 animate-scale-in">
-            <!-- Header inside menu -->
-            <div class="px-3.5 py-3 border-b border-slate-100 dark:border-slate-800/80 mb-1.5">
-              <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ authService.restaurantName() }}</p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{{ authService.currentUser()?.email || 'Tryb demonstracyjny' }}</p>
-              <div class="mt-2 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Właściciel lokalu</span>
-              </div>
+        <div
+          class="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl z-50 p-2 animate-scale-in">
+          <!-- Header inside menu -->
+          <div class="px-3.5 py-3 border-b border-slate-100 dark:border-slate-800/80 mb-1.5">
+            <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ authService.restaurantName() }}</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{{
+              authService.currentUser()?.email || 'Tryb demonstracyjny' }}</p>
+            <div class="mt-2 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span
+                class="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Właściciel
+                lokalu</span>
+            </div>
+          </div>
+
+          <!-- Item 1: Dark Mode Toggle Switch -->
+          <button type="button" (click)="toggleTheme()"
+            class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors group cursor-pointer"
+            role="switch" [attr.aria-checked]="themeService.isDarkMode">
+            <div class="flex items-center gap-2.5">
+              <span class="material-icons-round text-lg transition-colors"
+                [class.text-amber-400]="themeService.isDarkMode" [class.text-slate-400]="!themeService.isDarkMode"
+                [class.group-hover:text-amber-500]="!themeService.isDarkMode">
+                dark_mode
+              </span>
+              <span>Ciemny motyw</span>
             </div>
 
-            <!-- Item 1: Dark Mode Toggle Switch -->
-            <button
-              type="button"
-              (click)="toggleTheme()"
-              class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors group cursor-pointer"
-              role="switch"
-              [attr.aria-checked]="themeService.isDarkMode"
-            >
-              <div class="flex items-center gap-2.5">
-                <span
-                  class="material-icons-round text-lg transition-colors"
-                  [class.text-amber-400]="themeService.isDarkMode"
-                  [class.text-slate-400]="!themeService.isDarkMode"
-                  [class.group-hover:text-amber-500]="!themeService.isDarkMode"
-                >
-                  dark_mode
-                </span>
-                <span>Ciemny motyw</span>
-              </div>
+            <!-- iOS Style Toggle Switch -->
+            <div
+              class="w-10 h-5 rounded-full transition-colors duration-200 ease-in-out relative p-0.5 flex items-center"
+              [class.bg-orange-500]="themeService.isDarkMode" [class.bg-slate-300]="!themeService.isDarkMode"
+              [class.dark:bg-slate-700]="!themeService.isDarkMode">
+              <div class="w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out"
+                [class.translate-x-5]="themeService.isDarkMode" [class.translate-x-0]="!themeService.isDarkMode"></div>
+            </div>
+          </button>
 
-              <!-- iOS Style Toggle Switch -->
-              <div
-                class="w-10 h-5 rounded-full transition-colors duration-200 ease-in-out relative p-0.5 flex items-center"
-                [class.bg-orange-500]="themeService.isDarkMode"
-                [class.bg-slate-300]="!themeService.isDarkMode"
-                [class.dark:bg-slate-700]="!themeService.isDarkMode"
-              >
-                <div
-                  class="w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out"
-                  [class.translate-x-5]="themeService.isDarkMode"
-                  [class.translate-x-0]="!themeService.isDarkMode"
-                ></div>
-              </div>
-            </button>
+          <!-- Item 2: Account Settings -->
+          <button type="button" (click)="openAccountModal()"
+            class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors group">
+            <span
+              class="material-icons-round text-lg text-slate-400 group-hover:text-orange-500 transition-colors">settings</span>
+            <span>Ustawienia konta</span>
+          </button>
 
-            <!-- Item 2: Account Settings -->
-            <button
-              type="button"
-              (click)="openAccountModal()"
-              class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors group"
-            >
-              <span class="material-icons-round text-lg text-slate-400 group-hover:text-orange-500 transition-colors">settings</span>
-              <span>Ustawienia konta</span>
-            </button>
+          @if (authService.isDemoAccount()) {
+          <button type="button" (click)="resetDemo()" [disabled]="isResettingDemo()"
+            class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors group cursor-pointer">
+            <span class="material-icons-round text-lg text-amber-500 transition-colors"
+              [class.animate-spin]="isResettingDemo()">refresh</span>
+            <span>Przywróć dane demo</span>
+          </button>
+          }
 
-            @if (authService.isDemoAccount()) {
-              <button
-                type="button"
-                (click)="resetDemo()"
-                [disabled]="isResettingDemo()"
-                class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors group cursor-pointer"
-              >
-                <span class="material-icons-round text-lg text-amber-500 transition-colors" [class.animate-spin]="isResettingDemo()">refresh</span>
-                <span>Przywróć dane demo</span>
-              </button>
-            }
+          <div class="my-1.5 border-t border-slate-100 dark:border-slate-800/80"></div>
 
-            <div class="my-1.5 border-t border-slate-100 dark:border-slate-800/80"></div>
-
-            <!-- Item 3: Logout -->
-            <button
-              type="button"
-              (click)="logout()"
-              class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors group"
-            >
-              <span class="material-icons-round text-lg text-rose-500 transition-colors">logout</span>
-              <span>Wyloguj się</span>
-            </button>
-          </div>
+          <!-- Item 3: Logout -->
+          <button type="button" (click)="logout()"
+            class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors group">
+            <span class="material-icons-round text-lg text-rose-500 transition-colors">logout</span>
+            <span>Wyloguj się</span>
+          </button>
+        </div>
         }
       </div>
     </header>
@@ -266,5 +229,5 @@
 
 <!-- Account Settings Modal -->
 @if (isAccountModalOpen()) {
-  <app-account-settings-modal (close)="closeAccountModal()"></app-account-settings-modal>
+<app-account-settings-modal (close)="closeAccountModal()"></app-account-settings-modal>
 }

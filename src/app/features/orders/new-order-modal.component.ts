@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, inject, signal, computed } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RecipeService } from '../../core/services/recipe.service';
@@ -24,6 +24,12 @@ export class NewOrderModalComponent {
   readonly recipeService = inject(RecipeService);
   readonly orderService = inject(OrderService);
   readonly promotionService = inject(PromotionService);
+
+  @Input() set initialTableNumber(val: string | undefined) {
+    if (val && val.trim()) {
+      this.tableNumber.set(val.trim());
+    }
+  }
 
   @Output() close = new EventEmitter<void>();
   @Output() created = new EventEmitter<void>();

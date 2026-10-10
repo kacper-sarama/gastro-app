@@ -73,7 +73,8 @@ export class AuthService {
     inventoryService: { resetToStarter: (id: string) => Promise<any[]> },
     recipeService: { resetToStarter: (id: string, inv?: any[]) => Promise<any[]> },
     orderService: { resetToStarter: (id: string, rec?: any[]) => Promise<void> },
-    promotionService?: { resetToStarter: (id: string, rec?: any[]) => Promise<void> }
+    promotionService?: { resetToStarter: (id: string, rec?: any[]) => Promise<void> },
+    tableService?: { resetToStarter: (id: string) => Promise<void> }
   ): Promise<void> {
     const u = this.auth.currentUser;
     if (!u || u.email !== 'demo@gastroapp.pl') {
@@ -105,6 +106,9 @@ export class AuthService {
     await orderService.resetToStarter(u.uid, newRecipes);
     if (promotionService) {
       await promotionService.resetToStarter(u.uid, newRecipes);
+    }
+    if (tableService) {
+      await tableService.resetToStarter(u.uid);
     }
 
     this.toastService.success('Pomyślnie przywrócono stan fabryczny konta Demo!', 'Reset Demo');
