@@ -1,22 +1,30 @@
-<div class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors pb-16">
+<div class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors pb-28">
   
   <!-- Guest Top Navigation Bar -->
   <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-colors">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
       
-      <!-- Restaurant Branding -->
+      <!-- Restaurant Branding & Dining Context -->
       <div class="flex items-center gap-3 min-w-0">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20 shrink-0">
           <span class="material-icons-round text-2xl">restaurant</span>
         </div>
-        <div>
-          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+        <div class="min-w-0">
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight truncate">
             {{ displayName() }}
           </h1>
-          <div class="flex items-center gap-1.5 mt-0.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-              Kuchnia otwarta
+          <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Kuchnia otwarta</span>
+            </span>
+
+            <!-- Kontekst stolika / wynosu -->
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-900">
+              <span class="material-icons-round text-xs">
+                {{ orderType() === 'takeout' ? 'takeout_dining' : 'table_restaurant' }}
+              </span>
+              <span>{{ orderType() === 'takeout' ? 'Na wynos' : tableNumber() }}</span>
             </span>
           </div>
         </div>
@@ -30,7 +38,7 @@
           title="Wróć do panelu lokalu"
         >
           <span class="material-icons-round text-sm text-orange-500">dashboard</span>
-          <span>Panel</span>
+          <span class="hidden sm:inline">Panel</span>
         </a>
 
         <button
@@ -77,116 +85,815 @@
     </div>
   </header>
 
-  <!-- Main Menu Content Container -->
-  <main class="max-w-4xl mx-auto px-4 sm:px-6 pt-6 space-y-10">
-    
-    @if (groupedDishes().length === 0) {
-      <div class="py-20 text-center space-y-3">
-        <span class="material-icons-round text-5xl text-slate-300 dark:text-slate-600">restaurant</span>
-        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200">Karta menu jest aktualizowana</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Zapytaj obsługę lokalu o aktualne pozycje.</p>
-      </div>
-    } @else {
-      @for (group of groupedDishes(); track group.category) {
-        <section class="space-y-4">
-          
-          <!-- Category Section Title (Sticky) -->
-          <div class="sticky top-[108px] z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md flex items-center gap-2 border-b border-slate-200/80 dark:border-slate-800 transition-colors shadow-sm">
-            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-            <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {{ group.category }}
-            </h2>
+  <!-- GŁÓWNY WIDOK: EKRAN SUKCESU (LIVE TRACKER) LUB KARTA DAŃ -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 pt-6">
+
+    <!-- ======================================================== -->
+    <!-- WIDOK ŚLEDZENIA ZAMÓWIENIA NA ŻYWO (PO OPŁACENIU/ZŁOŻENIU) -->
+    <!-- ======================================================== -->
+    @if (completedOrder()) {
+      @let order = completedOrder()!;
+
+      <div class="max-w-xl mx-auto bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800 shadow-xl space-y-6">
+        
+        <!-- Nagłówek sukcesu -->
+        <div class="text-center space-y-2">
+          <div class="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <span class="material-icons-round text-3xl">check_circle</span>
+          </div>
+          <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">
+            Zamówienie przyjęte!
+          </h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            Kuchnia otrzymała Twoje zamówienie i przystępuje do jego realizacji.
+          </p>
+        </div>
+
+        <!-- Karta numeru bonu i danych -->
+        <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-slate-700/60">
+            <div>
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Numer bonu</span>
+              <div class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                #{{ order.orderNumber }}
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Miejsce</span>
+              <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1 justify-end">
+                <span class="material-icons-round text-xs text-orange-500">
+                  {{ order.isTakeout ? 'takeout_dining' : 'table_restaurant' }}
+                </span>
+                <span>{{ order.tableNumber }}</span>
+              </div>
+            </div>
           </div>
 
-          <!-- Dishes Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            @for (dish of group.items; track dish.id) {
-              @let soldOut = isSoldOut(dish);
+          <div class="flex items-center justify-between text-xs pt-1">
+            <span class="text-slate-500 dark:text-slate-400">Status płatności:</span>
+            @if (order.paid) {
+              <span class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span class="material-icons-round text-xs">verified</span>
+                <span>Opłacone online ({{ order.paymentMethod || 'BLIK' }})</span>
+              </span>
+            } @else {
+              <span class="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <span class="material-icons-round text-xs">payments</span>
+                <span>Płatność u kelnera / przy odbiorze</span>
+              </span>
+            }
+          </div>
+        </div>
 
-              <article
-                class="p-4 sm:p-5 rounded-2xl border transition-all flex flex-col justify-between"
-                [ngClass]="soldOut 
-                  ? 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-60' 
-                  : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700'"
-              >
-                <div class="space-y-2.5">
-                  <!-- Dish Header: Name, Category & Price -->
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-1.5 flex-wrap">
-                        <h3 class="font-bold text-base text-slate-900 dark:text-white leading-snug">
-                          {{ dish.name }}
-                        </h3>
-                        @if (dish.isFeatured) {
-                          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center gap-0.5">
-                            <span class="material-icons-round text-xs">star</span>
-                            <span>Polecane</span>
+        <!-- REAKTYWNY LIVE STATUS TRACKER (Z KUCHNI) -->
+        <div class="space-y-3 pt-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Status w kuchni (na żywo)</span>
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              <span>Live Sync</span>
+            </span>
+          </div>
+
+          <!-- Kroki realizacji -->
+          <div class="grid grid-cols-3 gap-2 text-center text-xs">
+            
+            <!-- Krok 1: Przyjęte -->
+            <div 
+              class="p-3 rounded-xl border transition-all"
+              [ngClass]="order.status === 'pending'
+                ? 'bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 font-bold'
+                : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'"
+            >
+              <span class="material-icons-round text-xl mb-1 block">
+                {{ order.status === 'pending' ? 'hourglass_top' : 'done' }}
+              </span>
+              <span>Przyjęte</span>
+            </div>
+
+            <!-- Krok 2: W kuchni -->
+            <div 
+              class="p-3 rounded-xl border transition-all"
+              [ngClass]="order.status === 'in_progress'
+                ? 'bg-sky-500/10 border-sky-500 text-sky-600 dark:text-sky-400 font-bold animate-pulse'
+                : (order.status === 'ready' || order.status === 'completed' 
+                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400' 
+                    : 'bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-400')"
+            >
+              <span class="material-icons-round text-xl mb-1 block">
+                {{ order.status === 'in_progress' ? 'skillet' : (order.status === 'ready' || order.status === 'completed' ? 'done' : 'skillet') }}
+              </span>
+              <span>W kuchni</span>
+            </div>
+
+            <!-- Krok 3: Gotowe / Wydane -->
+            <div 
+              class="p-3 rounded-xl border transition-all"
+              [ngClass]="order.status === 'ready' || order.status === 'completed'
+                ? 'bg-emerald-500/15 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold shadow-md shadow-emerald-500/10'
+                : 'bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-400'"
+            >
+              <span class="material-icons-round text-xl mb-1 block">
+                {{ order.status === 'ready' || order.status === 'completed' ? 'restaurant' : 'dinner_dining' }}
+              </span>
+              <span>{{ order.isTakeout ? 'Do odbioru' : 'Gotowe' }}</span>
+            </div>
+
+          </div>
+
+          <!-- Komunikat statusowy -->
+          <div class="p-3 rounded-xl text-center text-xs font-medium"
+            [ngClass]="{
+              'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300': order.status === 'pending',
+              'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300': order.status === 'in_progress',
+              'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300': order.status === 'ready' || order.status === 'completed'
+            }"
+          >
+            @if (order.status === 'pending') {
+              <span>Kucharz za chwilę rozpocznie przygotowanie Twojego zamówienia.</span>
+            } @else if (order.status === 'in_progress') {
+              <span>Twoje dania są właśnie przygotowywane na kuchni! 🔥</span>
+            } @else if (order.status === 'ready') {
+              <span class="font-bold">🍽️ Dania są gotowe! Obsługa zmierza do Twojego stolika lub zapraszamy do odbioru.</span>
+            } @else if (order.status === 'completed') {
+              <span>Zamówienie zostało pomyślnie zrealizowane. Smacznego!</span>
+            }
+          </div>
+        </div>
+
+        <!-- Podsumowanie pozycji zamówienia -->
+        <div class="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Zamówione pozycje</span>
+          <div class="space-y-1.5">
+            @for (item of order.items; track item.recipeId + $index) {
+              <div class="flex items-center justify-between text-xs py-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 font-bold flex items-center justify-center text-slate-700 dark:text-slate-300 text-[11px]">
+                    {{ item.quantity }}x
+                  </span>
+                  <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.recipeName }}</span>
+                </div>
+                <span class="font-mono text-slate-500">{{ (item.unitPrice * item.quantity) | number:'1.2-2' }} zł</span>
+              </div>
+            }
+          </div>
+          <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-sm font-extrabold text-slate-900 dark:text-white">
+            <span>Suma</span>
+            <span>{{ order.totalPrice | number:'1.2-2' }} zł</span>
+          </div>
+        </div>
+
+        <!-- Przycisk powrotu do menu -->
+        <button
+          type="button"
+          (click)="resetOrderView()"
+          class="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-sm transition-colors flex items-center justify-center gap-2"
+        >
+          <span class="material-icons-round text-lg">restaurant_menu</span>
+          <span>Złóż kolejne zamówienie</span>
+        </button>
+
+      </div>
+
+    } @else {
+
+      <!-- ======================================================== -->
+      <!-- WIDOK STANDARDOWY: KARTA MENU Z PRZYCISKAMI DO KOSZYKA -->
+      <!-- ======================================================== -->
+      <div class="space-y-10">
+        @if (groupedDishes().length === 0) {
+          <div class="py-20 text-center space-y-3">
+            <span class="material-icons-round text-5xl text-slate-300 dark:text-slate-600">restaurant</span>
+            <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200">Karta menu jest aktualizowana</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Zapytaj obsługę lokalu o aktualne pozycje.</p>
+          </div>
+        } @else {
+          @for (group of groupedDishes(); track group.category) {
+            <section class="space-y-4">
+              
+              <!-- Category Section Title (Sticky) -->
+              <div class="sticky top-[108px] z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md flex items-center gap-2 border-b border-slate-200/80 dark:border-slate-800 transition-colors shadow-sm">
+                <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  {{ group.category }}
+                </h2>
+              </div>
+
+              <!-- Dishes Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                @for (dish of group.items; track dish.id) {
+                  @let soldOut = isSoldOut(dish);
+                  @let qty = getItemQuantity(dish.id);
+
+                  <article
+                    class="p-4 sm:p-5 rounded-2xl border transition-all flex flex-col justify-between"
+                    [ngClass]="soldOut 
+                      ? 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-60' 
+                      : (qty > 0 
+                          ? 'bg-white dark:bg-slate-900 border-orange-500/80 shadow-md ring-2 ring-orange-500/20' 
+                          : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700')"
+                  >
+                    <div class="space-y-2.5">
+                      <!-- Dish Header: Name, Category & Price -->
+                      <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center gap-1.5 flex-wrap">
+                            <h3 class="font-bold text-base text-slate-900 dark:text-white leading-snug">
+                              {{ dish.name }}
+                            </h3>
+                            @if (dish.isFeatured) {
+                              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center gap-0.5">
+                                <span class="material-icons-round text-xs">star</span>
+                                <span>Polecane</span>
+                              </span>
+                            }
+                            @if (dish.category) {
+                              <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60">
+                                {{ dish.category }}
+                              </span>
+                            }
+                          </div>
+
+                          @if (dish.description) {
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                              {{ dish.description }}
+                            </p>
+                          }
+                        </div>
+
+                        <!-- Price -->
+                        <div class="text-right flex-shrink-0 pt-0.5">
+                          <span class="text-lg font-extrabold text-slate-900 dark:text-white">
+                            {{ dish.sellingPrice ? (dish.sellingPrice | number:'1.2-2') : '—' }}
                           </span>
-                        }
-                        @if (dish.category) {
-                          <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60">
-                            {{ dish.category }}
+                          <span class="text-[11px] font-semibold text-slate-400 ml-0.5">zł</span>
+                        </div>
+                      </div>
+
+                      <!-- Ingredients Pill list -->
+                      @let ingredients = getIngredientNames(dish);
+                      @if (ingredients.length > 0) {
+                        <div class="flex items-center gap-1 flex-wrap pt-1">
+                          @for (ing of ingredients; track ing) {
+                            <span class="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400">
+                              {{ ing }}
+                            </span>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Bottom Status & Add-to-Cart Action -->
+                    <div class="pt-3.5 mt-3.5 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between gap-3">
+                      <div>
+                        @if (soldOut) {
+                          <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-900">
+                            <span class="material-icons-round text-xs">block</span>
+                            <span>Wyprzedane</span>
+                          </span>
+                        } @else {
+                          <span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                            <span class="material-icons-round text-xs">check_circle</span>
+                            <span>Dostępne od ręki</span>
                           </span>
                         }
                       </div>
 
-                      @if (dish.description) {
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                          {{ dish.description }}
-                        </p>
+                      <!-- Kontrolka koszyka dla dania -->
+                      @if (!soldOut) {
+                        @if (qty === 0) {
+                          <button
+                            type="button"
+                            (click)="addToCart(dish)"
+                            class="px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm shadow-orange-500/30 transition-all"
+                          >
+                            <span class="material-icons-round text-sm">add_shopping_cart</span>
+                            <span>Dodaj</span>
+                          </button>
+                        } @else {
+                          <div class="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-950/60 p-1 rounded-xl border border-orange-200 dark:border-orange-800/60">
+                            <button
+                              type="button"
+                              (click)="removeFromCart(dish.id)"
+                              class="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-orange-100 flex items-center justify-center font-bold text-xs transition-colors shadow-sm"
+                              title="Zmniejsz ilość"
+                            >
+                              <span class="material-icons-round text-sm">remove</span>
+                            </button>
+                            <span class="w-6 text-center font-extrabold text-sm text-orange-600 dark:text-orange-400 font-mono">
+                              {{ qty }}
+                            </span>
+                            <button
+                              type="button"
+                              (click)="addToCart(dish)"
+                              class="w-7 h-7 rounded-lg bg-orange-500 text-white hover:bg-orange-600 flex items-center justify-center font-bold text-xs transition-colors shadow-sm"
+                              title="Zwiększ ilość"
+                            >
+                              <span class="material-icons-round text-sm">add</span>
+                            </button>
+                          </div>
+                        }
                       }
                     </div>
 
-                    <!-- Price -->
-                    <div class="text-right flex-shrink-0 pt-0.5">
-                      <span class="text-lg font-extrabold text-slate-900 dark:text-white">
-                        {{ dish.sellingPrice ? (dish.sellingPrice | number:'1.2-2') : '—' }}
-                      </span>
-                      <span class="text-[11px] font-semibold text-slate-400 ml-0.5">zł</span>
-                    </div>
-                  </div>
+                  </article>
+                }
+              </div>
 
-                  <!-- Ingredients Pill list -->
-                  @let ingredients = getIngredientNames(dish);
-                  @if (ingredients.length > 0) {
-                    <div class="flex items-center gap-1 flex-wrap pt-1">
-                      @for (ing of ingredients; track ing) {
-                        <span class="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400">
-                          {{ ing }}
-                        </span>
-                      }
-                    </div>
-                  }
-                </div>
+            </section>
+          }
+        }
+      </div>
 
-                <!-- Bottom Status -->
-                <div class="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
-                  @if (soldOut) {
-                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-900">
-                      <span class="material-icons-round text-xs">block</span>
-                      <span>Chwilowo wyprzedane</span>
-                    </span>
-                  } @else {
-                    <span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                      <span class="material-icons-round text-xs">check_circle</span>
-                      <span>Dostępne od ręki</span>
-                    </span>
-                  }
-
-                  <span class="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-                    1 porcja
-                  </span>
-                </div>
-
-              </article>
-            }
-          </div>
-
-        </section>
-      }
     }
 
   </main>
+
+  <!-- ======================================================== -->
+  <!-- PŁYWAJĄCY DOLNY PASEK KOSZYKA (STICKY FLOATING BAR) -->
+  <!-- ======================================================== -->
+  @if (cartCount() > 0 && !completedOrder() && !isCheckoutOpen()) {
+    <div class="fixed bottom-4 inset-x-0 z-40 max-w-lg mx-auto px-4 animate-in fade-in slide-in-from-bottom-5 duration-200">
+      <div class="p-3 bg-slate-900/95 dark:bg-slate-800/95 backdrop-blur-lg text-white rounded-2xl shadow-2xl border border-slate-700/80 flex items-center justify-between gap-4">
+        
+        <!-- Podsumowanie koszyka -->
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="relative w-11 h-11 rounded-xl bg-orange-500 flex items-center justify-center shrink-0 shadow-md shadow-orange-500/40">
+            <span class="material-icons-round text-2xl text-white">shopping_bag</span>
+            <span class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white text-orange-600 font-extrabold text-[11px] flex items-center justify-center shadow-md">
+              {{ cartCount() }}
+            </span>
+          </div>
+          <div class="min-w-0">
+            <div class="text-[11px] text-slate-400 font-medium">Do zapłaty:</div>
+            <div class="text-base font-black tracking-tight text-white">
+              {{ cartTotal() | number:'1.2-2' }} <span class="text-xs font-normal text-slate-300">zł</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Przycisk przejścia do kasy -->
+        <button
+          type="button"
+          (click)="openCheckout()"
+          class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-95 text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-orange-500/30 transition-all shrink-0"
+        >
+          <span>Zamów i zapłać</span>
+          <span class="material-icons-round text-base">arrow_forward</span>
+        </button>
+
+      </div>
+    </div>
+  }
+
+  <!-- ======================================================== -->
+  <!-- MODAL / DRAWER KASY I PŁATNOŚCI ONLINE DLA GOŚCIA -->
+  <!-- ======================================================== -->
+  @if (isCheckoutOpen()) {
+    <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/70 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto">
+      
+      <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom duration-200">
+        
+        <!-- Modal Header -->
+        <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-2">
+            <span class="material-icons-round text-orange-500 text-2xl">point_of_sale</span>
+            <h2 class="text-lg font-extrabold text-slate-900 dark:text-white">Kasa i Płatność Online</h2>
+          </div>
+          <button
+            type="button"
+            (click)="closeCheckout()"
+            class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 flex items-center justify-center transition-colors"
+          >
+            <span class="material-icons-round text-lg">close</span>
+          </button>
+        </div>
+
+        <!-- Modal Body (Scrollable) -->
+        <div class="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1">
+
+          <!-- 1. Podsumowanie dań w koszyku -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Twoje pozycje</span>
+              <button
+                type="button"
+                (click)="clearCart(); closeCheckout()"
+                class="text-xs text-rose-500 hover:text-rose-600 font-semibold"
+              >
+                Wyczyść koszyk
+              </button>
+            </div>
+
+            <div class="divide-y divide-slate-100 dark:divide-slate-800 bg-slate-50 dark:bg-slate-850/60 rounded-2xl p-3">
+              @for (item of cartItemsDetailed(); track item.recipe.id) {
+                <div class="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3">
+                  <div class="min-w-0 flex-1">
+                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200 truncate">
+                      {{ item.recipe.name }}
+                    </h4>
+                    <span class="text-xs text-slate-400">
+                      {{ item.recipe.sellingPrice | number:'1.2-2' }} zł / porcja
+                    </span>
+                  </div>
+
+                  <!-- Kontrolki ilości -->
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      (click)="removeFromCart(item.recipe.id)"
+                      class="w-6 h-6 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold shadow-sm"
+                    >
+                      <span class="material-icons-round text-xs">remove</span>
+                    </button>
+                    <span class="w-5 text-center text-xs font-bold text-slate-900 dark:text-white">
+                      {{ item.quantity }}
+                    </span>
+                    <button
+                      type="button"
+                      (click)="addToCart(item.recipe)"
+                      class="w-6 h-6 rounded-md bg-orange-500 text-white flex items-center justify-center text-xs font-bold shadow-sm"
+                    >
+                      <span class="material-icons-round text-xs">add</span>
+                    </button>
+                    <span class="w-16 text-right font-bold text-xs text-slate-900 dark:text-white font-mono ml-1">
+                      {{ item.subtotal | number:'1.2-2' }} zł
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- 2. Typ zamówienia: Przy stoliku vs Na wynos -->
+          <div class="space-y-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Gdzie podać dania?</span>
+            
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                (click)="orderType.set('dine_in')"
+                class="p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-1"
+                [ngClass]="orderType() === 'dine_in' 
+                  ? 'bg-orange-500/10 border-orange-500 text-orange-600 dark:text-orange-400 font-bold ring-1 ring-orange-500/20' 
+                  : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'"
+              >
+                <span class="material-icons-round text-xl">table_restaurant</span>
+                <span class="text-xs">Przy stoliku</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="orderType.set('takeout')"
+                class="p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-1"
+                [ngClass]="orderType() === 'takeout' 
+                  ? 'bg-orange-500/10 border-orange-500 text-orange-600 dark:text-orange-400 font-bold ring-1 ring-orange-500/20' 
+                  : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'"
+              >
+                <span class="material-icons-round text-xl">takeout_dining</span>
+                <span class="text-xs">Na wynos / Odbiór</span>
+              </button>
+            </div>
+
+            <!-- Pola w zależności od typu -->
+            @if (orderType() === 'dine_in') {
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Numer Twojego stolika
+                </label>
+                <input
+                  type="text"
+                  [ngModel]="tableNumber()"
+                  (ngModelChange)="tableNumber.set($event)"
+                  placeholder="np. Stolik 3"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                />
+              </div>
+            } @else {
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Twoje imię
+                  </label>
+                  <input
+                    type="text"
+                    [ngModel]="customerName()"
+                    (ngModelChange)="customerName.set($event)"
+                    placeholder="np. Anna"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Telefon (opcjonalnie)
+                  </label>
+                  <input
+                    type="tel"
+                    [ngModel]="customerPhone()"
+                    (ngModelChange)="customerPhone.set($event)"
+                    placeholder="np. 500 100 200"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                  />
+                </div>
+              </div>
+            }
+
+            <!-- Uwagi do kuchni -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                Wskazówki dla kuchni (opcjonalnie)
+              </label>
+              <input
+                type="text"
+                [ngModel]="orderNotes()"
+                (ngModelChange)="orderNotes.set($event)"
+                placeholder="np. sos czosnkowy osobno, bez cebuli"
+                class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <!-- 3. Wybór Metody Płatności (Stripe Sandbox) -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Metoda płatności</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-200 dark:border-indigo-900 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                <span>Stripe Sandbox</span>
+              </span>
+            </div>
+
+            <!-- Przyciski metod płatności -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              
+              <!-- BLIK -->
+              <button
+                type="button"
+                (click)="paymentMethod.set('BLIK')"
+                class="p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5"
+                [ngClass]="paymentMethod() === 'BLIK'
+                  ? 'bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-400 font-bold ring-2 ring-rose-500/20'
+                  : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'"
+              >
+                <div class="w-8 h-8 rounded-lg bg-black text-white font-black text-xs flex items-center justify-center tracking-tighter shadow-sm">
+                  <span class="text-rose-500 font-extrabold text-sm">b</span><span class="text-white">lik</span>
+                </div>
+                <span class="text-xs">BLIK</span>
+              </button>
+
+              <!-- Apple Pay -->
+              <button
+                type="button"
+                (click)="paymentMethod.set('Apple Pay')"
+                class="p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5"
+                [ngClass]="paymentMethod() === 'Apple Pay'
+                  ? 'bg-slate-900 border-slate-900 text-white font-bold ring-2 ring-slate-900/30'
+                  : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'"
+              >
+                <div class="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center text-sm font-bold shadow-sm">
+                  
+                </div>
+                <span class="text-xs">Apple Pay</span>
+              </button>
+
+              <!-- Google Pay -->
+              <button
+                type="button"
+                (click)="paymentMethod.set('Google Pay')"
+                class="p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5"
+                [ngClass]="paymentMethod() === 'Google Pay'
+                  ? 'bg-blue-500/10 border-blue-500 text-blue-600 dark:text-blue-400 font-bold ring-2 ring-blue-500/20'
+                  : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'"
+              >
+                <div class="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-xs shadow-sm">
+                  <span class="text-blue-500">G</span><span class="text-red-500 font-normal">P</span>
+                </div>
+                <span class="text-xs">Google Pay</span>
+              </button>
+
+              <!-- Karta płatnicza -->
+              <button
+                type="button"
+                (click)="paymentMethod.set('Karta')"
+                class="p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5"
+                [ngClass]="paymentMethod() === 'Karta'
+                  ? 'bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold ring-2 ring-indigo-500/20'
+                  : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'"
+              >
+                <span class="material-icons-round text-2xl text-indigo-500">credit_card</span>
+                <span class="text-xs">Karta płatnicza</span>
+              </button>
+
+              <!-- Gotówka u kelnera -->
+              <button
+                type="button"
+                (click)="paymentMethod.set('Gotówka')"
+                class="p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 col-span-2 sm:col-span-1"
+                [ngClass]="paymentMethod() === 'Gotówka'
+                  ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold ring-2 ring-emerald-500/20'
+                  : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'"
+              >
+                <span class="material-icons-round text-2xl text-emerald-500">payments</span>
+                <span class="text-xs">Gotówka</span>
+              </button>
+
+            </div>
+
+            <!-- Panel szczegółowy wybranej metody -->
+            @if (paymentMethod() === 'BLIK') {
+              <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-700/80 space-y-3">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Wpisz 6-cyfrowy kod BLIK z aplikacji banku
+                  </label>
+                  <span class="text-[11px] text-slate-400 font-medium">Szybka płatność</span>
+                </div>
+                
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="6"
+                  [value]="blikCode()"
+                  (input)="formatBlikInput($event)"
+                  placeholder="123 456"
+                  class="w-full text-center tracking-[0.4em] font-mono text-2xl font-black py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500 outline-none shadow-inner"
+                />
+
+                @if (blikError()) {
+                  <p class="text-xs font-semibold text-rose-500 flex items-center gap-1">
+                    <span class="material-icons-round text-sm">error</span>
+                    {{ blikError() }}
+                  </p>
+                }
+
+                <!-- Sandbox Helper Pills dla BLIK -->
+                <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1.5">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                    🧪 Kody testowe Stripe Sandbox:
+                  </span>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      (click)="fillTestBlikCode('777123')"
+                      class="px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 hover:scale-105 transition-all"
+                    >
+                      777123 (Sukces)
+                    </button>
+                    <button
+                      type="button"
+                      (click)="fillTestBlikCode('777000')"
+                      class="px-2 py-1 rounded-lg text-[10px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800 hover:scale-105 transition-all"
+                    >
+                      777000 (Odrzucenie)
+                    </button>
+                    <button
+                      type="button"
+                      (click)="fillTestBlikCode('777001')"
+                      class="px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 hover:scale-105 transition-all"
+                    >
+                      777001 (Timeout)
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            } @else if (paymentMethod() === 'Apple Pay') {
+              <div class="p-4 rounded-2xl bg-black text-white space-y-2.5 shadow-md">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold flex items-center gap-1 text-slate-200">
+                    <span class="material-icons-round text-base">fingerprint</span>
+                    <span>Apple Pay Sandbox</span>
+                  </span>
+                  <span class="text-emerald-400 font-bold text-[11px] flex items-center gap-0.5">
+                    <span class="material-icons-round text-xs">verified</span> Gotowy do płatności
+                  </span>
+                </div>
+                <div class="p-3 bg-white/10 rounded-xl flex items-center justify-between border border-white/10">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xl"></span>
+                    <span class="text-xs font-semibold">Karta w portfelu Apple Wallet (Sandbox)</span>
+                  </div>
+                  <span class="text-[11px] text-slate-300 font-mono">Touch ID / Face ID</span>
+                </div>
+              </div>
+            } @else if (paymentMethod() === 'Google Pay') {
+              <div class="p-4 rounded-2xl bg-slate-900 text-white space-y-2.5 shadow-md border border-slate-800">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold flex items-center gap-1.5 text-slate-200">
+                    <span class="text-blue-400 font-black">G</span><span class="text-white font-bold">Pay Sandbox</span>
+                  </span>
+                  <span class="text-emerald-400 font-bold text-[11px] flex items-center gap-0.5">
+                    <span class="material-icons-round text-xs">check_circle</span> Konto Google połączone
+                  </span>
+                </div>
+                <div class="p-3 bg-white/10 rounded-xl flex items-center justify-between border border-white/10">
+                  <div class="flex items-center gap-2">
+                    <span class="material-icons-round text-base text-blue-400">account_balance_wallet</span>
+                    <span class="text-xs font-semibold">Domyślna karta płatnicza Google</span>
+                  </div>
+                  <span class="text-[11px] text-slate-300 font-mono">1-Kliknięcie</span>
+                </div>
+              </div>
+            } @else if (paymentMethod() === 'Karta') {
+              <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-700/80 space-y-2">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <span>Płatność kartą Stripe Sandbox</span>
+                  <span class="text-emerald-500 font-semibold flex items-center gap-0.5">
+                    <span class="material-icons-round text-xs">lock</span> 256-bit SSL
+                  </span>
+                </div>
+                <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="material-icons-round text-indigo-500">credit_card</span>
+                    <span class="font-mono text-sm text-slate-800 dark:text-slate-200 font-bold">4242 •••• •••• 4242</span>
+                  </div>
+                  <span class="text-xs text-slate-400 font-mono">12/28</span>
+                </div>
+              </div>
+            } @else {
+              <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                <span class="material-icons-round text-lg text-amber-600 shrink-0">info</span>
+                <span>Płatność uregulujesz tradycyjnie u kelnera przy podaniu zamówienia.</span>
+              </div>
+            }
+
+          </div>
+
+        </div>
+
+        <!-- Modal Footer (Kwitacja i Akcja) -->
+        <div class="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/30 shrink-0 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-semibold text-slate-600 dark:text-slate-400">Łącznie do zapłaty:</span>
+            <div class="text-xl font-black text-slate-900 dark:text-white">
+              {{ cartTotal() | number:'1.2-2' }} <span class="text-sm font-normal text-slate-400">zł</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            (click)="proceedToPayment()"
+            [disabled]="isSubmitting() || isAwaitingBankAuth()"
+            class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-98 disabled:opacity-50 text-white font-extrabold text-base shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
+          >
+            @if (isSubmitting()) {
+              <span class="material-icons-round animate-spin">autorenew</span>
+              <span>Przetwarzanie...</span>
+            } @else {
+              <span class="material-icons-round text-xl">check</span>
+              <span>
+                {{ paymentMethod() === 'BLIK' ? 'Zapłać BLIK i wyślij do kuchni' : (paymentMethod() === 'Gotówka' ? 'Wyślij zamówienie do kuchni' : 'Zapłać i wyślij do kuchni') }}
+              </span>
+            }
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- SYMULACJA AUTORYZACJI BANKOWEJ BLIK (OVERLAY MODAL) -->
+      <!-- ======================================================== -->
+      @if (isAwaitingBankAuth()) {
+        <div class="fixed inset-0 z-60 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div class="bg-white dark:bg-slate-900 max-w-sm w-full rounded-3xl p-6 sm:p-8 text-center space-y-6 shadow-2xl border border-slate-200 dark:border-slate-800">
+            
+            <div class="relative w-20 h-20 mx-auto">
+              <div class="absolute inset-0 rounded-full bg-rose-500/20 animate-ping"></div>
+              <div class="relative w-20 h-20 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/40">
+                <span class="material-icons-round text-3xl animate-spin">autorenew</span>
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <h3 class="text-xl font-extrabold text-slate-900 dark:text-white">
+                Potwierdź płatność w banku
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Otwórz aplikację swojego banku na telefonie i zaakceptuj transakcję BLIK.
+              </p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+              <div class="text-xs text-slate-400 font-medium">Kwota płatności:</div>
+              <div class="text-2xl font-black text-rose-500">
+                {{ cartTotal() | number:'1.2-2' }} zł
+              </div>
+              <div class="text-[11px] text-slate-400 font-mono pt-1">
+                Czas na potwierdzenie: {{ blikTimer() }}s
+              </div>
+            </div>
+
+            <div class="text-[11px] text-emerald-500 font-semibold flex items-center justify-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Oczekiwanie na odpowiedź serwera bankowego...</span>
+            </div>
+
+          </div>
+        </div>
+      }
+
+    </div>
+  }
 
   <!-- Guest Footer -->
   <footer class="max-w-4xl mx-auto px-4 sm:px-6 pt-12 text-center space-y-2 border-t border-slate-200/60 dark:border-slate-800/60 mt-12">
@@ -195,7 +902,7 @@
     </p>
     <p class="text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1">
       <span class="material-icons-round text-xs text-orange-500">sync</span>
-      <span>Menu i dostępność aktualizowane na żywo z magazynu kuchni</span>
+      <span>Menu, koszyk i status zamówienia aktualizowane na żywo z kuchnią</span>
     </p>
   </footer>
 

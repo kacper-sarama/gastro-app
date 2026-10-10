@@ -131,6 +131,17 @@
                 <span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
                   {{ order.tableNumber }}
                 </span>
+                @if (order.paid) {
+                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-1 cursor-help" [title]="order.stripePaymentIntentId ? ('ID Stripe: ' + order.stripePaymentIntentId) : 'Opłacone online'">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Opłacone ({{ order.paymentMethod || 'Online' }})</span>
+                  </span>
+                } @else if (order.paymentMethod) {
+                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center gap-1" title="Do rozliczenia">
+                    <span class="material-icons-round text-xs">payments</span>
+                    <span>Do zapłaty ({{ order.paymentMethod }})</span>
+                  </span>
+                }
               </div>
               <span class="text-[11px] font-medium text-slate-400 flex items-center gap-1">
                 <span class="material-icons-round text-xs">schedule</span>
@@ -236,6 +247,17 @@
                 <span class="px-2 py-0.5 rounded text-xs font-semibold bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/50">
                   {{ order.tableNumber }}
                 </span>
+                @if (order.paid) {
+                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-1 cursor-help" [title]="order.stripePaymentIntentId ? ('ID Stripe: ' + order.stripePaymentIntentId) : 'Opłacone online'">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Opłacone ({{ order.paymentMethod || 'Online' }})</span>
+                  </span>
+                } @else if (order.paymentMethod) {
+                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center gap-1" title="Do rozliczenia">
+                    <span class="material-icons-round text-xs">payments</span>
+                    <span>Do zapłaty ({{ order.paymentMethod }})</span>
+                  </span>
+                }
               </div>
               <span class="text-[11px] font-medium text-sky-600 dark:text-sky-400 flex items-center gap-1 font-mono">
                 <span class="material-icons-round text-xs animate-spin">autorenew</span>
@@ -327,6 +349,17 @@
                 <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
                   {{ order.tableNumber }}
                 </span>
+                @if (order.paid) {
+                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-1 cursor-help" [title]="order.stripePaymentIntentId ? ('ID Stripe: ' + order.stripePaymentIntentId) : 'Opłacone online'">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>Opłacone ({{ order.paymentMethod || 'Online' }})</span>
+                  </span>
+                } @else if (order.paymentMethod) {
+                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center gap-1" title="Do rozliczenia">
+                    <span class="material-icons-round text-xs">payments</span>
+                    <span>Do zapłaty ({{ order.paymentMethod }})</span>
+                  </span>
+                }
               </div>
               <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono">
                 <span class="material-icons-round text-xs">schedule</span>
@@ -444,6 +477,11 @@
                 <span class="px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                   {{ order.tableNumber }}
                 </span>
+                @if (order.paid) {
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                    {{ order.paymentMethod || 'Opłacone' }}
+                  </span>
+                }
               </div>
               <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">
                 <span class="material-icons-round text-xs">done_all</span>

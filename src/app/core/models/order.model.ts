@@ -25,6 +25,14 @@ export interface Order {
   discountAmount?: number;
   originalPrice?: number;
   notes?: string;
+  paid?: boolean;
+  paymentMethod?: 'BLIK' | 'Karta' | 'Apple Pay' | 'Google Pay' | 'Gotówka' | string;
+  paidAt?: string;
+  stripePaymentIntentId?: string;
+  paymentError?: string;
+  customerName?: string;
+  customerPhone?: string;
+  isTakeout?: boolean;
 }
 
 export interface CreateOrderDto {
@@ -35,4 +43,11 @@ export interface CreateOrderDto {
   discountAmount?: number;
   originalPrice?: number;
   notes?: string;
+  paid?: boolean;
+  paymentMethod?: 'BLIK' | 'Karta' | 'Apple Pay' | 'Google Pay' | 'Gotówka' | string;
+  paidAt?: string;
+  stripePaymentIntentId?: string;
+  customerName?: string;
+  customerPhone?: string;
+  isTakeout?: boolean;
 }
