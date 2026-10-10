@@ -1,31 +1,24 @@
 <div class="space-y-6 max-w-7xl mx-auto pb-12">
   <!-- 1. Header & Quick Actions -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-    <div class="flex items-center gap-4">
-      <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/25">
-        <span class="material-icons-round text-3xl">table_restaurant</span>
-      </div>
-      <div>
-        <div class="flex items-center gap-2.5">
-          <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Plan Sali & Stoliki
-          </h1>
-          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300">
-            Na żywo
-          </span>
-        </div>
-        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Podgląd obłożenia lokalu, otwartych rachunków i gotowości stolików w czasie rzeczywistym.
-        </p>
-      </div>
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+        <span>Plan Sali & Stoliki</span>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300">
+          Na żywo
+        </span>
+      </h1>
+      <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+        Podgląd obłożenia lokalu, otwartych rachunków i gotowości stolików w czasie rzeczywistym.
+      </p>
     </div>
 
     <!-- Prawa strona headera: akcje -->
-    <div class="flex items-center gap-2.5 self-start md:self-auto">
+    <div class="flex items-center gap-2.5 flex-wrap">
       <button 
         type="button" 
         (click)="openAddTableModal()"
-        class="px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+        class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-2 shadow-xs transition-all cursor-pointer"
       >
         <span class="material-icons-round text-base text-orange-500">add</span>
         <span>Dodaj stolik</span>
@@ -34,7 +27,7 @@
       <button 
         type="button" 
         (click)="openNewOrderModal()"
-        class="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-2xl text-xs font-bold shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all"
+        class="gastro-btn-primary shadow-lg shadow-orange-500/20 py-2.5 px-4 font-bold text-xs flex items-center gap-2 cursor-pointer"
       >
         <span class="material-icons-round text-base">add_shopping_cart</span>
         <span>Nowe zamówienie</span>
