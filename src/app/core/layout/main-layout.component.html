@@ -50,7 +50,7 @@
       <div class="h-px bg-slate-200 dark:bg-slate-800 mx-2 my-2"></div>
       }
 
-      @for (item of navItems; track item.route) {
+      @for (item of filteredNavItems(); track item.route) {
       <a [routerLink]="item.route" (click)="closeMobileMenu()" [title]="isCompact() ? item.label : ''"
         routerLinkActive="bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold shadow-sm shadow-orange-500/5 active-nav-link"
         [routerLinkActiveOptions]="{ exact: false }"
@@ -136,8 +136,89 @@
         </div>
       </div>
 
-      <!-- User Avatar Profile & Dropdown -->
-      <div class="relative">
+      <div class="flex items-center gap-2.5">
+        <!-- Interactive Role Switcher / Simulator -->
+        <div class="relative">
+          <button
+            type="button"
+            (click)="toggleRoleMenu()"
+            class="px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer shadow-xs hover:shadow-sm"
+            [ngClass]="authService.currentRoleDefinition().badgeClass"
+            title="Przełącz aktywną rolę w systemie"
+          >
+            <span class="material-icons-round text-base">{{ authService.currentRoleDefinition().icon }}</span>
+            <span class="hidden sm:inline">{{ authService.currentRoleDefinition().label }}</span>
+            <span class="material-icons-round text-sm">expand_more</span>
+          </button>
+
+          <!-- Dropdown wyboru roli -->
+          @if (isRoleMenuOpen()) {
+            <div (click)="closeRoleMenu()" class="fixed inset-0 z-40 bg-transparent"></div>
+            <div class="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl z-50 p-2 space-y-1 animate-scale-in">
+              <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800/80 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Symuluj rolę / Urządzenie
+              </div>
+              <button
+                type="button"
+                (click)="selectRole('owner')"
+                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+                [class.bg-purple-50]="authService.currentUserRole() === 'owner'"
+                [class.dark:bg-purple-950/30]="authService.currentUserRole() === 'owner'"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="material-icons-round text-base text-purple-600 dark:text-purple-400">admin_panel_settings</span>
+                  <span class="text-slate-900 dark:text-white">Właściciel (Pełny)</span>
+                </div>
+                <span *ngIf="authService.currentUserRole() === 'owner'" class="material-icons-round text-sm text-purple-600">check</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="selectRole('manager')"
+                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+                [class.bg-indigo-50]="authService.currentUserRole() === 'manager'"
+                [class.dark:bg-indigo-950/30]="authService.currentUserRole() === 'manager'"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="material-icons-round text-base text-indigo-600 dark:text-indigo-400">manage_accounts</span>
+                  <span class="text-slate-900 dark:text-white">Menedżer Sali</span>
+                </div>
+                <span *ngIf="authService.currentUserRole() === 'manager'" class="material-icons-round text-sm text-indigo-600">check</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="selectRole('waiter')"
+                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+                [class.bg-blue-50]="authService.currentUserRole() === 'waiter'"
+                [class.dark:bg-blue-950/30]="authService.currentUserRole() === 'waiter'"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="material-icons-round text-base text-blue-600 dark:text-blue-400">person</span>
+                  <span class="text-slate-900 dark:text-white">Kelner / Kasjer (Sala & POS)</span>
+                </div>
+                <span *ngIf="authService.currentUserRole() === 'waiter'" class="material-icons-round text-sm text-blue-600">check</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="selectRole('kitchen')"
+                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+                [class.bg-amber-50]="authService.currentUserRole() === 'kitchen'"
+                [class.dark:bg-amber-950/30]="authService.currentUserRole() === 'kitchen'"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="material-icons-round text-base text-amber-600 dark:text-amber-400">soup_kitchen</span>
+                  <span class="text-slate-900 dark:text-white">Kucharz / Pizzer (KDS)</span>
+                </div>
+                <span *ngIf="authService.currentUserRole() === 'kitchen'" class="material-icons-round text-sm text-amber-600">check</span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- User Avatar Profile & Dropdown -->
+        <div class="relative">
         <button type="button" (click)="toggleUserMenu()"
           class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white font-bold text-base flex items-center justify-center shadow-md shadow-orange-500/25 hover:shadow-lg hover:shadow-orange-500/35 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none"
           [class.ring-2]="isUserMenuOpen()" [class.ring-orange-500]="isUserMenuOpen()"
@@ -217,6 +298,7 @@
           </button>
         </div>
         }
+      </div>
       </div>
     </header>
 

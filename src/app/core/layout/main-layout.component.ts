@@ -10,7 +10,9 @@ import { RecipeService } from '../services/recipe.service';
 import { OrderService } from '../services/order.service';
 import { PromotionService } from '../services/promotion.service';
 import { TableService } from '../services/table.service';
+import { StaffService } from '../services/staff.service';
 import { ToastService } from '../services/toast.service';
+import { UserRole } from '../models/staff.model';
 import { AccountSettingsModalComponent } from '../../features/account/account-settings-modal.component';
 
 // Telefon w pionie (wąski ekran)
@@ -40,6 +42,7 @@ export class MainLayoutComponent implements OnInit {
   readonly orderService = inject(OrderService);
   readonly promotionService = inject(PromotionService);
   readonly tableService = inject(TableService);
+  readonly staffService = inject(StaffService);
   readonly toastService = inject(ToastService);
 
   private router = inject(Router);
@@ -53,6 +56,7 @@ export class MainLayoutComponent implements OnInit {
   /** Tryb samych ikon – tylko poza widokiem mobilnym */
   readonly isCompact = computed(() => this.isSidebarCollapsed() && !this.isMobile());
   isUserMenuOpen = signal(false);
+  isRoleMenuOpen = signal(false);
   isAccountModalOpen = signal(false);
   isResettingDemo = signal(false);
 
@@ -65,8 +69,14 @@ export class MainLayoutComponent implements OnInit {
     { label: 'Promocje & Vouchery', route: '/promotions', icon: 'local_offer' },
     { label: 'Magazyn Składników', route: '/inventory', icon: 'inventory_2' },
     { label: 'Receptury & Wydajność', route: '/recipes', icon: 'menu_book' },
-    { label: 'Karta Dań & Menu', route: '/dishes', icon: 'restaurant_menu' }
+    { label: 'Karta Dań & Menu', route: '/dishes', icon: 'restaurant_menu' },
+    { label: 'Pracownicy & Role', route: '/staff', icon: 'badge' }
   ];
+
+  /** Reaktywne filtrowanie pozycji menu w zależności od uprawnień aktualnej roli */
+  readonly filteredNavItems = computed(() => {
+    return this.navItems.filter(item => this.authService.canAccessRoute(item.route));
+  });
 
   ngOnInit(): void {
     // Oficjalny reaktywny mechanizm Angular CDK BreakpointObserver
@@ -131,6 +141,24 @@ export class MainLayoutComponent implements OnInit {
     this.isAccountModalOpen.set(true);
   }
 
+  toggleRoleMenu(): void {
+    this.isRoleMenuOpen.update(v => !v);
+  }
+
+  closeRoleMenu(): void {
+    this.isRoleMenuOpen.set(false);
+  }
+
+  selectRole(role: UserRole | null): void {
+    this.closeRoleMenu();
+    this.authService.setSimulatedRole(role);
+    const currentUrl = this.router.url;
+    if (!this.authService.canAccessRoute(currentUrl)) {
+      const target = role === 'kitchen' ? '/orders' : (role === 'waiter' ? '/tables' : '/dashboard');
+      this.router.navigateByUrl(target);
+    }
+  }
+
   closeAccountModal(): void {
     this.isAccountModalOpen.set(false);
   }
@@ -162,7 +190,8 @@ export class MainLayoutComponent implements OnInit {
           this.recipeService,
           this.orderService,
           this.promotionService,
-          this.tableService
+          this.tableService,
+          this.staffService
         ),
         timeoutPromise
       ]);

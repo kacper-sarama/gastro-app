@@ -1,0 +1,396 @@
+<div class="space-y-6">
+  <!-- 1. Header sekcji -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+        <span class="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+          <span class="material-icons-round text-2xl">badge</span>
+        </span>
+        <span>Zespół & Uprawnienia Ról</span>
+      </h1>
+      <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+        Zarządzaj kontami pracowników restauracji i przydzielaj dostęp do dedykowanych modułów (Kuchnia KDS, Sala POS, Zarząd).
+      </p>
+    </div>
+
+    <button
+      type="button"
+      (click)="openAddModal()"
+      class="gastro-btn-primary shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 text-xs py-2.5 px-4 font-bold cursor-pointer shrink-0"
+    >
+      <span class="material-icons-round text-base">person_add</span>
+      <span>Dodaj Pracownika</span>
+    </button>
+  </div>
+
+  <!-- 2. Kafelki StatCard KPI -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <app-stat-card
+      title="Wszyscy pracownicy"
+      [count]="staffService.totalStaffCount()"
+      [subtitle]="staffService.activeStaffCount() + ' aktywnych w systemie'"
+      icon="groups"
+      color="indigo"
+    ></app-stat-card>
+
+    <app-stat-card
+      title="Kelnerzy / Sala POS"
+      [count]="staffService.waitersCount()"
+      subtitle="Obsługa stolików i kasy"
+      icon="person"
+      color="blue"
+    ></app-stat-card>
+
+    <app-stat-card
+      title="Kuchnia / Pizzerzy"
+      [count]="staffService.kitchenCount()"
+      subtitle="Tablica KDS i receptury"
+      icon="soup_kitchen"
+      color="amber"
+    ></app-stat-card>
+
+    <app-stat-card
+      title="Kierownictwo"
+      [count]="staffService.managersCount()"
+      subtitle="Zarządzanie i finanse"
+      icon="admin_panel_settings"
+      color="emerald"
+    ></app-stat-card>
+  </div>
+
+  <!-- 3. Pasek Wyszukiwania i Filtrów -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+    <!-- Filtry ról (Pills) -->
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        (click)="roleFilter.set('all')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+        [ngClass]="roleFilter() === 'all'
+          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
+      >
+        Wszyscy ({{ staffService.totalStaffCount() }})
+      </button>
+
+      <button
+        type="button"
+        (click)="roleFilter.set('waiter')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+        [ngClass]="roleFilter() === 'waiter'
+          ? 'bg-blue-600 text-white shadow-sm'
+          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
+      >
+        <span class="material-icons-round text-sm">person</span>
+        <span>Kelnerzy ({{ staffService.waitersCount() }})</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="roleFilter.set('kitchen')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+        [ngClass]="roleFilter() === 'kitchen'
+          ? 'bg-amber-600 text-white shadow-sm'
+          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
+      >
+        <span class="material-icons-round text-sm">soup_kitchen</span>
+        <span>Kuchnia ({{ staffService.kitchenCount() }})</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="roleFilter.set('manager')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+        [ngClass]="roleFilter() === 'manager'
+          ? 'bg-indigo-600 text-white shadow-sm'
+          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
+      >
+        <span class="material-icons-round text-sm">manage_accounts</span>
+        <span>Menedżerowie</span>
+      </button>
+    </div>
+
+    <!-- Wyszukiwarka -->
+    <div class="relative w-full sm:w-72">
+      <span class="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+      <input
+        type="text"
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+        placeholder="Szukaj po nazwisku, mailu..."
+        class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-xs"
+      />
+    </div>
+  </div>
+
+  <!-- 4. Tabela Pracowników -->
+  <div class="gastro-card overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-sm p-0">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold border-b border-slate-200/80 dark:border-slate-800">
+          <tr>
+            <th class="py-3.5 px-4">Pracownik</th>
+            <th class="py-3.5 px-4">Rola & Uprawnienia</th>
+            <th class="py-3.5 px-4">Kontakt & Notatka</th>
+            <th class="py-3.5 px-4">Data dodania</th>
+            <th class="py-3.5 px-4 text-center">Status</th>
+            <th class="py-3.5 px-4 text-right">Akcje</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+          @for (member of filteredStaff; track member.id) {
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <!-- Pracownik: Awatar & Dane -->
+              <td class="py-3.5 px-4">
+                <div class="flex items-center gap-3">
+                  <div 
+                    class="w-9 h-9 rounded-xl font-bold flex items-center justify-center text-xs shrink-0 shadow-xs"
+                    [ngClass]="getRoleDef(member.role).badgeClass"
+                  >
+                    {{ member.name.charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <span class="font-bold text-slate-900 dark:text-white text-sm block">{{ member.name }}</span>
+                    <span class="text-[11px] text-slate-400 font-mono">{{ member.email }}</span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Rola & Odznaka -->
+              <td class="py-3.5 px-4">
+                <div class="space-y-1">
+                  <span 
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold"
+                    [ngClass]="getRoleDef(member.role).badgeClass"
+                  >
+                    <span class="material-icons-round text-sm">{{ getRoleDef(member.role).icon }}</span>
+                    <span>{{ getRoleDef(member.role).label }}</span>
+                  </span>
+                  <p class="text-[10px] text-slate-400 max-w-xs truncate">
+                    {{ getRoleDef(member.role).description }}
+                  </p>
+                </div>
+              </td>
+
+              <!-- Kontakt & Notatki -->
+              <td class="py-3.5 px-4">
+                <div class="space-y-0.5">
+                  <div *ngIf="member.phone" class="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-mono">
+                    <span class="material-icons-round text-xs text-slate-400">phone</span>
+                    <span>{{ member.phone }}</span>
+                  </div>
+                  <div *ngIf="member.notes" class="text-slate-400 italic text-[11px]">
+                    {{ member.notes }}
+                  </div>
+                  <span *ngIf="!member.phone && !member.notes" class="text-slate-300 dark:text-slate-600">-</span>
+                </div>
+              </td>
+
+              <!-- Data dodania -->
+              <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 font-mono">
+                {{ formatDate(member.createdAt) }}
+              </td>
+
+              <!-- Status (Przełącznik) -->
+              <td class="py-3.5 px-4 text-center">
+                <button
+                  type="button"
+                  (click)="toggleStatus(member)"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all"
+                  [ngClass]="member.active
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 hover:bg-emerald-200'
+                    : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400 hover:bg-slate-300'"
+                  [title]="member.active ? 'Kliknij, aby zablokować dostęp' : 'Kliknij, aby aktywować'"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="member.active ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+                  <span>{{ member.active ? 'Aktywny' : 'Zablokowany' }}</span>
+                </button>
+              </td>
+
+              <!-- Akcje -->
+              <td class="py-3.5 px-4 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button
+                    type="button"
+                    (click)="openEditModal(member)"
+                    class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+                    title="Edytuj dane"
+                  >
+                    <span class="material-icons-round text-base">edit</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="deleteMember(member)"
+                    class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                    title="Usuń pracownika"
+                  >
+                    <span class="material-icons-round text-base">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="py-12 text-center text-slate-400">
+                <div class="flex flex-col items-center justify-center gap-2">
+                  <span class="material-icons-round text-4xl text-slate-300 dark:text-slate-600">group_off</span>
+                  <p class="font-bold text-sm text-slate-600 dark:text-slate-300">Brak pracowników spełniających kryteria</p>
+                  <p class="text-xs">Dodaj pierwszego członka zespołu za pomocą przycisku powyżej.</p>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 5. Modal Dodawania / Edycji Pracownika -->
+  @if (isModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+      <div (click)="closeModal()" class="fixed inset-0"></div>
+
+      <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10 animate-scale-in">
+        <!-- Nagłówek modala -->
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+              <span class="material-icons-round text-lg">{{ editingMember() ? 'edit' : 'person_add' }}</span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">
+                {{ editingMember() ? 'Edycja Pracownika' : 'Nowy Pracownik Zespołu' }}
+              </h3>
+              <p class="text-xs text-slate-400">
+                {{ editingMember() ? 'Zmień dane i rolę pracownika' : 'Wprowadź dane i przydziel rolę w systemie' }}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <span class="material-icons-round text-xl">close</span>
+          </button>
+        </div>
+
+        <!-- Formularz -->
+        <form [formGroup]="staffForm" (ngSubmit)="onSubmit()" class="p-6 space-y-4">
+          <!-- Imię i nazwisko -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+              Imię i Nazwisko *
+            </label>
+            <input
+              type="text"
+              formControlName="name"
+              placeholder="np. Katarzyna Kowalska"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+            />
+            <span *ngIf="staffForm.get('name')?.touched && staffForm.get('name')?.invalid" class="text-xs text-rose-500 mt-1 block">
+              Imię i nazwisko jest wymagane (min. 2 znaki).
+            </span>
+          </div>
+
+          <!-- Adres E-mail -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+              Adres E-mail (login) *
+            </label>
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="np. kasia.kelnerka@twojalokal.pl"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+            />
+            <span *ngIf="staffForm.get('email')?.touched && staffForm.get('email')?.invalid" class="text-xs text-rose-500 mt-1 block">
+              Podaj poprawny adres e-mail.
+            </span>
+          </div>
+
+          <!-- Wybór roli -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+              Stanowisko / Rola w lokalu *
+            </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              @for (role of availableRoles; track role.key) {
+                <label 
+                  class="p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between gap-1.5"
+                  [ngClass]="staffForm.get('role')?.value === role.key
+                    ? 'border-orange-500 bg-orange-50/20 dark:bg-orange-950/20 ring-2 ring-orange-500/20'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons-round text-base" [class.text-orange-500]="staffForm.get('role')?.value === role.key">
+                        {{ role.icon }}
+                      </span>
+                      <span class="font-bold text-xs text-slate-900 dark:text-white">{{ role.label }}</span>
+                    </div>
+                    <input
+                      type="radio"
+                      formControlName="role"
+                      [value]="role.key"
+                      class="text-orange-500 focus:ring-orange-500"
+                    />
+                  </div>
+                  <p class="text-[10px] text-slate-400 leading-tight">
+                    {{ role.description }}
+                  </p>
+                </label>
+              }
+            </div>
+          </div>
+
+          <!-- Telefon & Notatki -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                Telefon (opcjonalnie)
+              </label>
+              <input
+                type="text"
+                formControlName="phone"
+                placeholder="+48 500 000 000"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                Notatka / Sekcja
+              </label>
+              <input
+                type="text"
+                formControlName="notes"
+                placeholder="np. Zmiana poranna, Bar"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+              />
+            </div>
+          </div>
+
+          <!-- Przyciski akcji -->
+          <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              (click)="closeModal()"
+              class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              Anuluj
+            </button>
+            <button
+              type="submit"
+              class="gastro-btn-primary text-xs py-2 px-5 font-bold shadow-md shadow-orange-500/20 cursor-pointer"
+            >
+              {{ editingMember() ? 'Zapisz Zmiany' : 'Dodaj do Zespołu' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

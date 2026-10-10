@@ -16,6 +16,7 @@ import { Firestore, doc, setDoc } from '@angular/fire/firestore';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import { ToastService } from './toast.service';
+import { UserRole, ROLE_DEFINITIONS, RoleDefinition } from '../models/staff.model';
 
 @Injectable({
   providedIn: 'root'
@@ -66,6 +67,36 @@ export class AuthService {
     return u?.displayName || 'Mój Lokal';
   });
 
+  // --- OBSŁUGA RÓL I UPRAWNIEŃ (RBAC) ---
+  private readonly simulatedRole = signal<UserRole | null>(null);
+
+  /** Aktualna rola użytkownika (z uwzględnieniem podglądu symulacji roli na koncie Demo) */
+  readonly currentUserRole = computed<UserRole>(() => {
+    if (this.simulatedRole()) {
+      return this.simulatedRole()!;
+    }
+    return 'owner';
+  });
+
+  /** Pełna definicja uprawnień i stylizacji aktualnej roli */
+  readonly currentRoleDefinition = computed<RoleDefinition>(() => {
+    return ROLE_DEFINITIONS[this.currentUserRole()];
+  });
+
+  /** Przełącznik roli (dla właściciela / testowania widoku kelnera i kuchni) */
+  setSimulatedRole(role: UserRole | null): void {
+    this.simulatedRole.set(role);
+    const def = role ? ROLE_DEFINITIONS[role] : ROLE_DEFINITIONS.owner;
+    this.toastService.info(`Przełączono aktywny widok na rolę: ${def.label}`, 'Role & Uprawnienia');
+  }
+
+  /** Sprawdza, czy bieżąca rola ma prawo wejść na podaną ścieżkę */
+  canAccessRoute(route: string): boolean {
+    const cleanRoute = route.split('?')[0];
+    const allowed = this.currentRoleDefinition().allowedRoutes;
+    return allowed.some(r => cleanRoute === r || cleanRoute.startsWith(r + '/'));
+  }
+
   /**
    * Resetuje wszystkie dane konta demo (magazyn, menu, zamówienia, ustawienia)
    */
@@ -74,7 +105,8 @@ export class AuthService {
     recipeService: { resetToStarter: (id: string, inv?: any[]) => Promise<any[]> },
     orderService: { resetToStarter: (id: string, rec?: any[]) => Promise<void> },
     promotionService?: { resetToStarter: (id: string, rec?: any[]) => Promise<void> },
-    tableService?: { resetToStarter: (id: string, isDemo?: boolean) => Promise<void> }
+    tableService?: { resetToStarter: (id: string, isDemo?: boolean) => Promise<void> },
+    staffService?: { seedStarterStaff: (id: string) => Promise<void> }
   ): Promise<void> {
     const u = this.auth.currentUser;
     if (!u || u.email !== 'demo@gastroapp.pl') {
@@ -109,6 +141,9 @@ export class AuthService {
     }
     if (tableService) {
       await tableService.resetToStarter(u.uid, true);
+    }
+    if (staffService) {
+      await staffService.seedStarterStaff(u.uid);
     }
 
     this.toastService.success('Pomyślnie przywrócono stan fabryczny konta Demo!', 'Reset Demo');

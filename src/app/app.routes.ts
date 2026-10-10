@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 import { MainLayoutComponent } from './core/layout/main-layout.component';
 import { LoginComponent } from './features/auth/login/login.component';
 import { RegisterComponent } from './features/auth/register/register.component';
@@ -11,6 +12,7 @@ import { GuestMenuComponent } from './features/menu/guest-menu.component';
 import { OrdersKanbanComponent } from './features/orders/orders-kanban.component';
 import { PromotionsListComponent } from './features/promotions/promotions-list.component';
 import { TablesFloorPlanComponent } from './features/tables/tables-floor-plan.component';
+import { StaffManagementComponent } from './features/staff/staff-management.component';
 
 export const routes: Routes = [
   // Public auth routes
@@ -44,31 +46,43 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
-        component: DashboardComponent
+        component: DashboardComponent,
+        canActivate: [roleGuard]
       },
       {
         path: 'tables',
-        component: TablesFloorPlanComponent
+        component: TablesFloorPlanComponent,
+        canActivate: [roleGuard]
       },
       {
         path: 'orders',
-        component: OrdersKanbanComponent
+        component: OrdersKanbanComponent,
+        canActivate: [roleGuard]
       },
       {
         path: 'promotions',
-        component: PromotionsListComponent
+        component: PromotionsListComponent,
+        canActivate: [roleGuard]
       },
       {
         path: 'inventory',
-        component: InventoryListComponent
+        component: InventoryListComponent,
+        canActivate: [roleGuard]
       },
       {
         path: 'recipes',
-        component: RecipesListComponent
+        component: RecipesListComponent,
+        canActivate: [roleGuard]
       },
       {
         path: 'dishes',
-        component: MenuManagementComponent
+        component: MenuManagementComponent,
+        canActivate: [roleGuard]
+      },
+      {
+        path: 'staff',
+        component: StaffManagementComponent,
+        canActivate: [roleGuard]
       }
     ]
   },
