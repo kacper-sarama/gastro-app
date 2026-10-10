@@ -12,6 +12,7 @@ import { PromotionService } from '../services/promotion.service';
 import { TableService } from '../services/table.service';
 import { StaffService } from '../services/staff.service';
 import { ToastService } from '../services/toast.service';
+import { RoleNotificationService, RoleAlertItem } from '../services/role-notification.service';
 import { UserRole } from '../models/staff.model';
 import { AccountSettingsModalComponent } from '../../features/account/account-settings-modal.component';
 
@@ -44,6 +45,7 @@ export class MainLayoutComponent implements OnInit {
   readonly tableService = inject(TableService);
   readonly staffService = inject(StaffService);
   readonly toastService = inject(ToastService);
+  readonly roleNotificationService = inject(RoleNotificationService);
 
   private router = inject(Router);
   private breakpointObserver = inject(BreakpointObserver);
@@ -57,6 +59,7 @@ export class MainLayoutComponent implements OnInit {
   readonly isCompact = computed(() => this.isSidebarCollapsed() && !this.isMobile());
   isUserMenuOpen = signal(false);
   isRoleMenuOpen = signal(false);
+  isNotificationsMenuOpen = signal(false);
   isAccountModalOpen = signal(false);
   isResettingDemo = signal(false);
 
@@ -147,6 +150,25 @@ export class MainLayoutComponent implements OnInit {
 
   closeRoleMenu(): void {
     this.isRoleMenuOpen.set(false);
+  }
+
+  toggleNotificationsMenu(): void {
+    this.isNotificationsMenuOpen.update(v => !v);
+    if (this.isNotificationsMenuOpen()) {
+      this.isUserMenuOpen.set(false);
+      this.isRoleMenuOpen.set(false);
+    }
+  }
+
+  closeNotificationsMenu(): void {
+    this.isNotificationsMenuOpen.set(false);
+  }
+
+  handleAlertClick(alert: RoleAlertItem): void {
+    this.closeNotificationsMenu();
+    if (alert.route) {
+      this.router.navigateByUrl(alert.route);
+    }
   }
 
   selectRole(role: UserRole | null): void {

@@ -9,6 +9,7 @@ import { PromotionService } from '../services/promotion.service';
 import { TableService } from '../services/table.service';
 import { StaffService } from '../services/staff.service';
 import { ToastService } from '../services/toast.service';
+import { RoleNotificationService } from '../services/role-notification.service';
 import { Router, provideRouter } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { signal, computed } from '@angular/core';
@@ -83,6 +84,12 @@ describe('MainLayoutComponent (Navigation & Dynamic RBAC Menu)', () => {
       danger: jasmine.createSpy('danger')
     };
 
+    const mockRoleNotificationService = {
+      unreadCount: signal(1),
+      tooltipLabel: signal('1 nowe zamówienie'),
+      activeAlertItems: signal([])
+    };
+
     await TestBed.configureTestingModule({
       imports: [MainLayoutComponent],
       providers: [
@@ -96,7 +103,8 @@ describe('MainLayoutComponent (Navigation & Dynamic RBAC Menu)', () => {
         { provide: PromotionService, useValue: mockPromotionService },
         { provide: TableService, useValue: mockTableService },
         { provide: StaffService, useValue: mockStaffService },
-        { provide: ToastService, useValue: mockToastService }
+        { provide: ToastService, useValue: mockToastService },
+        { provide: RoleNotificationService, useValue: mockRoleNotificationService }
       ]
     }).compileComponents();
 
