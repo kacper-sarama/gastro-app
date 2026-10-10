@@ -67,4 +67,21 @@ describe('roleGuard (RBAC)', () => {
     expect(result instanceof UrlTree).toBeTrue();
     expect((result as UrlTree).toString()).toBe('/dashboard');
   });
+
+  it('powinien poprawnie sprawdzić dostęp, gdy adres URL zawiera parametry zapytania (query params)', () => {
+    mockAuthService.canAccessRoute.and.returnValue(true);
+
+    const result = executeGuard('/tables?zone=ogrodek&status=free');
+    expect(result).toBeTrue();
+    expect(mockAuthService.canAccessRoute).toHaveBeenCalledWith('/tables?zone=ogrodek&status=free');
+  });
+
+  it('powinien przekierować menedżera (manager) na /dashboard, gdy próbuje wejść na niedozwoloną trasę', () => {
+    mockAuthService.currentUserRole.set('manager');
+    mockAuthService.canAccessRoute.and.returnValue(false);
+
+    const result = executeGuard('/unauthorized-path');
+    expect(result instanceof UrlTree).toBeTrue();
+    expect((result as UrlTree).toString()).toBe('/dashboard');
+  });
 });

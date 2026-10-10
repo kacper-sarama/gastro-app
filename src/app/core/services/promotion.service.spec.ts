@@ -155,4 +155,87 @@ describe('PromotionService (Discount & Validation Engine)', () => {
     // Najtańsza to Margherita (32 zł). -50% to 16 zł rabatu!
     expect(result.discountAmount).toBe(16);
   });
+
+  it('powinien odrzucić promocję wymagającą konkretnej kategorii, jeśli koszyk nie zawiera wystarczającej liczby dań z tej kategorii', () => {
+    const categoryPromo: Promotion = {
+      id: 'p-5',
+      restaurantId: 'rest-1',
+      name: '2 Pizze w zestawie',
+      description: 'Wymaga min. 2 dań z kategorii Pizza Rossa',
+      type: 'combo',
+      condition: {
+        requiredCategory: 'Pizza Rossa',
+        requiredQuantity: 2
+      },
+      reward: { rewardType: 'discount_amount', discountValue: 15 },
+      isActive: true,
+      usageCount: 0,
+      totalDiscountGiven: 0,
+      revenueGenerated: 0,
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    // 1 Pizza Rossa i 1 Deser (inny niż Pizza Rossa)
+    const items: OrderItem[] = [
+      { recipeId: 'r1', recipeName: 'Pizza Margherita', category: 'Pizza Rossa', quantity: 1, unitPrice: 35 },
+      { recipeId: 'r2', recipeName: 'Tiramisu', category: 'Desery', quantity: 1, unitPrice: 22 }
+    ];
+
+    const result = service.calculateValidationAndDiscount(categoryPromo, items);
+    expect(result.isEligible).toBeFalse();
+    expect(result.missingRequirementReason).toContain('Dodaj jeszcze 1 szt. dań z kategorii "Pizza Rossa"');
+    expect(result.discountAmount).toBe(0);
+  });
+
+  it('dla 3 dań o różnych cenach w promocji BOGO rabat powinien zostać naliczony z najtańszego pojedynczego egzemplarza', () => {
+    const bogoPromo: Promotion = {
+      id: 'p-6',
+      restaurantId: 'rest-1',
+      name: 'Druga pizza -50%',
+      description: 'Najtańsza za pół ceny',
+      type: 'bogo',
+      condition: { requiredQuantity: 2 },
+      reward: { rewardType: 'discount_percent', discountValue: 50 },
+      isActive: true,
+      usageCount: 0,
+      totalDiscountGiven: 0,
+      revenueGenerated: 0,
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    const items: OrderItem[] = [
+      { recipeId: 'r1', recipeName: 'Pizza Suprema', quantity: 1, unitPrice: 52 },
+      { recipeId: 'r2', recipeName: 'Pizza Prosciutto', quantity: 1, unitPrice: 44 },
+      { recipeId: 'r3', recipeName: 'Pizza Marinara', quantity: 1, unitPrice: 28 } // najtańsza z trzech
+    ];
+
+    const result = service.calculateValidationAndDiscount(bogoPromo, items);
+    expect(result.isEligible).toBeTrue();
+    // 50% z 28 zł = 14 zł rabatu
+    expect(result.discountAmount).toBe(14);
+  });
+
+  it('dla pustego zamówienia (brak pozycji) rabat powinien wynosić 0 zł bez rzucania błędów', () => {
+    const promo: Promotion = {
+      id: 'p-7',
+      restaurantId: 'rest-1',
+      name: '10% na wszystko',
+      description: 'Rabat',
+      type: 'code_discount',
+      condition: {},
+      reward: { rewardType: 'discount_percent', discountValue: 10 },
+      isActive: true,
+      usageCount: 0,
+      totalDiscountGiven: 0,
+      revenueGenerated: 0,
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    const result = service.calculateValidationAndDiscount(promo, []);
+    expect(result.isEligible).toBeTrue();
+    expect(result.discountAmount).toBe(0);
+  });
 });

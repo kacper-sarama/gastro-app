@@ -171,5 +171,64 @@ describe('TableService (Floor Plan & Table Lifecycle Engine)', () => {
       expect(activeOrders.length).toBe(1);
       expect(activeOrders[0].id).toBe('ord-a');
     });
+
+    it('nie powinien wliczać anulowanych zamówień (status: cancelled) do rachunku stolika', () => {
+      mockOrdersSignal.set([
+        {
+          id: 'ord-active',
+          restaurantId: 'rest-1',
+          orderNumber: 101,
+          tableNumber: 'Stolik 2',
+          items: [{ recipeId: 'r1', recipeName: 'Pizza', quantity: 1, unitPrice: 40 }],
+          totalPrice: 40,
+          status: 'ready',
+          stockDeducted: false,
+          createdAt: '2026-10-10T15:05:00Z',
+          updatedAt: '2026-10-10T15:05:00Z'
+        },
+        {
+          id: 'ord-cancelled',
+          restaurantId: 'rest-1',
+          orderNumber: 102,
+          tableNumber: 'Stolik 2',
+          items: [{ recipeId: 'r2', recipeName: 'Wino', quantity: 1, unitPrice: 90 }],
+          totalPrice: 90,
+          status: 'cancelled', // Anulowane zamówienie!
+          stockDeducted: false,
+          createdAt: '2026-10-10T15:10:00Z',
+          updatedAt: '2026-10-10T15:10:00Z'
+        }
+      ]);
+
+      const liveTables = service.tablesWithLiveStatus();
+      const table2 = liveTables.find(t => t.id === 'tbl-2');
+
+      // Tylko 40 zł z aktywnego zamówienia, anulowane 90 zł musi być zignorowane!
+      expect(table2?.currentOrderTotal).toBe(40);
+      expect(table2?.ordersCount).toBe(1);
+    });
+
+    it('powinien poprawnie dopasować zamówienia niezależnie od wielkości liter i spacji w nazwie stolika', () => {
+      mockOrdersSignal.set([
+        {
+          id: 'ord-case-test',
+          restaurantId: 'rest-1',
+          orderNumber: 103,
+          tableNumber: '  stolik 2  ', // małe litery i dodatkowe spacje
+          items: [{ recipeId: 'r1', recipeName: 'Calzone', quantity: 1, unitPrice: 38 }],
+          totalPrice: 38,
+          status: 'in_progress',
+          stockDeducted: false,
+          createdAt: '2026-10-10T15:05:00Z',
+          updatedAt: '2026-10-10T15:05:00Z'
+        }
+      ]);
+
+      const liveTables = service.tablesWithLiveStatus();
+      const table2 = liveTables.find(t => t.id === 'tbl-2');
+
+      expect(table2?.currentOrderTotal).toBe(38);
+      expect(table2?.ordersCount).toBe(1);
+    });
   });
 });

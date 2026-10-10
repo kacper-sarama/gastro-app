@@ -180,5 +180,55 @@ describe('OrderService (KDS & Automatic Warehouse Stock Deduction)', () => {
 
       expect(depleted).toContain('Mozzarella');
     });
+
+    it('powinien zagregować składniki, gdy zamówienie zawiera tę samą pozycję w kilku wpisach', async () => {
+      // 1x Margherita w pierwszym wpisie i 2x Margherita w drugim wpisie => łącznie 3 pizze
+      const testOrder: Order = {
+        id: 'ord-test-3',
+        restaurantId: 'rest-1',
+        orderNumber: 203,
+        tableNumber: 'Stolik 1',
+        items: [
+          { recipeId: 'rec-margherita', recipeName: 'Pizza Margherita', quantity: 1, unitPrice: 35 },
+          { recipeId: 'rec-margherita', recipeName: 'Pizza Margherita', quantity: 2, unitPrice: 35 }
+        ],
+        totalPrice: 105,
+        status: 'pending',
+        stockDeducted: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      await service.deductIngredientsForOrder(testOrder);
+
+      // 3 pizze * 250g mąki = 750g
+      expect(mockInventoryService.quickAdjustStock).toHaveBeenCalledWith('ing-flour', -750, true);
+    });
+
+    it('nie powinien powtórnie odpisywać składników z magazynu, jeśli zamówienie ma już flagę stockDeducted: true', async () => {
+      const alreadyDeductedOrder: Order = {
+        id: 'ord-test-4',
+        restaurantId: 'rest-1',
+        orderNumber: 204,
+        tableNumber: 'Stolik 1',
+        items: [
+          { recipeId: 'rec-margherita', recipeName: 'Pizza Margherita', quantity: 1, unitPrice: 35 }
+        ],
+        totalPrice: 35,
+        status: 'ready',
+        stockDeducted: true, // Już wcześniej odpisano
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      service.orders.set([alreadyDeductedOrder]);
+      const deductSpy = spyOn(service, 'deductIngredientsForOrder').and.resolveTo([]);
+
+      // Zmiana statusu na completed
+      await service.updateOrderStatus('ord-test-4', 'completed');
+
+      // deductIngredientsForOrder NIE powinien zostać wywołany!
+      expect(deductSpy).not.toHaveBeenCalled();
+    });
   });
 });
