@@ -27,10 +27,17 @@ export class RecipesListComponent {
   readonly recipeService = inject(RecipeService);
   readonly inventoryService = inject(InventoryService);
 
-  // Filtry
   searchQuery = signal<string>('');
   selectedCategory = signal<string>('all');
   selectedStatusFilter = signal<'all' | 'available' | 'low' | 'blocked'>('all');
+
+  toggleStatusFilter(status: 'all' | 'available' | 'low' | 'blocked'): void {
+    if (this.selectedStatusFilter() === status) {
+      this.selectedStatusFilter.set('all');
+    } else {
+      this.selectedStatusFilter.set(status);
+    }
+  }
 
   // Stan Modali
   isAddEditModalOpen = signal(false);

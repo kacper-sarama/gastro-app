@@ -16,13 +16,18 @@
           </span>
         </div>
         <div>
-          <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
-            Nowe Zamówienie (Bon)
-          </h2>
+          <div class="flex items-center gap-2">
+            <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
+              {{ isReorder() ? 'Domówienie dań' : 'Nowe Zamówienie (Bon)' }}
+            </h2>
+            <span *ngIf="isReorder()" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/40">
+              Kolejny bon • {{ tableNumber() }}
+            </span>
+          </div>
           <span class="text-[11px] text-slate-500 dark:text-slate-400">
             @if (currentStep() === 1) { Krok 1 z 3: Wybór dań z karty }
             @else if (currentStep() === 2) { Krok 2 z 3: Dobierz promocję i rabat }
-            @else { Krok 3 z 3: Wybór stolika i finalizacja }
+            @else { Krok 3 z 3: {{ isReorder() ? 'Potwierdź domówienie i wyślij na kuchnię' : 'Wybór stolika i finalizacja' }} }
           </span>
         </div>
       </div>

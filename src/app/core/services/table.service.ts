@@ -17,7 +17,7 @@ import { AuthService } from './auth.service';
 import { OrderService } from './order.service';
 import { ToastService } from './toast.service';
 import { RestaurantTable, TableStatus, TableZone } from '../models/table.model';
-import { Order } from '../models/order.model';
+import { Order, OrderStatus } from '../models/order.model';
 
 @Injectable({
   providedIn: 'root'
@@ -35,48 +35,110 @@ export class TableService {
   private firestoreUnsub: Unsubscribe | null = null;
 
   // Reaktywne połączenie z zamówieniami na żywo (Live Order Binding)
+  // Reaktywne połączenie z zamówieniami na żywo (Live Order Binding)
+  // Obsługa wielu transzy (bony kuchenne / domawianie w trakcie wizyty gości):
+  // Rachunek stolika automatycznie sumuje wszystkie zamówienia złożone podczas aktywnej wizyty.
   readonly tablesWithLiveStatus = computed<RestaurantTable[]>(() => {
     const rawTables = this.tables();
-    const activeOrders = this.orderService.orders().filter(
-      o => o.status !== 'completed' && o.status !== 'cancelled'
-    );
+    const orders = this.orderService.orders();
 
     return rawTables.map(tbl => {
-      // Szukaj aktywnego zamówienia pasującego do nazwy/numeru stolika
-      const matchingOrder = activeOrders.find(
-        o => o.tableNumber.trim().toLowerCase() === tbl.number.trim().toLowerCase()
-      );
-
-      if (matchingOrder) {
-        // Jeśli jest aktywne zamówienie, stolik jest zajęty
-        const status: TableStatus = tbl.status === 'bill_requested' ? 'bill_requested' : 'occupied';
+      // Jeśli stolik jest wolny lub czeka na posprzątanie, nie ma aktywnego rachunku
+      if (tbl.status === 'free' || tbl.status === 'dirty') {
         return {
           ...tbl,
-          status,
-          currentOrderId: matchingOrder.id,
-          currentOrderNumber: matchingOrder.orderNumber,
-          currentOrderTotal: matchingOrder.totalPrice,
-          currentOrderItemsCount: matchingOrder.items.reduce((s, i) => s + i.quantity, 0),
-          occupiedSince: matchingOrder.createdAt
-        };
-      }
-
-      // Jeśli nie ma aktywnego zamówienia, a w bazie wisiało 'occupied', traktujemy jako 'free'
-      if (tbl.status === 'occupied') {
-        return {
-          ...tbl,
-          status: 'free',
           currentOrderId: undefined,
           currentOrderNumber: undefined,
           currentOrderTotal: undefined,
           currentOrderItemsCount: undefined,
+          activeOrderIds: undefined,
+          ordersCount: 0,
+          kitchenOrderStatus: undefined,
           occupiedSince: undefined
         };
       }
 
-      return tbl;
+      // Dla stolika zajętego lub z prośbą o rachunek szukamy wszystkich zamówień z tej wizyty
+      const activeIds = new Set(tbl.activeOrderIds || []);
+      if (tbl.currentOrderId) activeIds.add(tbl.currentOrderId);
+
+      const matchingOrders = orders.filter(o => {
+        if (o.status === 'cancelled') return false;
+        if (activeIds.has(o.id)) return true;
+        if (o.tableNumber.trim().toLowerCase() === tbl.number.trim().toLowerCase()) {
+          if (!tbl.occupiedSince) return true;
+          const visitStart = new Date(tbl.occupiedSince).getTime() - (2 * 60 * 1000);
+          return new Date(o.createdAt).getTime() >= visitStart;
+        }
+        return false;
+      });
+
+      // Sortuj chronologicznie od najstarszego (Bon #1) do najnowszego (Bon #N)
+      matchingOrders.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+      if (matchingOrders.length > 0) {
+        const latestOrder = matchingOrders[matchingOrders.length - 1];
+        const total = matchingOrders.reduce((sum, o) => sum + o.totalPrice, 0);
+        const itemsCount = matchingOrders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0);
+
+        // Wyznaczenie łącznego stanu kuchni (od najwyższego priorytetu uwagi):
+        // 1. Jeśli jakiekolwiek danie czeka gotowe do odebrania -> 'ready'
+        // 2. Jeśli jakiekolwiek danie się gotuje -> 'in_progress'
+        // 3. Jeśli jakiekolwiek czeka w kolejce -> 'pending'
+        // 4. Jeśli wszystkie wydane na stół -> 'completed'
+        let kitchenStatus: OrderStatus = 'completed';
+        if (matchingOrders.some(o => o.status === 'ready')) {
+          kitchenStatus = 'ready';
+        } else if (matchingOrders.some(o => o.status === 'in_progress')) {
+          kitchenStatus = 'in_progress';
+        } else if (matchingOrders.some(o => o.status === 'pending')) {
+          kitchenStatus = 'pending';
+        }
+
+        return {
+          ...tbl,
+          currentOrderId: latestOrder.id,
+          currentOrderNumber: latestOrder.orderNumber,
+          currentOrderTotal: total,
+          currentOrderItemsCount: itemsCount,
+          activeOrderIds: matchingOrders.map(o => o.id),
+          ordersCount: matchingOrders.length,
+          kitchenOrderStatus: kitchenStatus,
+          occupiedSince: tbl.occupiedSince || matchingOrders[0].createdAt
+        };
+      }
+
+      // Stolik zajęty bez aktywnego zamówienia (np. goście właśnie usiedli)
+      return {
+        ...tbl,
+        ordersCount: 0
+      };
     });
   });
+
+  /**
+   * Zwraca chronologiczną listę wszystkich zamówień (bonów) z bieżącej aktywnej wizyty stolika
+   */
+  getActiveOrdersForTable(table: RestaurantTable): Order[] {
+    const orders = this.orderService.orders();
+    if (table.status === 'free' || table.status === 'dirty') return [];
+
+    const activeIds = new Set(table.activeOrderIds || []);
+    if (table.currentOrderId) activeIds.add(table.currentOrderId);
+
+    const matching = orders.filter(o => {
+      if (o.status === 'cancelled') return false;
+      if (activeIds.has(o.id)) return true;
+      if (o.tableNumber.trim().toLowerCase() === table.number.trim().toLowerCase()) {
+        if (!table.occupiedSince) return true;
+        const visitStart = new Date(table.occupiedSince).getTime() - (2 * 60 * 1000);
+        return new Date(o.createdAt).getTime() >= visitStart;
+      }
+      return false;
+    });
+
+    return matching.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
 
   // Strefy w lokalu
   readonly availableZones = computed<string[]>(() => {
@@ -287,13 +349,91 @@ export class TableService {
 
   async changeStatus(id: string, newStatus: TableStatus): Promise<void> {
     const docRef = doc(this.firestore, `tables/${id}`);
+    const now = new Date().toISOString();
+    const updateData: Record<string, any> = {
+      status: newStatus,
+      updatedAt: now
+    };
+    if (newStatus === 'free') {
+      updateData['currentOrderId'] = null;
+      updateData['currentOrderNumber'] = null;
+      updateData['currentOrderTotal'] = 0;
+      updateData['currentOrderItemsCount'] = 0;
+      updateData['activeOrderIds'] = [];
+      updateData['ordersCount'] = 0;
+      updateData['occupiedSince'] = null;
+    } else if (newStatus === 'occupied') {
+      const current = this.tables().find(t => t.id === id);
+      if (!current?.occupiedSince) {
+        updateData['occupiedSince'] = now;
+      }
+    }
     try {
-      await updateDoc(docRef, {
-        status: newStatus,
-        updatedAt: new Date().toISOString()
-      });
+      await updateDoc(docRef, updateData);
     } catch (e) {
       console.error('Błąd zmiany statusu stolika:', e);
+    }
+  }
+
+  /**
+   * Oznaczenie stolika jako zajęty z powiązaniem pierwszego zamówienia wizyty
+   */
+  async occupyTable(tableId: string, orderData?: { orderId?: string; orderNumber?: number; total?: number; itemsCount?: number }): Promise<void> {
+    const docRef = doc(this.firestore, `tables/${tableId}`);
+    const now = new Date().toISOString();
+    const activeOrderIds = orderData?.orderId ? [orderData.orderId] : [];
+    await updateDoc(docRef, this.cleanObject({
+      status: 'occupied',
+      currentOrderId: orderData?.orderId || null,
+      currentOrderNumber: orderData?.orderNumber || null,
+      currentOrderTotal: orderData?.total || 0,
+      currentOrderItemsCount: orderData?.itemsCount || 0,
+      activeOrderIds,
+      ordersCount: activeOrderIds.length,
+      occupiedSince: now,
+      updatedAt: now
+    }));
+  }
+
+  /**
+   * Dołączenie kolejnego zamówienia (bonu/domówienia) do już zajętego stolika
+   */
+  async appendOrderToTable(tableId: string, orderData: { orderId: string; orderNumber: number; total: number; itemsCount: number }): Promise<void> {
+    const current = this.tables().find(t => t.id === tableId);
+    if (!current) return;
+
+    const docRef = doc(this.firestore, `tables/${tableId}`);
+    const now = new Date().toISOString();
+    const existing = current.activeOrderIds || (current.currentOrderId ? [current.currentOrderId] : []);
+    const mergedIds = Array.from(new Set([...existing, orderData.orderId]));
+
+    await updateDoc(docRef, this.cleanObject({
+      status: 'occupied',
+      currentOrderId: orderData.orderId,
+      currentOrderNumber: orderData.orderNumber,
+      activeOrderIds: mergedIds,
+      ordersCount: mergedIds.length,
+      occupiedSince: current.occupiedSince || now,
+      updatedAt: now
+    }));
+  }
+
+  /**
+   * Oznaczenie stolika po numerze/nazwie jako zajęty lub domówienie kolejnego bonu
+   */
+  async occupyTableByNumber(tableNumber: string, orderData?: { orderId?: string; orderNumber?: number; total?: number; itemsCount?: number }): Promise<void> {
+    const table = this.tables().find(t => t.number.trim().toLowerCase() === tableNumber.trim().toLowerCase());
+    if (!table) return;
+
+    if (table.status === 'free') {
+      await this.occupyTable(table.id, orderData);
+    } else if (orderData?.orderId && orderData?.orderNumber) {
+      await this.appendOrderToTable(table.id, {
+        orderId: orderData.orderId,
+        orderNumber: orderData.orderNumber,
+        total: orderData.total || 0,
+        itemsCount: orderData.itemsCount || 0
+      });
     }
   }
 
@@ -321,15 +461,31 @@ export class TableService {
   }
 
   /**
-   * Rozliczenie rachunku stolika (płatność kartą / gotówką / BLIK)
+   * Rozliczenie całego rachunku stolika (obsługuje jedno lub wiele zamówień/bonów wizyty)
    */
-  async settleTableOrder(tableId: string, orderId?: string, paymentMethod = 'Karta'): Promise<void> {
-    if (orderId) {
-      await this.orderService.updateOrderStatus(orderId, 'completed');
+  async settleTableOrder(tableId: string, orderIds?: string[] | string, paymentMethod = 'Karta'): Promise<void> {
+    const idsToSettle: string[] = Array.isArray(orderIds) 
+      ? orderIds 
+      : (orderIds ? [orderIds] : []);
+
+    for (const ordId of idsToSettle) {
+      await this.orderService.updateOrderStatus(ordId, 'completed');
     }
-    // Po opłaceniu oznaczamy jako do posprzątania / wolny
-    await this.changeStatus(tableId, 'dirty');
-    this.toastService.success(`Rozliczono zamówienie (${paymentMethod}). Stolik czeka na przetarcie.`, 'Rozliczono');
+
+    // Po opłaceniu oznaczamy jako do posprzątania i czyścimy bieżący otwarty rachunek wizyty
+    const docRef = doc(this.firestore, `tables/${tableId}`);
+    await updateDoc(docRef, {
+      status: 'dirty',
+      currentOrderId: null,
+      currentOrderNumber: null,
+      currentOrderTotal: 0,
+      currentOrderItemsCount: 0,
+      activeOrderIds: [],
+      ordersCount: 0,
+      occupiedSince: null,
+      updatedAt: new Date().toISOString()
+    });
+    this.toastService.success(`Rozliczono rachunek (${paymentMethod}). Stolik czeka na przetarcie.`, 'Rozliczono');
   }
 
   /**

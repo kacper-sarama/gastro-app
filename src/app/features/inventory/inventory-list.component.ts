@@ -28,6 +28,15 @@ export class InventoryListComponent {
   searchQuery = signal<string>('');
   selectedStatusFilter = signal<string>('all'); // 'all' | 'ok' | 'low' | 'out'
   selectedCategory = signal<string>('all');
+
+  toggleStatusFilter(status: string): void {
+    if (this.selectedStatusFilter() === status) {
+      this.selectedStatusFilter.set('all');
+    } else {
+      this.selectedStatusFilter.set(status);
+    }
+  }
+
   sortColumn = signal<'name' | 'amount' | 'minAmount' | 'status'>('name');
   sortDirection = signal<'asc' | 'desc'>('asc');
 

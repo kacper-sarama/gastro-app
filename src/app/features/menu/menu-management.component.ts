@@ -9,6 +9,8 @@ import { Recipe, RecipeCapacityResult } from '../../core/models/recipe.model';
 import { QrCodeModalComponent } from './qr-code-modal.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 
+export type MenuStatusFilter = 'all' | 'available' | 'hidden' | 'sold_out';
+
 @Component({
   selector: 'app-menu-management',
   standalone: true,
@@ -24,6 +26,15 @@ export class MenuManagementComponent {
   // Filtry
   searchQuery = signal<string>('');
   selectedCategory = signal<string>('all');
+  selectedStatusFilter = signal<MenuStatusFilter>('all');
+
+  toggleStatusFilter(filter: MenuStatusFilter): void {
+    if (this.selectedStatusFilter() === filter) {
+      this.selectedStatusFilter.set('all');
+    } else {
+      this.selectedStatusFilter.set(filter);
+    }
+  }
 
   // Modal QR
   isQrModalOpen = signal<boolean>(false);
@@ -43,6 +54,7 @@ export class MenuManagementComponent {
   readonly filteredRecipes = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const cat = this.selectedCategory();
+    const status = this.selectedStatusFilter();
     const recipes = this.recipeService.recipes();
 
     return recipes.filter(r => {
@@ -57,6 +69,20 @@ export class MenuManagementComponent {
       // 2. Kategoria
       if (cat !== 'all' && (r.category || '').toLowerCase() !== cat.toLowerCase()) {
         return false;
+      }
+
+      // 3. Filtr statusu z kafelków
+      if (status !== 'all') {
+        const capacity = this.recipeService.getCapacity(r.id);
+        const isManuallyActive = r.isAvailable !== false;
+
+        if (status === 'available') {
+          if (!isManuallyActive || capacity.status === 'blocked') return false;
+        } else if (status === 'hidden') {
+          if (isManuallyActive) return false;
+        } else if (status === 'sold_out') {
+          if (capacity.status !== 'blocked') return false;
+        }
       }
 
       return true;

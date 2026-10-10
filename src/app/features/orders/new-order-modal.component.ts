@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RecipeService } from '../../core/services/recipe.service';
 import { OrderService } from '../../core/services/order.service';
+import { TableService } from '../../core/services/table.service';
 import { PromotionService } from '../../core/services/promotion.service';
 import { Recipe, RecipeCapacityResult } from '../../core/models/recipe.model';
 import { OrderItem } from '../../core/models/order.model';
@@ -23,6 +24,7 @@ export interface QuickTableOption {
 export class NewOrderModalComponent {
   readonly recipeService = inject(RecipeService);
   readonly orderService = inject(OrderService);
+  readonly tableService = inject(TableService);
   readonly promotionService = inject(PromotionService);
 
   @Input() set initialTableNumber(val: string | undefined) {
@@ -53,6 +55,14 @@ export class NewOrderModalComponent {
   selectedPromotionId = signal<string | null>(null);
   promoCodeInput = signal<string>('');
   promoCodeMessage = signal<{ text: string; isError: boolean } | null>(null);
+
+  // Czy to domówienie do już zajętego stolika (kolejny bon kuchenny)
+  readonly isReorder = computed<boolean>(() => {
+    const num = this.tableNumber().trim().toLowerCase();
+    if (!num || num === 'wynos' || num.includes('wynos')) return false;
+    const table = this.tableService.tables().find(t => t.number.trim().toLowerCase() === num);
+    return !!table && (table.status === 'occupied' || table.status === 'bill_requested');
+  });
 
   readonly quickTables: QuickTableOption[] = [
     { name: 'Stolik 1', icon: 'table_restaurant', type: 'table' },
@@ -304,14 +314,26 @@ export class NewOrderModalComponent {
 
     this.isSubmitting.set(true);
     try {
-      await this.orderService.createOrder({
-        tableNumber: this.tableNumber().trim() || 'Stolik 1',
+      const tableNumber = this.tableNumber().trim() || 'Stolik 1';
+      const createdOrder = await this.orderService.createOrder({
+        tableNumber,
         items,
         appliedPromotionId: isPromoValid ? applied.promo.id : undefined,
         appliedPromotionName: isPromoValid ? applied.promo.name : undefined,
         discountAmount: isPromoValid ? this.discountAmount() : undefined,
         originalPrice: this.totalPrice()
       });
+
+      // Jeśli to zamówienie na stolik (nie wynos), oznacz stolik trwale jako zajęty
+      if (tableNumber.toLowerCase() !== 'wynos') {
+        await this.tableService.occupyTableByNumber(tableNumber, {
+          orderId: createdOrder.id,
+          orderNumber: createdOrder.orderNumber,
+          total: createdOrder.totalPrice,
+          itemsCount: items.reduce((s, i) => s + i.quantity, 0)
+        });
+      }
+
       this.created.emit();
       this.close.emit();
     } catch {

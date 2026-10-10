@@ -9,12 +9,15 @@ import { AddEditTableModalComponent } from './add-edit-table-modal.component';
 import { TableDetailsModalComponent } from './table-details-modal.component';
 import { NewOrderModalComponent } from '../orders/new-order-modal.component';
 
+import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
+
 @Component({
   selector: 'app-tables-floor-plan',
   standalone: true,
   imports: [
     CommonModule, 
     FormsModule, 
+    StatCardComponent,
     AddEditTableModalComponent, 
     TableDetailsModalComponent, 
     NewOrderModalComponent
@@ -32,6 +35,11 @@ export class TablesFloorPlanComponent {
 
   // Modale
   selectedTableForDetails = signal<RestaurantTable | null>(null);
+  readonly currentDetailsTable = computed<RestaurantTable | null>(() => {
+    const selected = this.selectedTableForDetails();
+    if (!selected) return null;
+    return this.tableService.tablesWithLiveStatus().find(t => t.id === selected.id) || selected;
+  });
   selectedTableForEdit = signal<RestaurantTable | null>(null);
   isAddModalOpen = signal<boolean>(false);
   isNewOrderModalOpen = signal<boolean>(false);
@@ -74,6 +82,14 @@ export class TablesFloorPlanComponent {
 
   selectZone(zone: string): void {
     this.tableService.selectedZone.set(zone);
+  }
+
+  toggleStatusFilter(status: TableStatus): void {
+    if (this.statusFilter() === status) {
+      this.statusFilter.set('all');
+    } else {
+      this.statusFilter.set(status);
+    }
   }
 
   setStatusFilter(status: TableStatus | 'all'): void {

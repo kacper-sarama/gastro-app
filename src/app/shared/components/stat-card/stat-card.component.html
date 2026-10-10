@@ -1,77 +1,114 @@
 <div
   (click)="onClick()"
-  class="gastro-card border transition-all"
+  class="p-4 sm:p-5 rounded-2xl border shadow-sm transition-all flex flex-col justify-between group"
   [class.cursor-pointer]="isClickable"
-  [class.hover:border-slate-400]="isClickable"
-  [class.dark:hover:border-slate-600]="isClickable"
+  [class.hover:shadow-md]="isClickable"
+
+  [class.bg-white]="!isActive"
+  [class.dark:bg-slate-900]="!isActive"
+  [class.border-slate-200/80]="!isActive"
+  [class.dark:border-slate-800]="!isActive"
+
+  [class.hover:border-blue-500/60]="isClickable && !isActive && color === 'blue'"
+  [class.hover:border-emerald-500/60]="isClickable && !isActive && color === 'emerald'"
+  [class.hover:border-amber-500/60]="isClickable && !isActive && color === 'amber'"
+  [class.hover:border-rose-500/60]="isClickable && !isActive && color === 'rose'"
+  [class.hover:border-orange-500/60]="isClickable && !isActive && color === 'orange'"
+  [class.hover:border-indigo-500/60]="isClickable && !isActive && color === 'indigo'"
 
   [class.border-blue-500]="isClickable && isActive && color === 'blue'"
-  [class.bg-blue-500/5]="(isClickable && isActive && color === 'blue') || (!isClickable && color === 'blue')"
-  [class.dark:bg-blue-500/10]="(isClickable && isActive && color === 'blue') || (!isClickable && color === 'blue')"
-  [class.border-blue-500/30]="!isClickable && color === 'blue'"
+  [class.ring-2]="isClickable && isActive"
+  [class.ring-blue-500/25]="isClickable && isActive && color === 'blue'"
+  [class.bg-blue-50/15]="isClickable && isActive && color === 'blue'"
+  [class.dark:bg-blue-950/25]="isClickable && isActive && color === 'blue'"
 
   [class.border-emerald-500]="isClickable && isActive && color === 'emerald'"
-  [class.bg-emerald-500/5]="(isClickable && isActive && color === 'emerald') || (!isClickable && color === 'emerald')"
-  [class.dark:bg-emerald-500/10]="(isClickable && isActive && color === 'emerald') || (!isClickable && color === 'emerald')"
-  [class.border-emerald-500/30]="!isClickable && color === 'emerald'"
+  [class.ring-emerald-500/25]="isClickable && isActive && color === 'emerald'"
+  [class.bg-emerald-50/15]="isClickable && isActive && color === 'emerald'"
+  [class.dark:bg-emerald-950/25]="isClickable && isActive && color === 'emerald'"
 
   [class.border-amber-500]="isClickable && isActive && color === 'amber'"
-  [class.bg-amber-500/5]="(isClickable && isActive && color === 'amber') || (!isClickable && color === 'amber')"
-  [class.dark:bg-amber-500/10]="(isClickable && isActive && color === 'amber') || (!isClickable && color === 'amber')"
-  [class.border-amber-500/30]="!isClickable && color === 'amber'"
+  [class.ring-amber-500/25]="isClickable && isActive && color === 'amber'"
+  [class.bg-amber-50/20]="isClickable && isActive && color === 'amber'"
+  [class.dark:bg-amber-950/25]="isClickable && isActive && color === 'amber'"
 
   [class.border-rose-500]="isClickable && isActive && color === 'rose'"
-  [class.bg-rose-500/5]="(isClickable && isActive && color === 'rose') || (!isClickable && color === 'rose')"
-  [class.dark:bg-rose-500/10]="(isClickable && isActive && color === 'rose') || (!isClickable && color === 'rose')"
-  [class.border-rose-500/30]="!isClickable && color === 'rose'"
+  [class.ring-rose-500/25]="isClickable && isActive && color === 'rose'"
+  [class.bg-rose-50/15]="isClickable && isActive && color === 'rose'"
+  [class.dark:bg-rose-950/25]="isClickable && isActive && color === 'rose'"
+
+  [class.border-orange-500]="isClickable && isActive && color === 'orange'"
+  [class.ring-orange-500/25]="isClickable && isActive && color === 'orange'"
+  [class.bg-orange-50/15]="isClickable && isActive && color === 'orange'"
+  [class.dark:bg-orange-950/25]="isClickable && isActive && color === 'orange'"
+
+  [class.border-indigo-500]="isClickable && isActive && color === 'indigo'"
+  [class.ring-indigo-500/25]="isClickable && isActive && color === 'indigo'"
+  [class.bg-indigo-50/15]="isClickable && isActive && color === 'indigo'"
+  [class.dark:bg-indigo-950/25]="isClickable && isActive && color === 'indigo'"
 >
-  <div class="flex items-center justify-between">
+  <!-- Górny wiersz: Etykieta & Ikonka -->
+  <div class="flex items-center justify-between mb-2">
     <span 
-      class="text-xs font-semibold uppercase tracking-wider transition-colors"
-      [class.text-blue-600]="color === 'blue'"
-      [class.dark:text-blue-400]="color === 'blue'"
-      [class.text-emerald-600]="color === 'emerald'"
-      [class.dark:text-emerald-400]="color === 'emerald'"
-      [class.text-amber-600]="color === 'amber'"
-      [class.dark:text-amber-400]="color === 'amber'"
-      [class.text-rose-600]="color === 'rose'"
-      [class.dark:text-rose-400]="color === 'rose'"
+      class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 transition-colors"
+      [class.group-hover:text-blue-600]="isClickable && color === 'blue'"
+      [class.group-hover:text-emerald-600]="isClickable && color === 'emerald'"
+      [class.group-hover:text-amber-600]="isClickable && color === 'amber'"
+      [class.group-hover:text-rose-600]="isClickable && color === 'rose'"
+      [class.group-hover:text-orange-600]="isClickable && color === 'orange'"
+      [class.group-hover:text-indigo-600]="isClickable && color === 'indigo'"
     >
       {{ title }}
     </span>
 
-    <span 
-      class="material-icons-round text-xl transition-colors"
-      [class.text-blue-500]="color === 'blue'"
+    <div 
+      class="w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105"
+      [class.bg-blue-500/10]="color === 'blue'"
+      [class.text-blue-600]="color === 'blue'"
       [class.dark:text-blue-400]="color === 'blue'"
-      [class.text-emerald-500]="color === 'emerald'"
+      [class.bg-emerald-500/10]="color === 'emerald'"
+      [class.text-emerald-600]="color === 'emerald'"
       [class.dark:text-emerald-400]="color === 'emerald'"
-      [class.text-amber-500]="color === 'amber'"
+      [class.bg-amber-500/10]="color === 'amber'"
+      [class.text-amber-600]="color === 'amber'"
       [class.dark:text-amber-400]="color === 'amber'"
-      [class.text-rose-500]="color === 'rose'"
+      [class.bg-rose-500/10]="color === 'rose'"
+      [class.text-rose-600]="color === 'rose'"
       [class.dark:text-rose-400]="color === 'rose'"
+      [class.bg-orange-500/10]="color === 'orange'"
+      [class.text-orange-600]="color === 'orange'"
+      [class.dark:text-orange-400]="color === 'orange'"
+      [class.bg-indigo-500/10]="color === 'indigo'"
+      [class.text-indigo-600]="color === 'indigo'"
+      [class.dark:text-indigo-400]="color === 'indigo'"
     >
-      {{ icon }}
-    </span>
+      <span class="material-icons-round text-lg">{{ icon }}</span>
+    </div>
   </div>
 
-  <p 
-    class="text-2xl font-bold mt-2 transition-colors"
-    [class.text-blue-600]="color === 'blue'"
-    [class.dark:text-blue-400]="color === 'blue'"
-    [class.text-emerald-600]="color === 'emerald'"
-    [class.dark:text-emerald-400]="color === 'emerald'"
-    [class.text-amber-600]="color === 'amber'"
-    [class.dark:text-amber-400]="color === 'amber'"
-    [class.text-rose-600]="color === 'rose'"
-    [class.dark:text-rose-400]="color === 'rose'"
-  >
-    {{ count }}
-  </p>
+  <!-- Środkowy wiersz: Duża liczba / kwota -->
+  <div>
+    <p 
+      class="text-2xl font-black tracking-tight text-slate-900 dark:text-white transition-colors"
+      [class.text-blue-600]="isClickable && isActive && color === 'blue'"
+      [class.dark:text-blue-400]="isClickable && isActive && color === 'blue'"
+      [class.text-emerald-600]="isClickable && isActive && color === 'emerald'"
+      [class.dark:text-emerald-400]="isClickable && isActive && color === 'emerald'"
+      [class.text-amber-600]="isClickable && isActive && color === 'amber'"
+      [class.dark:text-amber-400]="isClickable && isActive && color === 'amber'"
+      [class.text-rose-600]="isClickable && isActive && color === 'rose'"
+      [class.dark:text-rose-400]="isClickable && isActive && color === 'rose'"
+      [class.text-orange-600]="isClickable && isActive && color === 'orange'"
+      [class.dark:text-orange-400]="isClickable && isActive && color === 'orange'"
+      [class.text-indigo-600]="isClickable && isActive && color === 'indigo'"
+      [class.dark:text-indigo-400]="isClickable && isActive && color === 'indigo'"
+    >
+      {{ count }}
+    </p>
 
-  @if (subtitle) {
-    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+    <!-- Dolny wiersz: Podpis -->
+    <p *ngIf="subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
       {{ subtitle }}
     </p>
-  }
+  </div>
 </div>

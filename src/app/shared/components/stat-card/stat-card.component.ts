@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type StatCardColor = 'blue' | 'emerald' | 'amber' | 'rose';
+export type StatCardColor = 'blue' | 'emerald' | 'amber' | 'rose' | 'orange' | 'indigo';
 
 @Component({
   selector: 'app-stat-card',

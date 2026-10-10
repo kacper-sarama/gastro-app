@@ -23,35 +23,52 @@ export class TableDetailsModalComponent {
   isSettling = signal<boolean>(false);
   selectedPaymentMethod = signal<'Karta' | 'Gotówka' | 'BLIK'>('Karta');
 
-  // Powiązane aktywne zamówienie
-  readonly activeOrder = computed<Order | undefined>(() => {
-    if (!this.table) return undefined;
-    if (this.table.currentOrderId) {
-      return this.orderService.orders().find(o => o.id === this.table.currentOrderId);
-    }
-    // Wyszukaj alternatywnie po nazwie stolika jeśli currentOrderId nie jest jeszcze ustawione
-    return this.orderService.orders().find(
-      o => o.tableNumber.trim().toLowerCase() === this.table.number.trim().toLowerCase() &&
-           o.status !== 'completed' && o.status !== 'cancelled'
-    );
+  // Wszystkie aktywne zamówienia/bony w ramach tej wizyty (w kolejności chronologicznej)
+  readonly activeOrders = computed<Order[]>(() => {
+    if (!this.table) return [];
+    return this.tableService.getActiveOrdersForTable(this.table);
   });
 
-  // Obliczony czas od zamówienia
+  // Łączna kwota całego rachunku (ze wszystkich bonów wizyty)
+  readonly totalBill = computed<number>(() => {
+    const orders = this.activeOrders();
+    if (orders.length > 0) {
+      return orders.reduce((sum, o) => sum + o.totalPrice, 0);
+    }
+    return this.table?.currentOrderTotal || 0;
+  });
+
+  // Łączna liczba pozycji ze wszystkich bonów
+  readonly totalItemsCount = computed<number>(() => {
+    const orders = this.activeOrders();
+    if (orders.length > 0) {
+      return orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0);
+    }
+    return this.table?.currentOrderItemsCount || 0;
+  });
+
+  // Czas od rozpoczęcia wizyty (pierwszego bonu)
   readonly elapsedTime = computed<string>(() => {
-    const order = this.activeOrder();
-    if (!order) return '';
-    return this.orderService.getElapsedTime(order.createdAt);
+    const orders = this.activeOrders();
+    const startTime = this.table?.occupiedSince || (orders.length > 0 ? orders[0].createdAt : undefined);
+    if (!startTime) return '';
+    return this.orderService.getElapsedTime(startTime);
   });
 
   async onRequestBill(): Promise<void> {
     await this.tableService.requestBill(this.table.id);
   }
 
+  async onFreeTable(): Promise<void> {
+    await this.tableService.cleanAndFreeTable(this.table.id);
+    this.close.emit();
+  }
+
   async onSettle(paymentMethod: 'Karta' | 'Gotówka' | 'BLIK'): Promise<void> {
     this.isSettling.set(true);
     try {
-      const order = this.activeOrder();
-      await this.tableService.settleTableOrder(this.table.id, order?.id, paymentMethod);
+      const orderIds = this.activeOrders().map(o => o.id);
+      await this.tableService.settleTableOrder(this.table.id, orderIds, paymentMethod);
       this.close.emit();
     } finally {
       this.isSettling.set(false);

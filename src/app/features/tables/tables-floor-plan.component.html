@@ -143,139 +143,113 @@
       </div>
     </div>
 
-    <!-- RZĄD 2: Stan Sali (4 Operacyjne Statusy Stolików) -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+    <!-- RZĄD 2: Stan Sali (4 Operacyjne Statusy Stolików z filtrowaniem - spójne z modułem Magazyn Surowców) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <!-- 5. Wolne stoliki -->
-      <div class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Wolne stoliki</span>
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-        </div>
-        <div class="mt-2">
-          <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-            {{ tableService.freeTablesCount() }}
-          </div>
-          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            Gotowe na gości
-          </span>
-        </div>
-      </div>
+      <app-stat-card
+        title="Wolne stoliki"
+        [count]="tableService.freeTablesCount()"
+        [subtitle]="statusFilter() === 'free' ? 'Aktywny filtr (kliknij, by cofnąć)' : 'Gotowe na gości'"
+        icon="check_circle"
+        color="emerald"
+        [isActive]="statusFilter() === 'free'"
+        [isClickable]="true"
+        (cardClick)="toggleStatusFilter('free')"
+      ></app-stat-card>
 
       <!-- 6. Zajęte / Jedzą -->
-      <div class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Zajęte / Jedzą</span>
-          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-        </div>
-        <div class="mt-2">
-          <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400">
-            {{ tableService.occupiedTablesCount() }}
-          </div>
-          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            Aktywna konsumpcja
-          </span>
-        </div>
-      </div>
+      <app-stat-card
+        title="Zajęte / Jedzą"
+        [count]="tableService.occupiedTablesCount()"
+        [subtitle]="statusFilter() === 'occupied' ? 'Aktywny filtr (kliknij, by cofnąć)' : 'Aktywna konsumpcja'"
+        icon="restaurant"
+        color="indigo"
+        [isActive]="statusFilter() === 'occupied'"
+        [isClickable]="true"
+        (cardClick)="toggleStatusFilter('occupied')"
+      ></app-stat-card>
 
       <!-- 7. Czekają na rachunek -->
-      <div 
-        class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border shadow-sm flex flex-col justify-between transition-colors"
-        [ngClass]="tableService.billRequestedCount() > 0 
-          ? 'border-amber-400 dark:border-amber-900/60 bg-amber-50/15 dark:bg-amber-950/20' 
-          : 'border-slate-200/80 dark:border-slate-800'"
-      >
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Czekają na rachunek</span>
-          <span 
-            class="material-icons-round text-lg"
-            [ngClass]="tableService.billRequestedCount() > 0 ? 'text-amber-500 animate-pulse' : 'text-slate-400'"
-          >
-            receipt_long
-          </span>
-        </div>
-        <div class="mt-2">
-          <div class="text-2xl font-black text-amber-600 dark:text-amber-400">
-            {{ tableService.billRequestedCount() }}
-          </div>
-          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            Prośba o płatność
-          </span>
-        </div>
-      </div>
+      <app-stat-card
+        title="Czekają na rachunek"
+        [count]="tableService.billRequestedCount()"
+        [subtitle]="statusFilter() === 'bill_requested' ? 'Aktywny filtr (kliknij, by cofnąć)' : 'Prośba o płatność'"
+        icon="receipt_long"
+        color="amber"
+        [isActive]="statusFilter() === 'bill_requested'"
+        [isClickable]="true"
+        (cardClick)="toggleStatusFilter('bill_requested')"
+      ></app-stat-card>
 
       <!-- 8. Do posprzątania -->
-      <div 
-        class="bg-white dark:bg-slate-900/90 p-4 rounded-2xl border shadow-sm flex flex-col justify-between transition-colors"
-        [ngClass]="tableService.dirtyTablesCount() > 0 
-          ? 'border-yellow-400 dark:border-yellow-900/60 bg-yellow-50/15 dark:bg-yellow-950/20' 
-          : 'border-slate-200/80 dark:border-slate-800'"
-      >
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Do posprzątania</span>
-          <span 
-            class="material-icons-round text-lg"
-            [ngClass]="tableService.dirtyTablesCount() > 0 ? 'text-yellow-500' : 'text-slate-400'"
-          >
-            cleaning_services
-          </span>
-        </div>
-        <div class="mt-2">
-          <div class="text-2xl font-black text-yellow-600 dark:text-yellow-400">
-            {{ tableService.dirtyTablesCount() }}
-          </div>
-          <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            Wymagają przetarcia
-          </span>
-        </div>
-      </div>
+      <app-stat-card
+        title="Do posprzątania"
+        [count]="tableService.dirtyTablesCount()"
+        [subtitle]="statusFilter() === 'dirty' ? 'Aktywny filtr (kliknij, by cofnąć)' : 'Wymagają przetarcia'"
+        icon="cleaning_services"
+        color="rose"
+        [isActive]="statusFilter() === 'dirty'"
+        [isClickable]="true"
+        (cardClick)="toggleStatusFilter('dirty')"
+      ></app-stat-card>
     </div>
   </div>
 
-  <!-- 3. Strefy sali (Pills) & Wyszukiwarka & Filtry statusu -->
-  <div class="space-y-3">
-    <!-- Górny rząd: Zakładki Stref (Sala Główna, Ogródek, Bar...) -->
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <!-- Wszystkie strefy -->
-        <button 
-          type="button"
-          (click)="selectZone('all')"
-          class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
-          [ngClass]="tableService.selectedZone() === 'all'
-            ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-            : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'"
+  <!-- 3. Strefy sali (Pills) & Wyszukiwarka -->
+  <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Wszystkie strefy -->
+      <button 
+        type="button"
+        (click)="selectZone('all')"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+        [ngClass]="tableService.selectedZone() === 'all'
+          ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'"
+      >
+        <span class="material-icons-round text-base">apps</span>
+        <span>Wszystkie strefy</span>
+        <span 
+          class="px-1.5 py-0.2 rounded-full text-[10px]"
+          [ngClass]="tableService.selectedZone() === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'"
         >
-          <span class="material-icons-round text-base">apps</span>
-          <span>Wszystkie strefy</span>
-          <span 
-            class="px-1.5 py-0.2 rounded-full text-[10px]"
-            [ngClass]="tableService.selectedZone() === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'"
-          >
-            {{ tableService.totalTablesCount() }}
-          </span>
-        </button>
+          {{ tableService.totalTablesCount() }}
+        </span>
+      </button>
 
-        <!-- Dynamiczne strefy -->
-        <button 
-          *ngFor="let zone of tableService.availableZones()"
-          type="button"
-          (click)="selectZone(zone)"
-          class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
-          [ngClass]="tableService.selectedZone() === zone
-            ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-            : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'"
+      <!-- Dynamiczne strefy -->
+      <button 
+        *ngFor="let zone of tableService.availableZones()"
+        type="button"
+        (click)="selectZone(zone)"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+        [ngClass]="tableService.selectedZone() === zone
+          ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'"
+      >
+        <span>{{ zone }}</span>
+        <span 
+          class="px-1.5 py-0.2 rounded-full text-[10px]"
+          [ngClass]="tableService.selectedZone() === zone ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'"
         >
-          <span>{{ zone }}</span>
-          <span 
-            class="px-1.5 py-0.2 rounded-full text-[10px]"
-            [ngClass]="tableService.selectedZone() === zone ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'"
-          >
-            {{ zoneCounts()[zone] || 0 }}
-          </span>
-        </button>
-      </div>
+          {{ zoneCounts()[zone] || 0 }}
+        </span>
+      </button>
+    </div>
 
-      <!-- Wyszukiwarka po numerze/strefie -->
+    <!-- Prawa strona: Przycisk resetu filtra statusu (jeśli aktywny) + Wyszukiwarka -->
+    <div class="flex items-center gap-2 w-full sm:w-auto">
+      <button 
+        *ngIf="statusFilter() !== 'all'"
+        type="button"
+        (click)="setStatusFilter('all')"
+        class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition-colors shrink-0"
+        title="Pokaż wszystkie stoliki"
+      >
+        <span class="material-icons-round text-sm text-slate-400">filter_alt_off</span>
+        <span>Wyczyść filtr</span>
+      </button>
+
       <div class="relative w-full sm:w-64">
         <span class="material-icons-round absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
         <input 
@@ -293,70 +267,6 @@
           close
         </button>
       </div>
-    </div>
-
-    <!-- Dolny rząd: Filtry statusów -->
-    <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
-      <span class="text-slate-400 font-semibold text-[11px] uppercase tracking-wider mr-1">Status:</span>
-
-      <button 
-        type="button" 
-        (click)="setStatusFilter('all')"
-        class="px-3 py-1 rounded-lg font-medium transition-all"
-        [ngClass]="statusFilter() === 'all' 
-          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm' 
-          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'"
-      >
-        Wszystkie
-      </button>
-
-      <button 
-        type="button" 
-        (click)="setStatusFilter('free')"
-        class="px-3 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5"
-        [ngClass]="statusFilter() === 'free' 
-          ? 'bg-emerald-600 text-white shadow-sm' 
-          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'"
-      >
-        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-        Wolne ({{ tableService.freeTablesCount() }})
-      </button>
-
-      <button 
-        type="button" 
-        (click)="setStatusFilter('occupied')"
-        class="px-3 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5"
-        [ngClass]="statusFilter() === 'occupied' 
-          ? 'bg-indigo-600 text-white shadow-sm' 
-          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'"
-      >
-        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-        Zajęte ({{ tableService.occupiedTablesCount() }})
-      </button>
-
-      <button 
-        type="button" 
-        (click)="setStatusFilter('bill_requested')"
-        class="px-3 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5"
-        [ngClass]="statusFilter() === 'bill_requested' 
-          ? 'bg-amber-600 text-white shadow-sm' 
-          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'"
-      >
-        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-        Rachunek ({{ tableService.billRequestedCount() }})
-      </button>
-
-      <button 
-        type="button" 
-        (click)="setStatusFilter('dirty')"
-        class="px-3 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5"
-        [ngClass]="statusFilter() === 'dirty' 
-          ? 'bg-yellow-600 text-white shadow-sm' 
-          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'"
-      >
-        <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-        Do posprzątania ({{ tableService.dirtyTablesCount() }})
-      </button>
     </div>
   </div>
 
@@ -433,7 +343,12 @@
               <div class="flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
                 <span class="text-xs font-bold text-indigo-700 dark:text-indigo-300">
-                  Zam. #{{ tbl.currentOrderNumber }}
+                  <ng-container *ngIf="tbl.currentOrderNumber; else seatedWithoutOrderTpl">
+                    Zam. #{{ tbl.currentOrderNumber }}
+                  </ng-container>
+                  <ng-template #seatedWithoutOrderTpl>
+                    Goście siedzą
+                  </ng-template>
                 </span>
               </div>
               <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-0.5" *ngIf="tbl.occupiedSince">
@@ -442,11 +357,31 @@
               </span>
             </div>
 
+            <!-- Plakietka statusu kuchni (KDS) -->
+            <div *ngIf="tbl.kitchenOrderStatus" class="flex items-center gap-1.5">
+              <!-- 3. Gotowe do wydania -->
+              <span *ngIf="tbl.kitchenOrderStatus === 'ready'" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500 text-white animate-bounce flex items-center gap-1 shadow-xs">
+                <span class="material-icons-round text-xs">room_service</span> Gotowe do wydania
+              </span>
+              <!-- 2. W kuchni -->
+              <span *ngIf="tbl.kitchenOrderStatus === 'in_progress'" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 flex items-center gap-1">
+                <span class="material-icons-round text-xs">soup_kitchen</span> W kuchni
+              </span>
+              <!-- 1. Oczekujące -->
+              <span *ngIf="tbl.kitchenOrderStatus === 'pending'" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex items-center gap-1">
+                <span class="material-icons-round text-xs">hourglass_top</span> Oczekujące
+              </span>
+              <!-- 4. Wydane -->
+              <span *ngIf="tbl.kitchenOrderStatus === 'completed'" class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 flex items-center gap-1">
+                <span class="material-icons-round text-xs text-emerald-600 dark:text-emerald-400">done_all</span> Wydane
+              </span>
+            </div>
+
             <div class="flex items-baseline justify-between pt-1 border-t border-indigo-100/60 dark:border-indigo-900/40">
               <span class="text-xs text-indigo-600/80 dark:text-indigo-400/80">
-                {{ tbl.currentOrderItemsCount || 0 }} poz.
+                {{ tbl.currentOrderItemsCount ? (tbl.currentOrderItemsCount + ' poz.') : 'Oczekiwanie na wybór dań' }}
               </span>
-              <span class="text-base font-black text-slate-900 dark:text-white">
+              <span class="text-base font-black text-slate-900 dark:text-white" *ngIf="tbl.currentOrderTotal">
                 {{ (tbl.currentOrderTotal || 0) | number:'1.2-2' }} zł
               </span>
             </div>
@@ -580,7 +515,7 @@
   <!-- 5. Modale -->
   <!-- Modal Szczegółów stolika & Rozliczenia -->
   <app-table-details-modal 
-    *ngIf="selectedTableForDetails() as tbl"
+    *ngIf="currentDetailsTable() as tbl"
     [table]="tbl"
     (close)="closeTableDetails()"
     (editTable)="openEditTableModal($event)"
