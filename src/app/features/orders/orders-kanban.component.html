@@ -15,21 +15,7 @@
         Tablica realizacji zamówień. Zmiana statusu na <strong>Wydane</strong> automatycznie odejmuje gramatury składników z magazynu.
       </p>
     </div>
-
-    <div class="flex items-center gap-3">
-      <button 
-        type="button"
-        (click)="openNewOrderModal()"
-        class="gastro-btn-primary shadow-lg shadow-orange-500/20 py-2.5 px-4 font-semibold text-sm flex items-center gap-2"
-      >
-        <span class="material-icons-round text-lg">add_shopping_cart</span>
-        <span>Nowe zamówienie</span>
-      </button>
-    </div>
   </div>
-
-  <!-- Pasek 4 wykresów statystyk operacyjnych dnia -->
-  <app-orders-stats-bar></app-orders-stats-bar>
 
   <!-- Przełącznik zakładek na ekranach mobilnych (widoczny tylko na małych ekranach) -->
   <div class="xl:hidden flex rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1 border border-slate-200 dark:border-slate-700">
@@ -98,22 +84,21 @@
     </button>
   </div>
 
-  <!-- Główna siatka Kanban (4 kolumny na dużych ekranach, filtrowana na małych) -->
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 items-start">
+  <!-- Główna siatka Kanban (4 kolumny na dużych ekranach, 1 kolumna pełnej szerokości na małych) -->
+  <div class="grid grid-cols-1 xl:grid-cols-4 gap-5 items-start">
 
     <!-- ========================================== -->
     <!-- KOLUMNA 1: OCZEKUJĄCE (pending) -->
     <!-- ========================================== -->
     <div 
       class="space-y-4"
-      [class.hidden]="activeMobileTab() !== 'pending' && false"
       [class.max-xl:hidden]="activeMobileTab() !== 'pending'"
     >
-      <!-- Nagłówek kolumny -->
-      <div class="bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between shadow-sm">
+      <!-- Nagłówek kolumny (widoczny tylko na desktopie xl, na mniejszych rolę stanu pełni pasek zakładek) -->
+      <div class="hidden xl:flex bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-xl p-3 items-center justify-between shadow-sm">
         <div class="flex items-center gap-2">
           <span class="w-3 h-3 rounded-full bg-amber-500 ring-4 ring-amber-500/20"></span>
-          <h2 class="font-bold text-slate-800 dark:text-slate-200 text-sm uppercase tracking-wide">
+          <h2 class="font-bold text-slate-800 dark:text-slate-100 text-sm uppercase tracking-wide">
             1. Oczekujące
           </h2>
         </div>
@@ -123,7 +108,7 @@
       </div>
 
       <!-- Lista zamówień w kolejce -->
-      <div class="space-y-3 min-h-[120px]">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-3 min-h-[120px]">
         @for (order of pendingOrders(); track order.id) {
           <div class="gastro-card border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-all p-4 space-y-3 bg-white dark:bg-slate-800/90">
             <!-- Pasek góry karty -->
@@ -199,7 +184,7 @@
             </div>
           </div>
         } @empty {
-          <div class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-6 text-center text-slate-400">
+          <div class="col-span-full border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-6 text-center text-slate-400">
             <span class="material-icons-round text-3xl mb-1 text-slate-300 dark:text-slate-600">inbox</span>
             <p class="text-xs font-medium">Brak nowych zamówień</p>
           </div>
@@ -214,8 +199,8 @@
       class="space-y-4"
       [class.max-xl:hidden]="activeMobileTab() !== 'in_progress'"
     >
-      <!-- Nagłówek kolumny -->
-      <div class="bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/30 rounded-xl p-3 flex items-center justify-between shadow-sm">
+      <!-- Nagłówek kolumny (widoczny tylko na desktopie xl, na mniejszych rolę stanu pełni pasek zakładek) -->
+      <div class="hidden xl:flex bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/30 rounded-xl p-3 items-center justify-between shadow-sm">
         <div class="flex items-center gap-2">
           <span class="w-3 h-3 rounded-full bg-sky-500 ring-4 ring-sky-500/20"></span>
           <h2 class="font-bold text-slate-800 dark:text-slate-200 text-sm uppercase tracking-wide">
@@ -228,7 +213,7 @@
       </div>
 
       <!-- Lista zamówień w kuchni -->
-      <div class="space-y-3 min-h-[120px]">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-3 min-h-[120px]">
         @for (order of inProgressOrders(); track order.id) {
           <div class="gastro-card border-l-4 border-l-sky-500 shadow-sm hover:shadow-md transition-all p-4 space-y-3 bg-white dark:bg-slate-800/90">
             <!-- Pasek góry karty -->
@@ -290,7 +275,7 @@
             </div>
           </div>
         } @empty {
-          <div class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-6 text-center text-slate-400">
+          <div class="col-span-full border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-6 text-center text-slate-400">
             <span class="material-icons-round text-3xl mb-1 text-slate-300 dark:text-slate-600">soup_kitchen</span>
             <p class="text-xs font-medium">Kuchnia ma wolne moce</p>
           </div>
@@ -305,8 +290,8 @@
       class="space-y-4"
       [class.max-xl:hidden]="activeMobileTab() !== 'ready'"
     >
-      <!-- Nagłówek kolumny -->
-      <div class="bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-3 flex items-center justify-between shadow-sm">
+      <!-- Nagłówek kolumny (widoczny tylko na desktopie xl, na mniejszych rolę stanu pełni pasek zakładek) -->
+      <div class="hidden xl:flex bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-3 items-center justify-between shadow-sm">
         <div class="flex items-center gap-2">
           <span class="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20"></span>
           <h2 class="font-bold text-slate-800 dark:text-slate-200 text-sm uppercase tracking-wide">
@@ -319,7 +304,7 @@
       </div>
 
       <!-- Lista dań gotowych -->
-      <div class="space-y-3 min-h-[120px]">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-3 min-h-[120px]">
         @for (order of readyOrders(); track order.id) {
           <div class="gastro-card border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-all p-4 space-y-3 bg-emerald-50/20 dark:bg-emerald-950/10">
             <!-- Pasek góry karty -->
@@ -395,7 +380,7 @@
             </div>
           </div>
         } @empty {
-          <div class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-6 text-center text-slate-400">
+          <div class="col-span-full border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-6 text-center text-slate-400">
             <span class="material-icons-round text-3xl mb-1 text-slate-300 dark:text-slate-600">dinner_dining</span>
             <p class="text-xs font-medium">Brak gotowych dań</p>
           </div>
@@ -410,8 +395,8 @@
       class="space-y-4"
       [class.max-xl:hidden]="activeMobileTab() !== 'completed'"
     >
-      <!-- Nagłówek kolumny -->
-      <div class="bg-slate-200/60 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl p-3 flex items-center justify-between shadow-sm">
+      <!-- Nagłówek kolumny (widoczny tylko na desktopie xl, na mniejszych rolę stanu pełni pasek zakładek) -->
+      <div class="hidden xl:flex bg-slate-200/60 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl p-3 items-center justify-between shadow-sm">
         <div class="flex items-center gap-2">
           <span class="w-3 h-3 rounded-full bg-slate-400 dark:bg-slate-500"></span>
           <h2 class="font-bold text-slate-800 dark:text-slate-200 text-sm uppercase tracking-wide">
@@ -429,7 +414,7 @@
       </div>
 
       <!-- Lista wydanych zamówień -->
-      <div class="space-y-3 min-h-[120px]">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-3 min-h-[120px]">
         @for (order of completedOrders(); track order.id) {
           <div class="gastro-card opacity-85 hover:opacity-100 transition-opacity p-3.5 space-y-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
             <!-- Pasek góry karty -->
@@ -481,7 +466,7 @@
             </div>
           </div>
         } @empty {
-          <div class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-6 text-center text-slate-400">
+          <div class="col-span-full border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-6 text-center text-slate-400">
             <span class="material-icons-round text-3xl mb-1 text-slate-300 dark:text-slate-600">done_all</span>
             <p class="text-xs font-medium">Brak zrealizowanych zamówień</p>
           </div>
@@ -490,12 +475,4 @@
     </div>
 
   </div>
-
-  <!-- Modal Nowego Zamówienia -->
-  @if (isNewOrderModalOpen()) {
-    <app-new-order-modal
-      (close)="closeNewOrderModal()"
-      (created)="closeNewOrderModal()"
-    ></app-new-order-modal>
-  }
 </div>

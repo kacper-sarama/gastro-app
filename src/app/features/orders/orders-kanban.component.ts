@@ -3,21 +3,16 @@ import { CommonModule } from '@angular/common';
 import { OrderService } from '../../core/services/order.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Order, OrderStatus } from '../../core/models/order.model';
-import { NewOrderModalComponent } from './new-order-modal.component';
-import { OrdersStatsBarComponent } from './orders-stats-bar.component';
 
 @Component({
   selector: 'app-orders-kanban',
   standalone: true,
-  imports: [CommonModule, NewOrderModalComponent, OrdersStatsBarComponent],
+  imports: [CommonModule],
   templateUrl: './orders-kanban.component.html'
 })
 export class OrdersKanbanComponent {
   readonly orderService = inject(OrderService);
   readonly authService = inject(AuthService);
-
-  // Kontrola modala nowego zamówienia
-  isNewOrderModalOpen = signal<boolean>(false);
 
   // Zakładka dla widoku mobilnego (na małych ekranach)
   activeMobileTab = signal<OrderStatus>('pending');
@@ -38,14 +33,6 @@ export class OrdersKanbanComponent {
   readonly completedOrders = computed(() => 
     this.orderService.orders().filter(o => o.status === 'completed')
   );
-
-  openNewOrderModal(): void {
-    this.isNewOrderModalOpen.set(true);
-  }
-
-  closeNewOrderModal(): void {
-    this.isNewOrderModalOpen.set(false);
-  }
 
   /**
    * Przesuwa zamówienie o jeden krok w przód na tablicy Kanban:

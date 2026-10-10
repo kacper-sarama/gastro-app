@@ -8,12 +8,13 @@ import { OrderService } from '../../core/services/order.service';
 import { PromotionService } from '../../core/services/promotion.service';
 import { TableService } from '../../core/services/table.service';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
+import { OrdersStatsBarComponent } from '../orders/orders-stats-bar.component';
 import { formatStockAmount } from '../../core/models/inventory-item.model';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, StatCardComponent],
+  imports: [CommonModule, RouterLink, StatCardComponent, OrdersStatsBarComponent],
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent {
