@@ -39,6 +39,11 @@ export class OrdersKanbanComponent {
    * pending -> in_progress -> ready -> completed (zdejmuje składniki z magazynu!)
    */
   async advanceStatus(order: Order): Promise<void> {
+    // Kucharz nie ma uprawnień do wydania potrawy (status 'ready' -> 'completed')
+    if (order.status === 'ready' && this.authService.currentUserRole() === 'kitchen') {
+      return;
+    }
+
     let nextStatus: OrderStatus | null = null;
 
     if (order.status === 'pending') {

@@ -368,14 +368,21 @@
                   <span class="material-icons-round text-base">undo</span>
                 </button>
 
-                <button
-                  type="button"
-                  (click)="advanceStatus(order)"
-                  class="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all active:scale-95"
-                >
-                  <span class="material-icons-round text-sm">check_circle</span>
-                  <span>Wydaj (Odpisz z magazynu)</span>
-                </button>
+                @if (authService.currentUserRole() !== 'kitchen') {
+                  <button
+                    type="button"
+                    (click)="advanceStatus(order)"
+                    class="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all active:scale-95"
+                  >
+                    <span class="material-icons-round text-sm">check_circle</span>
+                    <span>Wydaj (Odpisz z magazynu)</span>
+                  </button>
+                } @else {
+                  <div class="flex-1 py-2 px-3 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex items-center justify-center gap-1.5 select-none">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Czeka na odbiór kelnera</span>
+                  </div>
+                }
               </div>
             </div>
           </div>
