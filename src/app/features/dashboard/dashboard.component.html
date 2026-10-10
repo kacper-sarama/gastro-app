@@ -1,359 +1,646 @@
-<div class="space-y-6">
-  <!-- Welcome Header -->
+<div class="space-y-8">
+  <!-- ======================================================== -->
+  <!-- 0. WELCOME HEADER & SZYBKIE PRZEJŚCIA                     -->
+  <!-- ======================================================== -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
-      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
         <span>Witaj w panelu, {{ authService.restaurantName() }}!</span>
         <span class="text-2xl">👋</span>
       </h1>
       <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
-        Centrum kontroli zamówień kuchennych, magazynu surowców i cyfrowej karty dań.
+        Centrum dowodzenia menedżera: finanse, operacje na sali, kuchnia KDS i gospodarka magazynowa.
       </p>
     </div>
 
-    <div class="flex items-center gap-3 w-full sm:w-auto">
-      <a routerLink="/orders" class="gastro-btn-primary shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 w-full sm:w-auto">
-        <span class="material-icons-round text-lg">view_kanban</span>
-        <span>Otwórz Tablicę Kuchni (KDS)</span>
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <a routerLink="/tables" class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 font-bold text-xs shadow-xs transition-all flex items-center gap-2">
+        <span class="material-icons-round text-base text-indigo-500">table_restaurant</span>
+        <span>Plan Sali</span>
+      </a>
+      <a routerLink="/orders" class="gastro-btn-primary shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 text-xs py-2.5 px-4 font-bold">
+        <span class="material-icons-round text-base">view_kanban</span>
+        <span>Tablica Kuchni (KDS)</span>
       </a>
     </div>
   </div>
 
-  <!-- Smart Promocje Banner -->
-  <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-orange-500/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
-    <div class="flex items-center gap-3.5">
-      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20 shrink-0">
-        <span class="material-icons-round text-2xl">local_offer</span>
-      </div>
-      <div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Smart Promocje & Psychologia Fast-Food</h3>
-          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 uppercase">
-            {{ promotionService.activePromotionsCount() }} aktywnych akcji
-          </span>
+  <!-- ======================================================== -->
+  <!-- SEKCJA 1: PODSUMOWANIE FINANSOWO-OPERACYJNE (EXECUTIVE)   -->
+  <!-- ======================================================== -->
+  <div class="space-y-3">
+    <!-- Header sekcji -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+          <span class="material-icons-round text-lg">payments</span>
         </div>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Wygenerowany obrót z promkami: <strong class="text-slate-800 dark:text-slate-200">{{ promotionService.totalRevenueGenerated().toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} zł</strong> • Użycia w kasie: <strong class="text-slate-800 dark:text-slate-200">{{ promotionService.totalUsagesCount() }}x</strong>
-        </p>
+        <div>
+          <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            Wyniki Finansowe & Obłożenie Sali
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Kluczowe metryki sprzedaży, otwartych rachunków i wykorzystania sali
+          </p>
+        </div>
       </div>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <a
-        routerLink="/promotions"
-        class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0"
-      >
-        <span>Zarządzaj Promocjami</span>
-        <span class="material-icons-round text-sm">arrow_forward</span>
-      </a>
-    </div>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- PODGLĄD STATUSÓW ZAMÓWIEŃ (KANBAN LIVE STATUS BAR)       -->
-  <!-- ======================================================== -->
-  <div class="space-y-2">
-    <div class="flex items-center justify-between">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span>Bieżący Stan Zamówień (Kuchnia & Sala)</span>
-      </h2>
-      <a routerLink="/orders" class="text-xs font-semibold text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-0.5">
-        <span>Zobacz pełną tablicę KDS</span>
+      <a routerLink="/tables" class="text-xs font-semibold text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-0.5">
+        <span>Zobacz salę na żywo</span>
         <span class="material-icons-round text-xs">arrow_forward</span>
       </a>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      <!-- 1. Oczekujące -->
-      <a routerLink="/orders" class="gastro-card border-l-4 border-l-amber-500 hover:shadow-md transition-all group block p-4 bg-white dark:bg-slate-800">
-        <div class="flex items-center justify-between">
-          <div>
-            <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">1. Oczekujące</span>
-            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">
-              {{ orderService.pendingOrdersCount() }}
-            </div>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <span class="material-icons-round">hourglass_empty</span>
-          </div>
-        </div>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
-          Czeka w kolejce na start
-        </p>
-      </a>
+    <!-- Kafelki StatCard Executive -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- 1. Utarg zamknięty -->
+      <app-stat-card
+        title="Utarg zamknięty (Dziś)"
+        [count]="(orderService.todaysRevenue() | number:'1.2-2') + ' zł'"
+        [subtitle]="orderService.completedOrdersCount() + ' rachunków • Śr. ' + (averageOrderValue() | number:'1.2-2') + ' zł'"
+        icon="point_of_sale"
+        color="emerald"
+        [isClickable]="true"
+        (cardClick)="navigate('/orders')"
+      ></app-stat-card>
 
-      <!-- 2. W przygotowaniu -->
-      <a routerLink="/orders" class="gastro-card border-l-4 border-l-sky-500 hover:shadow-md transition-all group block p-4 bg-white dark:bg-slate-800">
-        <div class="flex items-center justify-between">
-          <div>
-            <span class="text-[11px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider block">2. W kuchni</span>
-            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">
-              {{ orderService.inProgressOrdersCount() }}
-            </div>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-500 dark:text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <span class="material-icons-round">soup_kitchen</span>
-          </div>
-        </div>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
-          W trakcie przygotowania
-        </p>
-      </a>
+      <!-- 2. Rachunki otwarte na sali -->
+      <app-stat-card
+        title="Rachunki na sali (W toku)"
+        [count]="(totalOpenTabsValue() | number:'1.2-2') + ' zł'"
+        [subtitle]="'Potencjalny utarg: ' + (potentialTotalRevenue() | number:'1.2-2') + ' zł'"
+        icon="receipt_long"
+        color="indigo"
+        [isClickable]="true"
+        (cardClick)="navigate('/tables')"
+      ></app-stat-card>
 
-      <!-- 3. Gotowe do wydania -->
-      <a routerLink="/orders" class="gastro-card border-l-4 border-l-emerald-500 hover:shadow-md transition-all group block p-4 bg-white dark:bg-slate-800">
-        <div class="flex items-center justify-between">
-          <div>
-            <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">3. Gotowe</span>
-            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">
-              {{ orderService.readyOrdersCount() }}
-            </div>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <span class="material-icons-round">room_service</span>
-          </div>
-        </div>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
-          Czeka na odbiór / salę
-        </p>
-      </a>
+      <!-- 3. Obłożenie lokalu -->
+      <app-stat-card
+        title="Obłożenie lokalu"
+        [count]="occupancyRate() + '% (' + (tableService.occupiedTablesCount() + tableService.billRequestedCount()) + '/' + tableService.totalTablesCount() + ')'"
+        [subtitle]="tableService.freeTablesCount() + ' wolnych stolików • ~' + seatedGuestsEstimate() + ' gości'"
+        icon="table_restaurant"
+        color="orange"
+        [isClickable]="true"
+        (cardClick)="navigate('/tables')"
+      ></app-stat-card>
 
-      <!-- 4. Wydane dzisiaj -->
-      <a routerLink="/orders" class="gastro-card border-l-4 border-l-slate-400 dark:border-l-slate-600 hover:shadow-md transition-all group block p-4 bg-white dark:bg-slate-800">
-        <div class="flex items-center justify-between">
-          <div>
-            <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">4. Wydane</span>
-            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">
-              {{ orderService.completedOrdersCount() }}
-            </div>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-slate-500/10 text-slate-600 dark:text-slate-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <span class="material-icons-round">check_circle</span>
-          </div>
-        </div>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
-          Obrót: <span class="font-bold text-slate-800 dark:text-slate-200">{{ orderService.todaysRevenue().toFixed(2) }} zł</span>
-        </p>
-      </a>
+      <!-- 4. Kondycja magazynu -->
+      <app-stat-card
+        title="Kondycja magazynu"
+        [count]="inventoryService.criticalAlertsCount() + ' alertów'"
+        [subtitle]="inventoryService.criticalAlertsCount() > 0 ? 'Wymaga pilnego uzupełnienia' : 'Wszystkie stany w normie'"
+        icon="inventory_2"
+        [color]="inventoryService.criticalAlertsCount() > 0 ? 'rose' : 'emerald'"
+        [isClickable]="true"
+        (cardClick)="navigate('/inventory')"
+      ></app-stat-card>
     </div>
   </div>
 
-  <!-- Podgląd aktywnej kolejki kuchennej (jeśli są aktywne zamówienia) -->
-  @if (orderService.activeOrdersCount() > 0) {
-    <div class="gastro-card border border-slate-200 dark:border-slate-800 shadow-sm p-4">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
-        <div class="flex items-center gap-2">
-          <span class="material-icons-round text-orange-500">restaurant</span>
-          <h3 class="font-bold text-sm text-slate-900 dark:text-white">
-            Aktywne zamówienia na kuchni ({{ orderService.activeOrdersCount() }})
-          </h3>
+  <!-- ======================================================== -->
+  <!-- SEKCJA 2: PULS SERWISU & WĄSKIE GARDŁA ROTACJI           -->
+  <!-- ======================================================== -->
+  <div class="space-y-3">
+    <!-- Header sekcji -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+          <span class="material-icons-round text-lg">bolt</span>
         </div>
-        <a routerLink="/orders" class="text-xs text-orange-600 dark:text-orange-400 hover:underline font-semibold flex items-center gap-1">
-          <span>Przejdź do KDS</span>
-          <span class="material-icons-round text-sm">arrow_forward</span>
-        </a>
+        <div>
+          <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            Puls Serwisu na Żywo • Wąskie Gardła Rotacji
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Kluczowe punkty wymagające natychmiastowej uwagi obsługi sali i personelu kuchni
+          </p>
+        </div>
       </div>
+      <span class="text-xs text-slate-400 font-medium">Reaguj na bieżąco, by zachować płynność rotacji</span>
+    </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
-        @for (order of displayedActiveOrders(); track order.id) {
-          <div class="p-3 rounded-lg border bg-slate-50/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="font-extrabold text-sm text-slate-900 dark:text-white">#{{ order.orderNumber }}</span>
-                <span class="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300">
-                  {{ order.tableNumber }}
+    <!-- Kafelki StatCard Wąskie gardła -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <!-- 1. Dania do wydania -->
+      <app-stat-card
+        title="Dania gotowe do wydania"
+        [count]="orderService.readyOrdersCount()"
+        [subtitle]="orderService.readyOrdersCount() > 0 ? 'Czeka na kelnera na oknie wydawczym' : 'Brak oczekujących dań na wydawce'"
+        icon="room_service"
+        color="emerald"
+        [isActive]="orderService.readyOrdersCount() > 0"
+        [isClickable]="true"
+        (cardClick)="navigate('/orders')"
+      ></app-stat-card>
+
+      <!-- 2. Czekają na rachunek -->
+      <app-stat-card
+        title="Czekają na rachunek"
+        [count]="tableService.billRequestedCount()"
+        [subtitle]="tableService.billRequestedCount() > 0 ? 'Goście proszą o rozliczenie stolika' : 'Brak oczekujących na rachunek'"
+        icon="receipt"
+        color="amber"
+        [isActive]="tableService.billRequestedCount() > 0"
+        [isClickable]="true"
+        (cardClick)="navigate('/tables')"
+      ></app-stat-card>
+
+      <!-- 3. Do posprzątania -->
+      <app-stat-card
+        title="Stoliki do posprzątania"
+        [count]="tableService.dirtyTablesCount()"
+        [subtitle]="tableService.dirtyTablesCount() > 0 ? 'Stoliki zwolnione, przygotuj na nowych gości' : 'Wszystkie stoliki czyste i gotowe'"
+        icon="cleaning_services"
+        color="blue"
+        [isActive]="tableService.dirtyTablesCount() > 0"
+        [isClickable]="true"
+        (cardClick)="navigate('/tables')"
+      ></app-stat-card>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- SEKCJA 3: KUCHNIA KDS & PRZEPUSTOWOŚĆ BONÓW              -->
+  <!-- ======================================================== -->
+  <div class="space-y-3">
+    <!-- Header sekcji -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+          <span class="material-icons-round text-lg">soup_kitchen</span>
+        </div>
+        <div>
+          <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            Stan Realizacji w Kuchni (KDS Live Flow)
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Przepustowość kuchni oraz podgląd aktualnie przygotowywanych bonów
+          </p>
+        </div>
+      </div>
+      <a routerLink="/orders" class="text-xs font-semibold text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-0.5">
+        <span>Otwórz pełny KDS</span>
+        <span class="material-icons-round text-xs">arrow_forward</span>
+      </a>
+    </div>
+
+    <!-- 4 Zunifikowane Kafelki KDS Statuses -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <app-stat-card
+        title="1. Oczekujące"
+        [count]="orderService.pendingOrdersCount()"
+        subtitle="W kolejce do przygotowania"
+        icon="hourglass_top"
+        color="amber"
+        [isClickable]="true"
+        (cardClick)="navigate('/orders')"
+      ></app-stat-card>
+
+      <app-stat-card
+        title="2. W kuchni"
+        [count]="orderService.inProgressOrdersCount()"
+        subtitle="W trakcie gotowania"
+        icon="soup_kitchen"
+        color="blue"
+        [isClickable]="true"
+        (cardClick)="navigate('/orders')"
+      ></app-stat-card>
+
+      <app-stat-card
+        title="3. Gotowe do wydania"
+        [count]="orderService.readyOrdersCount()"
+        subtitle="Czeka na odbiór kelnera"
+        icon="room_service"
+        color="emerald"
+        [isClickable]="true"
+        (cardClick)="navigate('/orders')"
+      ></app-stat-card>
+
+      <app-stat-card
+        title="4. Wydane"
+        [count]="orderService.completedOrdersCount()"
+        [subtitle]="'Obrót: ' + (orderService.todaysRevenue() | number:'1.2-2') + ' zł'"
+        icon="done_all"
+        color="indigo"
+        [isClickable]="true"
+        (cardClick)="navigate('/orders')"
+      ></app-stat-card>
+    </div>
+
+    <!-- Podgląd aktywnej kolejki kuchennej (jeśli są aktywne zamówienia) -->
+    @if (orderService.activeOrdersCount() > 0) {
+      <div class="gastro-card border border-slate-200 dark:border-slate-800 shadow-sm p-4 mt-3">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+          <div class="flex items-center gap-2">
+            <span class="material-icons-round text-orange-500">restaurant</span>
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white">
+              Bieżące bony na blatach kuchennych ({{ orderService.activeOrdersCount() }})
+            </h3>
+          </div>
+          <a routerLink="/orders" class="text-xs text-orange-600 dark:text-orange-400 hover:underline font-semibold flex items-center gap-1">
+            <span>Zarządzaj w KDS</span>
+            <span class="material-icons-round text-sm">arrow_forward</span>
+          </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+          @for (order of displayedActiveOrders(); track order.id) {
+            <div class="p-3 rounded-xl border bg-slate-50/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2 hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="font-extrabold text-sm text-slate-900 dark:text-white">#{{ order.orderNumber }}</span>
+                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300">
+                    {{ order.tableNumber }}
+                  </span>
+                </div>
+                <span 
+                  class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+                  [ngClass]="{
+                    'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300': order.status === 'pending',
+                    'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300': order.status === 'in_progress',
+                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300': order.status === 'ready'
+                  }"
+                >
+                  <span class="material-icons-round text-xs" *ngIf="order.status === 'pending'">hourglass_top</span>
+                  <span class="material-icons-round text-xs" *ngIf="order.status === 'in_progress'">soup_kitchen</span>
+                  <span class="material-icons-round text-xs" *ngIf="order.status === 'ready'">room_service</span>
+                  {{ order.status === 'pending' ? 'Oczekujące' : (order.status === 'in_progress' ? 'W kuchni' : 'Gotowe do wydania') }}
                 </span>
               </div>
-              <span 
-                class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                [class.bg-amber-100]="order.status === 'pending'"
-                [class.text-amber-800]="order.status === 'pending'"
-                [class.bg-sky-100]="order.status === 'in_progress'"
-                [class.text-sky-800]="order.status === 'in_progress'"
-                [class.bg-emerald-100]="order.status === 'ready'"
-                [class.text-emerald-800]="order.status === 'ready'"
-              >
-                {{ order.status === 'pending' ? 'Oczekujące' : (order.status === 'in_progress' ? 'W kuchni' : 'Gotowe') }}
-              </span>
-            </div>
 
-            <div class="text-xs text-slate-600 dark:text-slate-400 space-y-0.5">
-              @for (item of order.items; track item.recipeId + $index) {
-                <div class="truncate">
-                  <span class="font-semibold text-slate-800 dark:text-slate-200">{{ item.quantity }}x</span> {{ item.recipeName }}
-                </div>
-              }
-            </div>
+              <div class="text-xs text-slate-600 dark:text-slate-400 space-y-0.5 max-h-24 overflow-y-auto">
+                @for (item of order.items; track item.recipeId + $index) {
+                  <div class="truncate flex items-center justify-between">
+                    <span class="truncate">
+                      <span class="font-semibold text-slate-800 dark:text-slate-200">{{ item.quantity }}x</span> {{ item.recipeName }}
+                    </span>
+                    <span class="text-[11px] text-slate-400 shrink-0 font-mono pl-2">{{ (item.unitPrice * item.quantity).toFixed(2) }} zł</span>
+                  </div>
+                }
+              </div>
 
-            <div class="pt-2 border-t border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
-              <span>{{ getElapsedTime(order.createdAt) }}</span>
-              <span class="font-bold text-slate-700 dark:text-slate-300">{{ order.totalPrice.toFixed(2) }} zł</span>
+              <div class="pt-2 border-t border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
+                <span class="flex items-center gap-0.5">
+                  <span class="material-icons-round text-xs">schedule</span>
+                  {{ getElapsedTime(order.createdAt) }}
+                </span>
+                <span class="font-bold text-slate-800 dark:text-slate-200">{{ order.totalPrice.toFixed(2) }} zł</span>
+              </div>
             </div>
-          </div>
-        }
+          }
 
-        <!-- 6. Kafelek informujący o pozostałych zamówieniach z szybkim przejściem do KDS -->
-        @if (remainingOrdersCount() > 0) {
-          <a
-            routerLink="/orders"
-            class="p-4 rounded-lg border-2 border-dashed border-orange-300 dark:border-orange-500/30 hover:border-orange-500 bg-orange-50/40 dark:bg-orange-500/5 hover:bg-orange-100/50 dark:hover:bg-orange-500/10 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md min-h-[110px]"
-          >
-            <div class="w-9 h-9 rounded-full bg-orange-500/15 text-orange-600 dark:text-orange-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <span class="material-icons-round text-xl">view_kanban</span>
-            </div>
-            <div>
-              <span class="font-extrabold text-sm text-slate-900 dark:text-white block">
-                +{{ remainingOrdersCount() }} więcej w KDS
-              </span>
-              <span class="text-[11px] text-orange-600 dark:text-orange-400 font-semibold flex items-center justify-center gap-1 mt-0.5">
-                <span>Otwórz pełną tablicę kuchni</span>
-                <span class="material-icons-round text-xs group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
-              </span>
-            </div>
-          </a>
-        }
-      </div>
-    </div>
-  }
-
-  <!-- Quick Metrics Grid (Magazyn, Alerty, Receptury, Menu) -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <!-- Pozycje w magazynie -->
-    <a routerLink="/inventory" class="gastro-card border-l-4 border-l-orange-500 hover:shadow-md transition-shadow block group">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Surowce w bazie</p>
-          <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ inventoryService.totalItemsCount() }}</h3>
-        </div>
-        <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-          <span class="material-icons-round">kitchen</span>
+          <!-- Kafelek informujący o pozostałych zamówieniach -->
+          @if (remainingOrdersCount() > 0) {
+            <a
+              routerLink="/orders"
+              class="p-4 rounded-xl border-2 border-dashed border-orange-300 dark:border-orange-500/30 hover:border-orange-500 bg-orange-50/40 dark:bg-orange-500/5 hover:bg-orange-100/50 dark:hover:bg-orange-500/10 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md min-h-[110px]"
+            >
+              <div class="w-9 h-9 rounded-full bg-orange-500/15 text-orange-600 dark:text-orange-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span class="material-icons-round text-xl">view_kanban</span>
+              </div>
+              <div>
+                <span class="font-extrabold text-sm text-slate-900 dark:text-white block">
+                  +{{ remainingOrdersCount() }} więcej w KDS
+                </span>
+                <span class="text-[11px] text-orange-600 dark:text-orange-400 font-semibold flex items-center justify-center gap-1 mt-0.5">
+                  <span>Otwórz pełną tablicę kuchni</span>
+                  <span class="material-icons-round text-xs group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                </span>
+              </div>
+            </a>
+          }
         </div>
       </div>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-3">
-        Ewidencja w g, ml, szt
-      </p>
-    </a>
-
-    <!-- Alerty zamówień -->
-    <a routerLink="/inventory" class="gastro-card border-l-4 hover:shadow-md transition-shadow block group" [class.border-l-rose-500]="inventoryService.criticalAlertsCount() > 0" [class.border-l-emerald-500]="inventoryService.criticalAlertsCount() === 0">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Braki surowców</p>
-          <h3 class="text-2xl font-bold mt-1" [class.text-rose-600]="inventoryService.criticalAlertsCount() > 0" [class.dark:text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.text-emerald-600]="inventoryService.criticalAlertsCount() === 0" [class.dark:text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
-            {{ inventoryService.criticalAlertsCount() }}
-          </h3>
-        </div>
-        <div class="w-10 h-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform" [class.bg-rose-500/10]="inventoryService.criticalAlertsCount() > 0" [class.text-rose-500]="inventoryService.criticalAlertsCount() > 0" [class.dark:text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.bg-emerald-500/10]="inventoryService.criticalAlertsCount() === 0" [class.text-emerald-500]="inventoryService.criticalAlertsCount() === 0" [class.dark:text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
-          <span class="material-icons-round">
-            {{ inventoryService.criticalAlertsCount() > 0 ? 'shopping_basket' : 'check_circle' }}
-          </span>
-        </div>
-      </div>
-      <p class="text-xs mt-3 font-medium" [class.text-rose-600]="inventoryService.criticalAlertsCount() > 0" [class.dark:text-rose-400]="inventoryService.criticalAlertsCount() > 0" [class.text-emerald-600]="inventoryService.criticalAlertsCount() === 0" [class.dark:text-emerald-400]="inventoryService.criticalAlertsCount() === 0">
-        {{ inventoryService.criticalAlertsCount() > 0 ? 'Wymaga pilnego uzupełnienia' : 'Stany w normie' }}
-      </p>
-    </a>
-
-    <!-- Wydajność dań (Faza 3 zintegrowana) -->
-    <a routerLink="/recipes" class="gastro-card border-l-4 border-l-amber-500 hover:shadow-md transition-shadow block group">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Księga Receptur</p>
-          <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ recipeService.totalRecipesCount() }} dań</h3>
-        </div>
-        <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-          <span class="material-icons-round">menu_book</span>
-        </div>
-      </div>
-      <p class="text-xs mt-3 font-medium flex items-center justify-between">
-        <span class="text-emerald-600 dark:text-emerald-400">Gotowe: {{ recipeService.availableRecipesCount() }}</span>
-        @if (recipeService.blockedRecipesCount() > 0) {
-          <span class="text-rose-600 dark:text-rose-400">Brak składników: {{ recipeService.blockedRecipesCount() }}</span>
-        } @else {
-          <span class="text-slate-400">Wszystkie aktywne</span>
-        }
-      </p>
-    </a>
-
-    <!-- Karta Menu (Faza 4 aktywna) -->
-    <a routerLink="/dishes" class="gastro-card border-l-4 border-l-blue-500 hover:shadow-md transition-shadow block group">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Karta Menu</p>
-          <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">Aktywna</h3>
-        </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-500 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-          <span class="material-icons-round">qr_code_2</span>
-        </div>
-      </div>
-      <p class="text-xs text-blue-600 dark:text-blue-400 mt-3 font-medium flex items-center gap-1">
-        <span>Zarządzaj kartą i kodem QR</span>
-        <span class="material-icons-round text-xs">arrow_forward</span>
-      </p>
-    </a>
+    }
   </div>
 
-  <!-- Critical Stock Alert Widget -->
-  @if (inventoryService.criticalAlertsCount() > 0) {
-    <div class="gastro-card border-l-4 border-l-rose-500 shadow-xl">
-      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-rose-500/10 text-rose-500 dark:text-rose-400 flex items-center justify-center">
-            <span class="material-icons-round">notification_important</span>
+  <!-- ======================================================== -->
+  <!-- SEKCJA 4: ROZKŁAD OBŁOŻENIA WG STREF SALI                -->
+  <!-- ======================================================== -->
+  <div class="space-y-3">
+    <!-- Header sekcji -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+          <span class="material-icons-round text-lg">chair</span>
+        </div>
+        <div>
+          <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            Rozkład Obłożenia wg Stref Sali
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Wykorzystanie przestrzeni lokalu i dostępność stolików na żywo
+          </p>
+        </div>
+      </div>
+      <a routerLink="/tables" class="text-xs font-semibold text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-0.5">
+        <span>Zarządzaj stolikami</span>
+        <span class="material-icons-round text-xs">arrow_forward</span>
+      </a>
+    </div>
+
+    <!-- Siatka stref sali -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      @for (zone of zoneOccupancy(); track zone.name) {
+        <a 
+          routerLink="/tables" 
+          class="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-md transition-all group block space-y-3"
+        >
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-900 dark:text-white text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              {{ zone.name }}
+            </span>
+            <span 
+              class="px-2 py-0.5 rounded-full text-[11px] font-bold"
+              [ngClass]="zone.percentage >= 80 
+                ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'
+                : zone.percentage >= 40 
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'"
+            >
+              {{ zone.percentage }}% zajęte
+            </span>
           </div>
-          <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">Surowce wymagające zamówienia</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Te składniki są na wyczerpaniu lub ich stan wynosi zero.</p>
+
+          <!-- Progress bar -->
+          <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div 
+              class="h-2 rounded-full transition-all duration-500"
+              [style.width.%]="zone.percentage"
+              [ngClass]="zone.percentage >= 80 ? 'bg-rose-500' : zone.percentage >= 40 ? 'bg-amber-500' : 'bg-emerald-500'"
+            ></div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800">
+            <span>Stoliki: <strong>{{ zone.occupied }}/{{ zone.total }}</strong></span>
+            <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ zone.free }} wolnych</span>
+          </div>
+        </a>
+      } @empty {
+        <div class="col-span-full border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center text-slate-400">
+          <p class="text-xs">Brak zdefiniowanych stref w lokalu.</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- SEKCJA 5: MIKS SPRZEDAŻY & SMART PROMOCJE                -->
+  <!-- ======================================================== -->
+  <div class="space-y-3">
+    <!-- Header sekcji -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
+          <span class="material-icons-round text-lg">trending_up</span>
+        </div>
+        <div>
+          <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            Miks Sprzedaży & Kampanie Promocyjne
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Bestsellery dzisiejszego dnia oraz efektywność zniżek i promocji
+          </p>
+        </div>
+      </div>
+      <a routerLink="/promotions" class="text-xs font-semibold text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-0.5">
+        <span>Zarządzaj promocjami</span>
+        <span class="material-icons-round text-xs">arrow_forward</span>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+      <!-- LEWA: Top 5 Bestsellerów Dzisiaj -->
+      <div class="gastro-card p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="material-icons-round text-amber-500">military_tech</span>
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white">
+              Bestsellery dnia (Top pozycje)
+            </h3>
+          </div>
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            {{ totalSoldItemsToday() }} porcji łącznie
+          </span>
+        </div>
+
+        <div class="space-y-3">
+          @for (dish of topSellingDishes(); track dish.recipeName; let idx = $index) {
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span 
+                    class="w-5 h-5 rounded-md text-[10px] font-black flex items-center justify-center shrink-0"
+                    [ngClass]="idx === 0 
+                      ? 'bg-amber-500 text-white' 
+                      : idx === 1 
+                        ? 'bg-slate-300 text-slate-800 dark:bg-slate-700 dark:text-slate-200' 
+                        : idx === 2 
+                          ? 'bg-amber-700/60 text-white' 
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'"
+                  >
+                    #{{ idx + 1 }}
+                  </span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200 truncate">{{ dish.recipeName }}</span>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class="font-extrabold text-slate-900 dark:text-white">{{ dish.quantity }} szt.</span>
+                  <span class="font-mono text-slate-500 dark:text-slate-400 text-[11px]">{{ dish.revenue.toFixed(2) }} zł</span>
+                </div>
+              </div>
+
+              <!-- Pasek udziału -->
+              <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-orange-500 h-1.5 rounded-full" [style.width.%]="dish.share"></div>
+              </div>
+            </div>
+          } @empty {
+            <div class="py-8 text-center text-slate-400">
+              <span class="material-icons-round text-3xl mb-1 text-slate-300 dark:text-slate-600">restaurant_menu</span>
+              <p class="text-xs font-medium">Brak zrealizowanych pozycji dzisiaj</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- PRAWA: Smart Promocje & Psychologia Fast-Food -->
+      <div class="p-5 rounded-2xl bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent border border-orange-500/20 flex flex-col justify-between gap-5 h-full">
+        <div>
+          <div class="flex items-center justify-between gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20 shrink-0">
+              <span class="material-icons-round text-2xl">local_offer</span>
+            </div>
+            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/20 uppercase">
+              {{ promotionService.activePromotionsCount() }} aktywnych akcji
+            </span>
+          </div>
+
+          <div class="mt-4">
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Smart Promocje & Psychologia Fast-Food</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+              Zestawy, happy hours i rabaty kwotowe. Analiza wpływu akcji promocyjnych na koszyk zakupowy gości.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-orange-500/15">
+            <div class="p-3 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-orange-500/15">
+              <span class="text-[11px] font-bold text-slate-400 block uppercase">Obrót z promek</span>
+              <span class="text-lg font-black text-slate-900 dark:text-white mt-0.5 block">
+                {{ promotionService.totalRevenueGenerated() | number:'1.2-2' }} zł
+              </span>
+            </div>
+            <div class="p-3 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-orange-500/15">
+              <span class="text-[11px] font-bold text-slate-400 block uppercase">Użycia w kasie</span>
+              <span class="text-lg font-black text-slate-900 dark:text-white mt-0.5 block">
+                {{ promotionService.totalUsagesCount() }}x
+              </span>
+            </div>
           </div>
         </div>
-        <a routerLink="/inventory" class="text-xs text-orange-600 dark:text-orange-400 hover:text-orange-500 dark:hover:text-orange-300 font-semibold flex items-center gap-1">
-          <span>Zarządzaj w magazynie</span>
+
+        <a
+          routerLink="/promotions"
+          class="w-full py-2.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2"
+        >
+          <span>Konfiguruj reguły i rabaty</span>
           <span class="material-icons-round text-sm">arrow_forward</span>
         </a>
       </div>
+    </div>
+  </div>
 
-      <div class="divide-y divide-slate-200 dark:divide-slate-800/60 mt-2">
-        <!-- Wyczerpane (Brak) -->
-        @for (item of inventoryService.outOfStockItems(); track item.id) {
-          <div class="py-3 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5 min-w-0 flex-1">
-              <span class="status-badge-danger shrink-0 text-[11px]">Brak (0)</span>
-              <span class="font-medium text-slate-900 dark:text-white text-sm truncate">{{ item.name }}</span>
+  <!-- ======================================================== -->
+  <!-- SEKCJA 6: GOSPODARKA MAGAZYNOWA & RECEPTURY              -->
+  <!-- ======================================================== -->
+  <div class="space-y-3">
+    <!-- Header sekcji -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+          <span class="material-icons-round text-lg">inventory_2</span>
+        </div>
+        <div>
+          <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            Gospodarka Magazynowa & Receptury
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Dostępność składników oraz alerty minimalnych stanów magazynowych
+          </p>
+        </div>
+      </div>
+      <a routerLink="/inventory" class="text-xs font-semibold text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-0.5">
+        <span>Zarządzaj magazynem</span>
+        <span class="material-icons-round text-xs">arrow_forward</span>
+      </a>
+    </div>
+
+    <!-- 4 Zunifikowane Kafelki StatCard Magazynu & Receptur -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <app-stat-card
+        title="Surowce w bazie"
+        [count]="inventoryService.totalItemsCount()"
+        subtitle="Ewidencja w g, ml, szt"
+        icon="kitchen"
+        color="orange"
+        [isClickable]="true"
+        (cardClick)="navigate('/inventory')"
+      ></app-stat-card>
+
+      <app-stat-card
+        title="Braki surowców"
+        [count]="inventoryService.criticalAlertsCount()"
+        [subtitle]="inventoryService.criticalAlertsCount() > 0 ? 'Wymaga pilnego uzupełnienia' : 'Wszystkie stany w normie'"
+        icon="shopping_basket"
+        [color]="inventoryService.criticalAlertsCount() > 0 ? 'rose' : 'emerald'"
+        [isActive]="inventoryService.criticalAlertsCount() > 0"
+        [isClickable]="true"
+        (cardClick)="navigate('/inventory')"
+      ></app-stat-card>
+
+      <app-stat-card
+        title="Księga Receptur"
+        [count]="recipeService.totalRecipesCount() + ' dań'"
+        [subtitle]="'Dostępne: ' + recipeService.availableRecipesCount() + ' • Braki: ' + recipeService.blockedRecipesCount()"
+        icon="menu_book"
+        color="amber"
+        [isClickable]="true"
+        (cardClick)="navigate('/recipes')"
+      ></app-stat-card>
+
+      <app-stat-card
+        title="Karta Menu & QR"
+        count="Aktywna"
+        subtitle="Zarządzaj kartą i kodem QR"
+        icon="qr_code_2"
+        color="blue"
+        [isClickable]="true"
+        (cardClick)="navigate('/dishes')"
+      ></app-stat-card>
+    </div>
+
+    <!-- Krytyczne braki magazynowe (Szczegółowy widget) -->
+    @if (inventoryService.criticalAlertsCount() > 0) {
+      <div class="gastro-card border-l-4 border-l-rose-500 shadow-md p-5 mt-3">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-rose-500/10 text-rose-500 dark:text-rose-400 flex items-center justify-center">
+              <span class="material-icons-round">notification_important</span>
             </div>
-            <div class="text-right shrink-0">
-              <span class="text-xs text-rose-600 dark:text-rose-400 font-semibold block">0 {{ item.unit }}</span>
-              <span class="text-[11px] text-slate-500 dark:text-slate-400">Próg: {{ formatAmount(item.minAmount, item.unit).display }}</span>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Składniki wymagające pilnego zamówienia</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Te surowce spadły poniżej progu minimalnego i mogą zablokować dania w menu.</p>
             </div>
           </div>
-        }
+          <a routerLink="/inventory" class="text-xs text-orange-600 dark:text-orange-400 hover:text-orange-500 dark:hover:text-orange-300 font-semibold flex items-center gap-1">
+            <span>Uzupełnij stany</span>
+            <span class="material-icons-round text-sm">arrow_forward</span>
+          </a>
+        </div>
 
-        <!-- Kończące się (Niski stan) -->
-        @for (item of inventoryService.lowStockItems(); track item.id) {
-          <div class="py-3 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5 min-w-0 flex-1">
-              <span class="status-badge-warning shrink-0 text-[11px]">Niski stan</span>
-              <span class="font-medium text-slate-900 dark:text-white text-sm truncate">{{ item.name }}</span>
+        <div class="divide-y divide-slate-200 dark:divide-slate-800/60 mt-2">
+          <!-- Wyczerpane (Brak) -->
+          @for (item of inventoryService.outOfStockItems(); track item.id) {
+            <div class="py-3 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                <span class="status-badge-danger shrink-0 text-[11px]">Brak (0)</span>
+                <span class="font-medium text-slate-900 dark:text-white text-sm truncate">{{ item.name }}</span>
+              </div>
+              <div class="text-right shrink-0">
+                <span class="text-xs text-rose-600 dark:text-rose-400 font-semibold block">0 {{ item.unit }}</span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Próg: {{ formatAmount(item.minAmount, item.unit).display }}</span>
+              </div>
             </div>
-            <div class="text-right shrink-0">
-              <span class="text-xs text-amber-600 dark:text-amber-400 font-semibold block">
-                Stan: {{ formatAmount(item.amount, item.unit).display }}
-              </span>
-              <span class="text-[11px] text-slate-500 dark:text-slate-400">Próg: {{ formatAmount(item.minAmount, item.unit).display }}</span>
+          }
+
+          <!-- Kończące się (Niski stan) -->
+          @for (item of inventoryService.lowStockItems(); track item.id) {
+            <div class="py-3 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                <span class="status-badge-warning shrink-0 text-[11px]">Niski stan</span>
+                <span class="font-medium text-slate-900 dark:text-white text-sm truncate">{{ item.name }}</span>
+              </div>
+              <div class="text-right shrink-0">
+                <span class="text-xs text-amber-600 dark:text-amber-400 font-semibold block">
+                  Stan: {{ formatAmount(item.amount, item.unit).display }}
+                </span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Próg: {{ formatAmount(item.minAmount, item.unit).display }}</span>
+              </div>
             </div>
-          </div>
-        }
+          }
+        </div>
       </div>
-    </div>
-  } @else {
-    <div class="gastro-card bg-emerald-500/5 border-emerald-500/20 p-5 flex items-center gap-4">
-      <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-        <span class="material-icons-round text-2xl">verified</span>
+    } @else {
+      <div class="gastro-card bg-emerald-500/5 border-emerald-500/20 p-5 flex items-center gap-4 mt-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+          <span class="material-icons-round text-2xl">verified</span>
+        </div>
+        <div>
+          <h4 class="font-semibold text-slate-900 dark:text-white text-sm">Wszystkie stany magazynowe w normie!</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Żaden surowiec nie spadł poniżej zdefiniowanego progu minimalnego.</p>
+        </div>
       </div>
-      <div>
-        <h4 class="font-semibold text-slate-900 dark:text-white text-sm">Wszystkie stany magazynowe w normie!</h4>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Żaden surowiec nie spadł poniżej zdefiniowanego progu minimalnego.</p>
-      </div>
-    </div>
-  }
+    }
+  </div>
 </div>
