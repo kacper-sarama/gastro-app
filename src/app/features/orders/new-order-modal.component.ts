@@ -56,6 +56,9 @@ export class NewOrderModalComponent {
   promoCodeInput = signal<string>('');
   promoCodeMessage = signal<{ text: string; isError: boolean } | null>(null);
 
+  // Notatki / uwagi dla kuchni
+  notes = signal<string>('');
+
   // Czy to domówienie do już zajętego stolika (kolejny bon kuchenny)
   readonly isReorder = computed<boolean>(() => {
     const num = this.tableNumber().trim().toLowerCase();
@@ -321,7 +324,8 @@ export class NewOrderModalComponent {
         appliedPromotionId: isPromoValid ? applied.promo.id : undefined,
         appliedPromotionName: isPromoValid ? applied.promo.name : undefined,
         discountAmount: isPromoValid ? this.discountAmount() : undefined,
-        originalPrice: this.totalPrice()
+        originalPrice: this.totalPrice(),
+        notes: this.notes().trim() || undefined
       });
 
       // Jeśli to zamówienie na stolik (nie wynos), oznacz stolik trwale jako zajęty

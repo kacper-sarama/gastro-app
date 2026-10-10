@@ -373,6 +373,7 @@ export class OrderService implements OnDestroy {
       discountAmount: discountAmount > 0 ? discountAmount : undefined,
       appliedPromotionId: dto.appliedPromotionId,
       appliedPromotionName: dto.appliedPromotionName,
+      notes: dto.notes?.trim() || undefined,
       status: 'pending' as OrderStatus,
       stockDeducted: false,
       createdAt: now,

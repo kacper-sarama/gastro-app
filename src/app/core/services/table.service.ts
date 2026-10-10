@@ -33,6 +33,7 @@ export class TableService {
   readonly selectedZone = signal<string>('all');
 
   private firestoreUnsub: Unsubscribe | null = null;
+  private isSeeding = false;
 
   // Reaktywne połączenie z zamówieniami na żywo (Live Order Binding)
   // Reaktywne połączenie z zamówieniami na żywo (Live Order Binding)
@@ -271,12 +272,48 @@ export class TableService {
             a.number.localeCompare(b.number, 'pl', { numeric: true, sensitivity: 'base' })
           );
 
-          this.tables.set(loaded);
+          // Deduplikacja w locie: grupujemy stoliki po (zone + number).
+          // Jeśli w Firestore znalazły się fizyczne duplikaty (np. przez współbieżną inicjalizację),
+          // wyświetlamy tylko 1 instancję, a nadmiarowe identyfikatory natychmiast usuwamy z bazy Firestore.
+          const seenMap = new Map<string, RestaurantTable>();
+          const duplicateIdsToDelete: string[] = [];
+          const uniqueLoaded: RestaurantTable[] = [];
+
+          for (const tbl of loaded) {
+            const key = `${(tbl.zone || '').trim().toLowerCase()}___${tbl.number.trim().toLowerCase()}`;
+            if (!seenMap.has(key)) {
+              seenMap.set(key, tbl);
+              uniqueLoaded.push(tbl);
+            } else {
+              const existing = seenMap.get(key)!;
+              // Jeśli ten ma aktywne zamówienie lub status inny niż free, zachowaj go zamiast wolnego
+              if (tbl.status !== 'free' && existing.status === 'free') {
+                duplicateIdsToDelete.push(existing.id);
+                seenMap.set(key, tbl);
+                const idx = uniqueLoaded.findIndex(u => u.id === existing.id);
+                if (idx !== -1) uniqueLoaded[idx] = tbl;
+              } else {
+                duplicateIdsToDelete.push(tbl.id);
+              }
+            }
+          }
+
+          // Ciche samoleczenie bazy w tle (Self-Healing Firestore Cleanup)
+          if (duplicateIdsToDelete.length > 0) {
+            const batch = writeBatch(this.firestore);
+            duplicateIdsToDelete.forEach(dupId => batch.delete(doc(this.firestore, `tables/${dupId}`)));
+            batch.commit().catch(err => console.error('Błąd czyszczenia duplikatów stolików w Firestore:', err));
+          }
+
+          this.tables.set(uniqueLoaded);
           this.isLoading.set(false);
 
           // Jeśli to nowe konto i nie ma stolików, załaduj starter
-          if (loaded.length === 0 && !this.isLoading()) {
-            this.resetToStarter(restaurantId, this.authService.isDemoAccount());
+          if (uniqueLoaded.length === 0 && !this.isLoading() && !this.isSeeding) {
+            this.isSeeding = true;
+            this.resetToStarter(restaurantId, this.authService.isDemoAccount()).finally(() => {
+              this.isSeeding = false;
+            });
           }
         },
         error => {
@@ -588,7 +625,8 @@ export class TableService {
 
     const newBatch = writeBatch(this.firestore);
     for (const tbl of starterTables) {
-      const newDocRef = doc(col);
+      const docKey = `${restaurantId}_${tbl.zone}_${tbl.number}`.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+      const newDocRef = doc(this.firestore, 'tables', docKey);
       newBatch.set(newDocRef, this.cleanObject(tbl));
     }
     await newBatch.commit();

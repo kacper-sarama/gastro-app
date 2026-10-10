@@ -105,5 +105,17 @@ service cloud.firestore {
         && request.resource.data.restaurantId == resource.data.restaurantId;
       allow delete: if isOwner(resource.data.restaurantId);
     }
+
+    // ========================================================
+    // 7. Zespół i Pracownicy Lokalu (staff)
+    // ========================================================
+    match /staff/{staffId} {
+      // Właściciel lokalu zarządza kontami personelu
+      allow read: if isOwner(resource.data.restaurantId);
+      allow create: if isOwner(request.resource.data.restaurantId);
+      allow update: if isOwner(resource.data.restaurantId)
+        && request.resource.data.restaurantId == resource.data.restaurantId;
+      allow delete: if isOwner(resource.data.restaurantId);
+    }
   }
 }

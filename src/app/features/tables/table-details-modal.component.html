@@ -178,6 +178,12 @@
               </div>
             </div>
 
+            <!-- Notatka dla kuchni / sali -->
+            <div *ngIf="order.notes" class="px-4 py-1.5 bg-amber-50/70 dark:bg-amber-950/20 border-b border-slate-100 dark:border-slate-800 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-1.5 font-medium">
+              <span class="material-icons-round text-xs text-amber-600">edit_note</span>
+              <span>Uwagi: {{ order.notes }}</span>
+            </div>
+
             <!-- Lista dań w tym bonie -->
             <div class="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-36 overflow-y-auto">
               <div *ngFor="let item of order.items" class="px-4 py-2 flex items-center justify-between text-xs hover:bg-slate-50/50 dark:hover:bg-slate-800/30">

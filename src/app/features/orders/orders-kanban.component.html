@@ -140,6 +140,14 @@
               </span>
             </div>
 
+            <!-- Notatka dla kuchni -->
+            @if (order.notes) {
+              <div class="px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-1.5 font-medium">
+                <span class="material-icons-round text-xs mt-0.5 text-amber-600">edit_note</span>
+                <span>{{ order.notes }}</span>
+              </div>
+            }
+
             <!-- Lista dań w zamówieniu -->
             <div class="space-y-1.5 py-1">
               @for (item of order.items; track item.recipeId + $index) {
@@ -237,6 +245,14 @@
               </span>
             </div>
 
+            <!-- Notatka dla kuchni -->
+            @if (order.notes) {
+              <div class="px-2.5 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/50 text-[11px] text-sky-800 dark:text-sky-300 flex items-start gap-1.5 font-medium">
+                <span class="material-icons-round text-xs mt-0.5 text-sky-600">edit_note</span>
+                <span>{{ order.notes }}</span>
+              </div>
+            }
+
             <!-- Lista dań w zamówieniu -->
             <div class="space-y-1.5 py-1">
               @for (item of order.items; track item.recipeId + $index) {
@@ -319,6 +335,14 @@
                 {{ getElapsedTime(order.createdAt) }}
               </span>
             </div>
+
+            <!-- Notatka dla kuchni -->
+            @if (order.notes) {
+              <div class="px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-[11px] text-emerald-800 dark:text-emerald-300 flex items-start gap-1.5 font-medium">
+                <span class="material-icons-round text-xs mt-0.5 text-emerald-600">edit_note</span>
+                <span>{{ order.notes }}</span>
+              </div>
+            }
 
             <!-- Lista dań w zamówieniu -->
             <div class="space-y-1.5 py-1">
@@ -421,6 +445,14 @@
                 Zrealizowane
               </span>
             </div>
+
+            <!-- Notatka dla kuchni -->
+            @if (order.notes) {
+              <div class="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-[11px] text-slate-700 dark:text-slate-300 flex items-start gap-1.5 font-medium">
+                <span class="material-icons-round text-xs mt-0.5 text-slate-500">edit_note</span>
+                <span>{{ order.notes }}</span>
+              </div>
+            }
 
             <!-- Lista dań w zamówieniu (skrócona) -->
             <div class="space-y-1 text-xs text-slate-600 dark:text-slate-400">

@@ -24,6 +24,7 @@ export interface Order {
   appliedPromotionName?: string;
   discountAmount?: number;
   originalPrice?: number;
+  notes?: string;
 }
 
 export interface CreateOrderDto {
@@ -33,4 +34,5 @@ export interface CreateOrderDto {
   appliedPromotionName?: string;
   discountAmount?: number;
   originalPrice?: number;
+  notes?: string;
 }
