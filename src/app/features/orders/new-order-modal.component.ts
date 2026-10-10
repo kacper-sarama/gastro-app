@@ -400,8 +400,9 @@ export class NewOrderModalComponent {
         notes: this.notes().trim() || undefined
       });
 
-      // Jeśli to zamówienie na stolik (nie wynos), oznacz stolik trwale jako zajęty
-      if (tableNumber.toLowerCase() !== 'wynos') {
+      // Jeśli to zamówienie na stolik sali (nie wynos / odbiór), oznacz stolik trwale jako zajęty
+      const isTakeout = this.selectedModalZone() === 'takeout' || tableNumber.toLowerCase().includes('wynos');
+      if (!isTakeout) {
         await this.tableService.occupyTableByNumber(tableNumber, {
           orderId: createdOrder.id,
           orderNumber: createdOrder.orderNumber,
