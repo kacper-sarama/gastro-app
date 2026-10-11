@@ -1,5 +1,5 @@
 <div 
-  class="relative overflow-hidden rounded-2xl border shadow-2xl bg-white dark:bg-slate-900 max-w-md w-full p-4 pointer-events-auto transition-all animate-fade-in isolate"
+  class="relative overflow-hidden rounded-2xl border shadow-2xl bg-white dark:bg-slate-900 w-full p-3.5 sm:p-4 pointer-events-auto transition-all animate-fade-in isolate"
   [class.border-amber-500/40]="data.type === 'warning'"
   [class.shadow-amber-500/10]="data.type === 'warning'"
   [class.border-rose-500/40]="data.type === 'danger'"
@@ -42,9 +42,9 @@
         <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white truncate">
           {{ defaultTitle }}
         </h4>
-        <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">teraz</span>
+        <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium shrink-0">teraz</span>
       </div>
-      <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+      <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed break-words">
         {{ data.message }}
       </p>
 
@@ -84,7 +84,7 @@
     <button
       type="button"
       (click)="onClose()"
-      class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 -mr-1 -mt-1"
+      class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
       title="Zamknij powiadomienie"
     >
       <span class="material-icons-round text-base">close</span>

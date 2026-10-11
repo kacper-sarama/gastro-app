@@ -63,6 +63,11 @@ export class MainLayoutComponent implements OnInit {
   isAccountModalOpen = signal(false);
   isResettingDemo = signal(false);
 
+  /** Sprawdza czy którekolwiek z górnych menu dropdown (rola, powiadomienia, profil) jest otwarte */
+  readonly isAnyTopMenuOpen = computed(() =>
+    this.isUserMenuOpen() || this.isRoleMenuOpen() || this.isNotificationsMenuOpen()
+  );
+
   private userHasManuallyToggled = false;
 
   readonly navItems: NavItem[] = [
@@ -161,6 +166,12 @@ export class MainLayoutComponent implements OnInit {
   }
 
   closeNotificationsMenu(): void {
+    this.isNotificationsMenuOpen.set(false);
+  }
+
+  closeAllTopMenus(): void {
+    this.isUserMenuOpen.set(false);
+    this.isRoleMenuOpen.set(false);
     this.isNotificationsMenuOpen.set(false);
   }
 
