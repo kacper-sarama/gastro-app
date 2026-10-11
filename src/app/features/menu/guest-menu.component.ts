@@ -14,6 +14,8 @@ import { PaymentService } from '../../core/services/payment.service';
 import { Recipe, RecipeCapacityResult, resolveFallbackIngredient } from '../../core/models/recipe.model';
 import { Order, OrderItem, CreateOrderDto } from '../../core/models/order.model';
 
+import { MatTabsModule } from '@angular/material/tabs';
+
 export interface CartItemDetail {
   recipe: Recipe;
   quantity: number;
@@ -23,7 +25,7 @@ export interface CartItemDetail {
 @Component({
   selector: 'app-guest-menu',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MatTabsModule],
   templateUrl: './guest-menu.component.html'
 })
 export class GuestMenuComponent implements OnInit, OnDestroy {
@@ -59,10 +61,47 @@ export class GuestMenuComponent implements OnInit, OnDestroy {
   blikTimer = signal<number>(60);
   isSubmitting = signal<boolean>(false);
 
-  // --- Stan po złożeniu zamówienia (Live Status) ---
-  completedOrder = signal<Order | null>(null);
-  private orderUnsub: Unsubscribe | null = null;
+  // --- Stan sesji zamówień gościa (Live Status & Multi-round) ---
+  readonly sessionOrders = signal<Order[]>([]);
+  readonly selectedOrderIndex = signal<number>(0);
+  isTrackerMinimized = signal<boolean>(false);
+  private orderSubscriptions = new Map<string, Unsubscribe>();
   private authTimerInterval: any = null;
+
+  readonly activeOrder = computed(() => {
+    const list = this.sessionOrders();
+    if (list.length === 0) return null;
+    const idx = this.selectedOrderIndex();
+    return list[idx] || list[list.length - 1];
+  });
+
+  // Kompatybilność wsteczna z szablonem
+  readonly completedOrder = computed(() => this.activeOrder());
+
+  readonly totalOrdersSpent = computed(() => 
+    this.sessionOrders().reduce((sum, o) => sum + (o.totalPrice || 0), 0)
+  );
+
+  readonly hasMultipleOrders = computed(() => this.sessionOrders().length > 1);
+
+  selectCategory(cat: string): void {
+    this.selectedCategory.set(cat);
+    if (this.sessionOrders().length > 0) {
+      this.isTrackerMinimized.set(true);
+    }
+  }
+
+  showFullTracker(): void {
+    this.isTrackerMinimized.set(false);
+  }
+
+  browseMenuWhileOrdered(): void {
+    this.isTrackerMinimized.set(true);
+  }
+
+  selectOrderRound(index: number): void {
+    this.selectedOrderIndex.set(index);
+  }
 
   constructor() {
     effect(() => {
@@ -117,17 +156,65 @@ export class GuestMenuComponent implements OnInit, OnDestroy {
       this.orderType.set('takeout');
       this.tableNumber.set('Wynos');
     }
+
+    this.restoreSessionOrders();
   }
 
   ngOnDestroy(): void {
-    if (this.orderUnsub) {
-      this.orderUnsub();
-      this.orderUnsub = null;
-    }
+    this.orderSubscriptions.forEach(unsub => unsub());
+    this.orderSubscriptions.clear();
     if (this.authTimerInterval) {
       clearInterval(this.authTimerInterval);
       this.authTimerInterval = null;
     }
+  }
+
+  private watchSessionOrder(orderId: string): void {
+    if (this.orderSubscriptions.has(orderId)) return;
+    const unsub = this.orderService.watchOrder(orderId, (updated) => {
+      if (updated) {
+        this.sessionOrders.update(list => {
+          const idx = list.findIndex(o => o.id === updated.id);
+          if (idx >= 0) {
+            const next = [...list];
+            next[idx] = updated;
+            return next;
+          }
+          return [...list, updated];
+        });
+        this.saveSessionOrders();
+      }
+    });
+    this.orderSubscriptions.set(orderId, unsub);
+  }
+
+  private getStorageKey(): string {
+    const table = this.tableNumber() || 'Stolik 1';
+    return `gastro_session_orders_${this.restaurantId()}_${table}`;
+  }
+
+  private saveSessionOrders(): void {
+    try {
+      const orders = this.sessionOrders();
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        sessionStorage.setItem(this.getStorageKey(), JSON.stringify(orders));
+      }
+    } catch (_) {}
+  }
+
+  private restoreSessionOrders(): void {
+    try {
+      if (typeof window === 'undefined' || !window.sessionStorage) return;
+      const raw = sessionStorage.getItem(this.getStorageKey());
+      if (raw) {
+        const parsed: Order[] = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.sessionOrders.set(parsed);
+          this.selectedOrderIndex.set(parsed.length - 1);
+          parsed.forEach(o => this.watchSessionOrder(o.id));
+        }
+      }
+    } catch (_) {}
   }
 
   // --- Filtrowanie i kategorie menu ---
@@ -381,10 +468,14 @@ export class GuestMenuComponent implements OnInit, OnDestroy {
       const isTakeout = this.orderType() === 'takeout';
       const resolvedTable = isTakeout ? 'Wynos' : (this.tableNumber().trim() || 'Stolik 1');
 
+      const currentRounds = this.sessionOrders().length;
+      const roundNote = currentRounds > 0 ? `[Domówienie - Runda ${currentRounds + 1}]` : '';
+      const finalNotes = [this.orderNotes().trim(), roundNote].filter(Boolean).join(' | ');
+
       const dto: CreateOrderDto = {
         tableNumber: resolvedTable,
         items: orderItems,
-        notes: this.orderNotes().trim() || undefined,
+        notes: finalNotes || undefined,
         paid,
         paymentMethod: method,
         stripePaymentIntentId: transactionId,
@@ -405,19 +496,18 @@ export class GuestMenuComponent implements OnInit, OnDestroy {
         }).catch(() => {});
       }
 
-      this.completedOrder.set(newOrder);
+      // Dołącz do listy zamówień bieżącej sesji gościa
+      this.sessionOrders.update(list => [...list, newOrder]);
+      this.selectedOrderIndex.set(this.sessionOrders().length - 1);
+      this.watchSessionOrder(newOrder.id);
+      this.saveSessionOrders();
+
+      this.isTrackerMinimized.set(false);
       this.clearCart();
       this.isAwaitingBankAuth.set(false);
       this.isSubmitting.set(false);
       this.isCheckoutOpen.set(false);
-
-      // Uruchom nasłuchiwanie na żywo statusu zamówienia gościa w kuchni!
-      if (this.orderUnsub) this.orderUnsub();
-      this.orderUnsub = this.orderService.watchOrder(newOrder.id, (updated) => {
-        if (updated) {
-          this.completedOrder.set(updated);
-        }
-      });
+      this.orderNotes.set('');
 
     } catch (err) {
       console.error('Błąd podczas finalizacji zamówienia:', err);
@@ -428,12 +518,15 @@ export class GuestMenuComponent implements OnInit, OnDestroy {
   }
 
   resetOrderView(): void {
-    if (this.orderUnsub) {
-      this.orderUnsub();
-      this.orderUnsub = null;
-    }
-    this.completedOrder.set(null);
+    this.orderSubscriptions.forEach(unsub => unsub());
+    this.orderSubscriptions.clear();
+    this.sessionOrders.set([]);
+    this.selectedOrderIndex.set(0);
+    this.isTrackerMinimized.set(false);
     this.blikCode.set('');
     this.orderNotes.set('');
+    try {
+      sessionStorage.removeItem(this.getStorageKey());
+    } catch (_) {}
   }
 }

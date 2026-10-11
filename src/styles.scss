@@ -131,3 +131,90 @@ html {
   border: none !important;
   padding: 0 !important;
 }
+
+/* Stylizacja zakładek rund zamówień (Styl pigułki / Segmented Pill bez kresek i podziałek) */
+.guest-rounds-tabs {
+  --mat-tab-divider-height: 0px !important;
+  --mat-tab-divider-color: transparent !important;
+  --mat-tab-header-divider-height: 0px !important;
+  --mat-tab-header-divider-color: transparent !important;
+  --mat-tab-inactive-ripple-color: transparent !important;
+  --mat-tab-active-ripple-color: transparent !important;
+
+  .mat-mdc-tab-header,
+  .mat-mdc-tab-label-container {
+    border: none !important;
+    border-bottom: none !important;
+    border-bottom-width: 0 !important;
+    --mat-tab-divider-height: 0px !important;
+    --mat-tab-divider-color: transparent !important;
+    &::after {
+      display: none !important;
+    }
+  }
+
+  .mat-mdc-tab {
+    min-width: auto !important;
+    padding: 0 4px !important;
+    height: 44px !important;
+    opacity: 1 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+
+    &:hover,
+    &:focus,
+    &.cdk-program-focused,
+    &.cdk-keyboard-focused {
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+
+    .mdc-tab__text-label {
+      width: 100%;
+    }
+
+    .mat-mdc-tab-ripple,
+    .mdc-tab__ripple {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      &::before {
+        display: none !important;
+        opacity: 0 !important;
+      }
+    }
+  }
+
+  /* Całkowite ukrycie dolnej kreski (ink-bar) */
+  .mdc-tab-indicator {
+    display: none !important;
+  }
+
+  .mat-mdc-tab-header-pagination {
+    box-shadow: none !important;
+    border: none !important;
+    color: #64748b;
+    min-width: 28px !important;
+    background: transparent !important;
+
+    .mat-ripple-element {
+      display: none !important;
+    }
+  }
+}
+
+.dark .guest-rounds-tabs {
+  --mat-tab-divider-height: 0px !important;
+  --mat-tab-divider-color: transparent !important;
+
+  .mat-mdc-tab-header,
+  .mat-mdc-tab-label-container {
+    border: none !important;
+    border-bottom: none !important;
+    border-bottom-width: 0 !important;
+  }
+
+  .mat-mdc-tab-header-pagination {
+    color: #cbd5e1;
+  }
+}

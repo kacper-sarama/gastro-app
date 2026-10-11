@@ -181,6 +181,11 @@ export class MainLayoutComponent implements OnInit {
     }
   }
 
+  openGuestSimulator(table = 'Stolik 1'): void {
+    this.closeRoleMenu();
+    this.router.navigate(['/menu'], { queryParams: { table } });
+  }
+
   closeAccountModal(): void {
     this.isAccountModalOpen.set(false);
   }

@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, computed, effect, OnDestroy } from '@angular/core';
+import { Injectable, inject, signal, computed, effect, OnDestroy, NgZone } from '@angular/core';
 import { 
   Firestore,
   collection, 
@@ -31,6 +31,7 @@ export class OrderService implements OnDestroy {
   private recipeService = inject(RecipeService);
   private toastService = inject(ToastService);
   private promotionService = inject(PromotionService);
+  private ngZone = inject(NgZone);
   private isResetting = false;
 
   readonly orders = signal<Order[]>([]);
@@ -132,31 +133,35 @@ export class OrderService implements OnDestroy {
         : query(ordersCol, where('restaurantId', '==', restaurantId));
 
       this.firestoreUnsub = onSnapshot(q, (snapshot) => {
-        if (this.isResetting) return;
-        const items = snapshot.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        } as Order));
+        this.ngZone.run(() => {
+          if (this.isResetting) return;
+          const items = snapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data()
+          } as Order));
 
-        if (items.length === 0) {
-          // Starter przykładowych zamówień seedujemy TYLKO dla konta demonstracyjnego.
-          // Nowo zarejestrowany restaurator (SaaS) zaczyna z czystą kasą i pustą kolejką w kuchni.
-          if (this.authService.currentUserId === restaurantId && this.authService.isDemoAccount()) {
-            this.seedStarterOrders(restaurantId);
+          if (items.length === 0) {
+            // Starter przykładowych zamówień seedujemy TYLKO dla konta demonstracyjnego.
+            // Nowo zarejestrowany restaurator (SaaS) zaczyna z czystą kasą i pustą kolejką w kuchni.
+            if (this.authService.currentUserId === restaurantId && this.authService.isDemoAccount()) {
+              this.seedStarterOrders(restaurantId);
+            } else {
+              this.orders.set([]);
+              this.isLoading.set(false);
+            }
           } else {
-            this.orders.set([]);
+            // Sortuj od najnowszych
+            items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            this.orders.set(items);
             this.isLoading.set(false);
           }
-        } else {
-          // Sortuj od najnowszych
-          items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          this.orders.set(items);
-          this.isLoading.set(false);
-        }
+        });
       }, (err) => {
-        console.error('Błąd subskrypcji zamówień Firestore:', err);
-        this.errorMessage.set('Błąd połączenia z bazą zamówień.');
-        this.isLoading.set(false);
+        this.ngZone.run(() => {
+          console.error('Błąd subskrypcji zamówień Firestore:', err);
+          this.errorMessage.set('Błąd połączenia z bazą zamówień.');
+          this.isLoading.set(false);
+        });
       });
     } catch (err) {
       console.error('Błąd inicjalizacji zamówień Firestore:', err);
@@ -467,14 +472,18 @@ export class OrderService implements OnDestroy {
     return onSnapshot(
       docRef,
       (snapshot) => {
-        if (snapshot.exists()) {
-          callback({ id: snapshot.id, ...snapshot.data() } as Order);
-        } else {
-          callback(null);
-        }
+        this.ngZone.run(() => {
+          if (snapshot.exists()) {
+            callback({ id: snapshot.id, ...snapshot.data() } as Order);
+          } else {
+            callback(null);
+          }
+        });
       },
       (error) => {
-        console.error('Błąd subskrypcji zamówienia gościa:', error);
+        this.ngZone.run(() => {
+          console.error('Błąd subskrypcji zamówienia gościa:', error);
+        });
       }
     );
   }
