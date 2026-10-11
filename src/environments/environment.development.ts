@@ -8,5 +8,6 @@ export const environment = {
     messagingSenderId: "937115334245",
     appId: "1:937115334245:web:4f7d1c1cf71264d9eff88c",
     measurementId: "G-QP5RY1S50V"
-  }
+  },
+  functionsUrl: "https://us-central1-gastro-app-8e55e.cloudfunctions.net"
 };

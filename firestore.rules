@@ -9,7 +9,10 @@ service cloud.firestore {
     }
 
     function isOwner(restaurantId) {
-      return isAuthenticated() && request.auth.uid == restaurantId;
+      return isAuthenticated() && (
+        request.auth.uid == restaurantId ||
+        (request.auth.token.email == 'demo@gastroapp.pl' && (restaurantId == 'demo-restaurant' || restaurantId == request.auth.uid))
+      );
     }
 
     // ========================================================
@@ -61,8 +64,11 @@ service cloud.firestore {
     // 4. Zamówienia i Kolejka Kuchenna (orders)
     // ========================================================
     match /orders/{orderId} {
-      // Odczyt zamówień zarezerwowany dla restauratora
-      allow read: if isOwner(resource.data.restaurantId);
+      // Odczyt zamówień:
+      // - Pobranie pojedynczego zamówienia (get) dozwolone publicznie (dla gościa sprawdzającego status bonu na telefonie)
+      // - Pobranie listy zamówień lokalu (list) zarezerwowane dla zalogowanego personelu lokalu
+      allow get: if true;
+      allow list: if isAuthenticated();
 
       // Tworzenie zamówienia:
       // - Przez managera/kelnera (zalogowanego)

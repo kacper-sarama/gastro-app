@@ -3,7 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 
-export type AccountTab = 'profile' | 'email' | 'password';
+import { PaymentService } from '../../core/services/payment.service';
+import { PaymentSettings, DEFAULT_PAYMENT_SETTINGS } from '../../core/models/payment.model';
+
+export type AccountTab = 'profile' | 'payments' | 'email' | 'password';
 
 @Component({
   selector: 'app-account-settings-modal',
@@ -13,6 +16,7 @@ export type AccountTab = 'profile' | 'email' | 'password';
 })
 export class AccountSettingsModalComponent {
   readonly authService = inject(AuthService);
+  readonly paymentService = inject(PaymentService);
 
   @Output() close = new EventEmitter<void>();
 
@@ -23,11 +27,48 @@ export class AccountSettingsModalComponent {
   // Formularz 1: Profil lokalu
   restaurantName = signal<string>(this.authService.restaurantName());
 
-  // Formularz 2: Zmiana e-mail
+  // Formularz 2: Płatności Online (Stripe Sandbox)
+  paymentSettings = signal<PaymentSettings>({ ...DEFAULT_PAYMENT_SETTINGS });
+
+  constructor() {
+    const uid = this.authService.currentUserId;
+    if (uid) {
+      this.paymentService.loadSettings(uid).then(s => {
+        this.paymentSettings.set({ ...s });
+      });
+    }
+  }
+
+  fillDefaultStripeKey(): void {
+    this.paymentSettings.update(s => ({
+      ...s,
+      isTestMode: true,
+      stripePublishableKey: 'pk_test_51MockGastroStripeSandboxKey2026'
+    }));
+  }
+
+  async savePaymentSettings(): Promise<void> {
+    const uid = this.authService.currentUserId;
+    if (!uid) return;
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    try {
+      await this.paymentService.saveSettings(uid, this.paymentSettings());
+      this.close.emit();
+    } catch (err: any) {
+      this.errorMessage.set('Nie udało się zapisać konfiguracji płatności.');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  // Formularz 3: Zmiana e-mail
   newEmail = signal<string>('');
   emailCurrentPassword = signal<string>('');
 
-  // Formularz 3: Zmiana hasła
+  // Formularz 4: Zmiana hasła
   currentPassword = signal<string>('');
   newPassword = signal<string>('');
   confirmPassword = signal<string>('');

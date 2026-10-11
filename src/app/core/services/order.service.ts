@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, computed, effect, OnDestroy } from '@angular/core';
+import { Injectable, inject, signal, computed, effect, OnDestroy, NgZone } from '@angular/core';
 import { 
   Firestore,
   collection, 
@@ -31,6 +31,7 @@ export class OrderService implements OnDestroy {
   private recipeService = inject(RecipeService);
   private toastService = inject(ToastService);
   private promotionService = inject(PromotionService);
+  private ngZone = inject(NgZone);
   private isResetting = false;
 
   readonly orders = signal<Order[]>([]);
@@ -126,34 +127,41 @@ export class OrderService implements OnDestroy {
 
     try {
       const ordersCol = collection(this.firestore, 'orders');
-      const q = query(ordersCol, where('restaurantId', '==', restaurantId));
+      const isDemo = this.authService.isDemoAccount();
+      const q = isDemo && restaurantId !== 'demo-restaurant'
+        ? query(ordersCol, where('restaurantId', 'in', [restaurantId, 'demo-restaurant']))
+        : query(ordersCol, where('restaurantId', '==', restaurantId));
 
       this.firestoreUnsub = onSnapshot(q, (snapshot) => {
-        if (this.isResetting) return;
-        const items = snapshot.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        } as Order));
+        this.ngZone.run(() => {
+          if (this.isResetting) return;
+          const items = snapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data()
+          } as Order));
 
-        if (items.length === 0) {
-          // Starter przykładowych zamówień seedujemy TYLKO dla konta demonstracyjnego.
-          // Nowo zarejestrowany restaurator (SaaS) zaczyna z czystą kasą i pustą kolejką w kuchni.
-          if (this.authService.currentUserId === restaurantId && this.authService.isDemoAccount()) {
-            this.seedStarterOrders(restaurantId);
+          if (items.length === 0) {
+            // Starter przykładowych zamówień seedujemy TYLKO dla konta demonstracyjnego.
+            // Nowo zarejestrowany restaurator (SaaS) zaczyna z czystą kasą i pustą kolejką w kuchni.
+            if (this.authService.currentUserId === restaurantId && this.authService.isDemoAccount()) {
+              this.seedStarterOrders(restaurantId);
+            } else {
+              this.orders.set([]);
+              this.isLoading.set(false);
+            }
           } else {
-            this.orders.set([]);
+            // Sortuj od najnowszych
+            items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            this.orders.set(items);
             this.isLoading.set(false);
           }
-        } else {
-          // Sortuj od najnowszych
-          items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          this.orders.set(items);
-          this.isLoading.set(false);
-        }
+        });
       }, (err) => {
-        console.error('Błąd subskrypcji zamówień Firestore:', err);
-        this.errorMessage.set('Błąd połączenia z bazą zamówień.');
-        this.isLoading.set(false);
+        this.ngZone.run(() => {
+          console.error('Błąd subskrypcji zamówień Firestore:', err);
+          this.errorMessage.set('Błąd połączenia z bazą zamówień.');
+          this.isLoading.set(false);
+        });
       });
     } catch (err) {
       console.error('Błąd inicjalizacji zamówień Firestore:', err);
@@ -361,7 +369,7 @@ export class OrderService implements OnDestroy {
     const discountAmount = dto.discountAmount || 0;
     const totalPrice = Math.max(0, Math.round((originalPrice - discountAmount) * 100) / 100);
 
-    const tableNumber = dto.tableNumber?.trim() || 'Stolik 1';
+    const tableNumber = dto.tableNumber?.trim() || (dto.isTakeout ? 'Wynos' : 'Stolik 1');
     const now = new Date().toISOString();
     const orderData = this.cleanObject({
       restaurantId: user.uid,
@@ -374,6 +382,13 @@ export class OrderService implements OnDestroy {
       appliedPromotionId: dto.appliedPromotionId,
       appliedPromotionName: dto.appliedPromotionName,
       notes: dto.notes?.trim() || undefined,
+      paid: dto.paid ?? false,
+      paymentMethod: dto.paymentMethod,
+      stripePaymentIntentId: dto.stripePaymentIntentId,
+      paidAt: dto.paid ? (dto.paidAt || now) : undefined,
+      customerName: dto.customerName?.trim() || undefined,
+      customerPhone: dto.customerPhone?.trim() || undefined,
+      isTakeout: dto.isTakeout ?? false,
       status: 'pending' as OrderStatus,
       stockDeducted: false,
       createdAt: now,
@@ -399,6 +414,78 @@ export class OrderService implements OnDestroy {
       this.toastService.danger('Nie udało się zarejestrować zamówienia w bazie.', 'Błąd zamówienia');
       throw err;
     }
+  }
+
+  /**
+   * Tworzenie zamówienia przez gościa lokalu (Pay-at-Table lub na Wynos z płatnością online).
+   * Nie wymaga uwierzytelnienia restauratora.
+   */
+  async createGuestOrder(restaurantId: string, dto: CreateOrderDto): Promise<Order> {
+    const originalPrice = dto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    const discountAmount = dto.discountAmount || 0;
+    const totalPrice = Math.max(0, Math.round((originalPrice - discountAmount) * 100) / 100);
+
+    // Unikalny, estetyczny 3-cyfrowy numer bonu dla gościa i kuchni (101 - 999)
+    const orderNumber = Math.floor(100 + (Date.now() % 900));
+    const tableNumber = dto.tableNumber?.trim() || (dto.isTakeout ? 'Wynos' : 'Stolik 1');
+    const now = new Date().toISOString();
+
+    const orderData = this.cleanObject({
+      restaurantId,
+      orderNumber,
+      tableNumber,
+      items: dto.items,
+      totalPrice,
+      originalPrice: discountAmount > 0 ? originalPrice : undefined,
+      discountAmount: discountAmount > 0 ? discountAmount : undefined,
+      appliedPromotionId: dto.appliedPromotionId,
+      appliedPromotionName: dto.appliedPromotionName,
+      notes: dto.notes?.trim() || undefined,
+      paid: dto.paid ?? false,
+      paymentMethod: dto.paymentMethod,
+      stripePaymentIntentId: dto.stripePaymentIntentId,
+      paidAt: dto.paid ? (dto.paidAt || now) : undefined,
+      customerName: dto.customerName?.trim() || undefined,
+      customerPhone: dto.customerPhone?.trim() || undefined,
+      isTakeout: dto.isTakeout ?? false,
+      status: 'pending' as OrderStatus,
+      stockDeducted: false,
+      createdAt: now,
+      updatedAt: now
+    });
+
+    try {
+      const col = collection(this.firestore, 'orders');
+      const docRef = await addDoc(col, orderData);
+      return { id: docRef.id, ...orderData } as Order;
+    } catch (err) {
+      console.error('Błąd zapisu zamówienia gościa do Firestore:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Nasłuchiwanie na żywo statusu konkretnego zamówienia przez gościa.
+   */
+  watchOrder(orderId: string, callback: (order: Order | null) => void): Unsubscribe {
+    const docRef = doc(this.firestore, 'orders', orderId);
+    return onSnapshot(
+      docRef,
+      (snapshot) => {
+        this.ngZone.run(() => {
+          if (snapshot.exists()) {
+            callback({ id: snapshot.id, ...snapshot.data() } as Order);
+          } else {
+            callback(null);
+          }
+        });
+      },
+      (error) => {
+        this.ngZone.run(() => {
+          console.error('Błąd subskrypcji zamówienia gościa:', error);
+        });
+      }
+    );
   }
 
   // --- Zmiana statusu zamówienia i automatyczny odpis magazynowy ---

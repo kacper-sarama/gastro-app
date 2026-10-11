@@ -29,6 +29,10 @@ export const routes: Routes = [
 
   // Public guest menu route (accessible without login, via QR code)
   {
+    path: 'menu',
+    component: GuestMenuComponent
+  },
+  {
     path: 'menu/:restaurantId',
     component: GuestMenuComponent
   },

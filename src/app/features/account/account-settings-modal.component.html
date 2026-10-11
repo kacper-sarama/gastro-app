@@ -48,6 +48,21 @@
 
       <button
         type="button"
+        (click)="setTab('payments')"
+        class="py-2.5 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-all"
+        [class.border-orange-500]="activeTab() === 'payments'"
+        [class.text-orange-600]="activeTab() === 'payments'"
+        [class.dark:text-orange-400]="activeTab() === 'payments'"
+        [class.border-transparent]="activeTab() !== 'payments'"
+        [class.text-slate-500]="activeTab() !== 'payments'"
+        [class.dark:text-slate-400]="activeTab() !== 'payments'"
+      >
+        <span class="material-icons-round text-base">credit_card</span>
+        <span>Płatności Stripe</span>
+      </button>
+
+      <button
+        type="button"
         (click)="setTab('email')"
         class="py-2.5 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-all"
         [class.border-orange-500]="activeTab() === 'email'"
@@ -144,6 +159,131 @@
               } @else {
                 <span class="material-icons-round text-sm">save</span>
                 <span>Zapisz profil lokalu</span>
+              }
+            </button>
+          </div>
+        </form>
+      }
+
+      <!-- ========================================== -->
+      <!-- TAB: PŁATNOŚCI STRIPE SANDBOX (BLIK/PORTFELE) -->
+      <!-- ========================================== -->
+      @if (activeTab() === 'payments') {
+        <form (ngSubmit)="savePaymentSettings()" class="space-y-4">
+          
+          <!-- Główny przełącznik bramki -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <span>Płatności Online dla Gości</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-500/20">Stripe</span>
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Umożliwia gościom płacenie telefonem przy stoliku i na wynos
+              </p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                [(ngModel)]="paymentSettings().enabled"
+                name="paymentsEnabled"
+                class="sr-only peer"
+              >
+              <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-orange-500"></div>
+            </label>
+          </div>
+
+          <!-- Przełącznik trybu Sandbox vs Live -->
+          <div class="p-3.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/80 dark:border-indigo-900/40 space-y-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1">
+                  <span class="material-icons-round text-sm text-indigo-500">science</span>
+                  <span>Środowisko: {{ paymentSettings().isTestMode ? 'Stripe Sandbox (Testowe)' : 'Stripe Live (Produkcja)' }}</span>
+                </span>
+                <p class="text-[11px] text-indigo-700/80 dark:text-indigo-400/80 mt-0.5">
+                  W trybie testowym nie są pobierane prawdziwe środki
+                </p>
+              </div>
+              <button
+                type="button"
+                (click)="paymentSettings().isTestMode = !paymentSettings().isTestMode"
+                class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all border"
+                [ngClass]="paymentSettings().isTestMode
+                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                  : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'"
+              >
+                {{ paymentSettings().isTestMode ? 'Tryb Sandbox' : 'Tryb Live' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Klucz Stripe Publishable Key -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Klucz publiczny Stripe (Publishable Key)
+              </label>
+              <button
+                type="button"
+                (click)="fillDefaultStripeKey()"
+                class="text-[11px] font-bold text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-0.5"
+              >
+                <span class="material-icons-round text-xs">auto_fix_high</span>
+                <span>Wstaw klucz testowy</span>
+              </button>
+            </div>
+            <input
+              type="text"
+              [(ngModel)]="paymentSettings().stripePublishableKey"
+              name="stripePublishableKey"
+              placeholder="pk_test_..."
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 text-slate-900 dark:text-white text-xs font-mono focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+          </div>
+
+          <!-- Włączone metody płatności -->
+          <div class="space-y-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Aktywne metody dla gości</span>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 cursor-pointer">
+                <input type="checkbox" [(ngModel)]="paymentSettings().enabledMethods.blik" name="mBlik" class="rounded text-orange-500">
+                <span class="font-bold text-slate-800 dark:text-slate-200">BLIK</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 cursor-pointer">
+                <input type="checkbox" [(ngModel)]="paymentSettings().enabledMethods.card" name="mCard" class="rounded text-orange-500">
+                <span class="font-bold text-slate-800 dark:text-slate-200">Karty płatnicze</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 cursor-pointer">
+                <input type="checkbox" [(ngModel)]="paymentSettings().enabledMethods.applePay" name="mApple" class="rounded text-orange-500">
+                <span class="font-bold text-slate-800 dark:text-slate-200">Apple Pay</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 cursor-pointer">
+                <input type="checkbox" [(ngModel)]="paymentSettings().enabledMethods.googlePay" name="mGoogle" class="rounded text-orange-500">
+                <span class="font-bold text-slate-800 dark:text-slate-200">Google Pay</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <button
+              type="button"
+              (click)="close.emit()"
+              class="gastro-btn-secondary px-4 py-2 text-xs"
+            >
+              Anuluj
+            </button>
+            <button
+              type="submit"
+              [disabled]="isLoading()"
+              class="gastro-btn-primary px-5 py-2 text-xs disabled:opacity-50"
+            >
+              @if (isLoading()) {
+                <span class="animate-spin material-icons-round text-sm">rotate_right</span>
+                <span>Zapisywanie...</span>
+              } @else {
+                <span class="material-icons-round text-sm">save</span>
+                <span>Zapisz konfigurację Stripe</span>
               }
             </button>
           </div>

@@ -72,11 +72,23 @@ html {
   }
 
   .gastro-btn-primary {
-    @apply inline-flex items-center justify-center text-center gap-2 px-4 py-2.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-medium text-sm transition-all duration-200 shadow-md shadow-orange-600/20 active:scale-[0.98];
+    @apply inline-flex items-center justify-center text-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs transition-all duration-150 shadow-lg shadow-orange-500/20 active:scale-[0.98] cursor-pointer;
   }
 
   .gastro-btn-secondary {
-    @apply inline-flex items-center justify-center text-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm border border-slate-200 transition-all duration-200 active:scale-[0.98] dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700;
+    @apply inline-flex items-center justify-center text-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-150 active:scale-[0.98] cursor-pointer dark:bg-slate-800 dark:hover:bg-slate-700;
+
+    .material-icons-round,
+    .material-symbols-rounded {
+      @apply text-slate-500 dark:text-slate-400 transition-colors;
+    }
+
+    &:hover {
+      .material-icons-round,
+      .material-symbols-rounded {
+        @apply text-slate-700 dark:text-slate-200;
+      }
+    }
   }
 }
 
@@ -131,3 +143,138 @@ html {
   border: none !important;
   padding: 0 !important;
 }
+
+/* Stylizacja zakładek rund zamówień (Styl pigułki / Segmented Pill bez kresek i podziałek) */
+.guest-rounds-tabs {
+  --mat-tab-divider-height: 0px !important;
+  --mat-tab-divider-color: transparent !important;
+  --mat-tab-header-divider-height: 0px !important;
+  --mat-tab-header-divider-color: transparent !important;
+  --mat-tab-inactive-ripple-color: transparent !important;
+  --mat-tab-active-ripple-color: transparent !important;
+
+  .mat-mdc-tab-header,
+  .mat-mdc-tab-label-container {
+    border: none !important;
+    border-bottom: none !important;
+    border-bottom-width: 0 !important;
+    --mat-tab-divider-height: 0px !important;
+    --mat-tab-divider-color: transparent !important;
+    &::after {
+      display: none !important;
+    }
+  }
+
+  .mat-mdc-tab {
+    min-width: auto !important;
+    padding: 0 4px !important;
+    height: 44px !important;
+    opacity: 1 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+
+    &:hover,
+    &:focus,
+    &.cdk-program-focused,
+    &.cdk-keyboard-focused {
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+
+    .mdc-tab__text-label {
+      width: 100%;
+    }
+
+    .mat-mdc-tab-ripple,
+    .mdc-tab__ripple {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      &::before {
+        display: none !important;
+        opacity: 0 !important;
+      }
+    }
+  }
+
+  /* Całkowite ukrycie dolnej kreski (ink-bar) */
+  .mdc-tab-indicator {
+    display: none !important;
+  }
+
+  .mat-mdc-tab-header-pagination {
+    box-shadow: none !important;
+    border: none !important;
+    color: #64748b;
+    min-width: 28px !important;
+    background: transparent !important;
+
+    .mat-ripple-element {
+      display: none !important;
+    }
+  }
+}
+
+.dark .guest-rounds-tabs {
+  --mat-tab-divider-height: 0px !important;
+  --mat-tab-divider-color: transparent !important;
+
+  .mat-mdc-tab-header,
+  .mat-mdc-tab-label-container {
+    border: none !important;
+    border-bottom: none !important;
+    border-bottom-width: 0 !important;
+  }
+
+  .mat-mdc-tab-header-pagination {
+    color: #cbd5e1;
+  }
+}
+
+/* Menu kontekstowe Split Button (Angular Material MatMenu) */
+.gastro-split-menu.mat-mdc-menu-panel,
+.mat-mdc-menu-panel {
+  background-color: #ffffff !important;
+  --mat-menu-container-color: #ffffff !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border-radius: 1rem !important;
+  min-width: 290px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+  padding: 4px 0 !important;
+}
+
+.gastro-split-menu {
+  .mat-mdc-menu-item {
+    height: auto !important;
+    min-height: 52px !important;
+    line-height: normal !important;
+
+    .mat-mdc-menu-item-text {
+      display: block !important;
+      width: 100% !important;
+    }
+
+    &[disabled] {
+      opacity: 0.85 !important;
+      cursor: default !important;
+      pointer-events: auto !important;
+    }
+  }
+}
+
+.dark .mat-mdc-menu-panel {
+  background-color: #1e293b !important;
+  --mat-menu-container-color: #1e293b !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+
+  .mat-mdc-menu-item {
+    color: #f1f5f9 !important;
+
+    &:hover:not([disabled]),
+    &.cdk-program-focused:not([disabled]),
+    &.cdk-keyboard-focused:not([disabled]) {
+      background-color: rgba(51, 65, 85, 0.6) !important;
+    }
+  }
+}
+

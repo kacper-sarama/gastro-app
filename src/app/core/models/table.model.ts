@@ -16,6 +16,10 @@ export interface RestaurantTable {
   activeOrderIds?: string[];    // ID wszystkich zamówień/transz w ramach aktywnej wizyty
   ordersCount?: number;         // Liczba transz/bonów kuchennych (np. 1, 2)
   kitchenOrderStatus?: OrderStatus; // Stan realizacji potraw w kuchni
+  isAllOrdersPaid?: boolean;    // Czy wszystkie zamówienia stolika są już opłacone
+  unpaidOrdersTotal?: number;   // Kwota pozostała do rozliczenia
+  paidOrdersTotal?: number;     // Kwota już opłacona
+  paymentMethod?: string;       // Sposób płatności (np. BLIK, Google Pay, Karta)
   occupiedSince?: string;       // ISO timestamp rozpoczęcia obsługi
   notes?: string;               // np. "Przy oknie", "Rezerwacja na 20:00"
   createdAt?: string;

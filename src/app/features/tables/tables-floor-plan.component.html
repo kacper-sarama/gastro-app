@@ -18,18 +18,18 @@
       <button 
         type="button" 
         (click)="openAddTableModal()"
-        class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-2 shadow-xs transition-all cursor-pointer"
+        class="gastro-btn-secondary"
       >
-        <span class="material-icons-round text-base text-orange-500">add</span>
+        <span class="material-icons-round text-lg">add</span>
         <span>Dodaj stolik</span>
       </button>
 
       <button 
         type="button" 
         (click)="openNewOrderModal()"
-        class="gastro-btn-primary shadow-lg shadow-orange-500/20 py-2.5 px-4 font-bold text-xs flex items-center gap-2 cursor-pointer"
+        class="gastro-btn-primary"
       >
-        <span class="material-icons-round text-base">add_shopping_cart</span>
+        <span class="material-icons-round text-lg">add_shopping_cart</span>
         <span>Nowe zamówienie</span>
       </button>
     </div>
@@ -350,23 +350,36 @@
               </span>
             </div>
 
-            <!-- Plakietka statusu kuchni (KDS) -->
-            <div *ngIf="tbl.kitchenOrderStatus" class="flex items-center gap-1.5">
-              <!-- 3. Gotowe do wydania -->
-              <span *ngIf="tbl.kitchenOrderStatus === 'ready'" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500 text-white animate-bounce flex items-center gap-1 shadow-xs">
-                <span class="material-icons-round text-xs">room_service</span> Gotowe do wydania
+            <!-- Plakietka statusu kuchni (KDS) & Płatności Online -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <!-- Plakietka statusu kuchni (KDS) -->
+              <ng-container *ngIf="tbl.kitchenOrderStatus">
+                <!-- 3. Gotowe do wydania -->
+                <span *ngIf="tbl.kitchenOrderStatus === 'ready'" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500 text-white animate-bounce flex items-center gap-1 shadow-xs">
+                  <span class="material-icons-round text-xs">room_service</span> Gotowe do wydania
+                </span>
+                <!-- 2. W kuchni -->
+                <span *ngIf="tbl.kitchenOrderStatus === 'in_progress'" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 flex items-center gap-1">
+                  <span class="material-icons-round text-xs">soup_kitchen</span> W kuchni
+                </span>
+                <!-- 1. Oczekujące -->
+                <span *ngIf="tbl.kitchenOrderStatus === 'pending'" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex items-center gap-1">
+                  <span class="material-icons-round text-xs">hourglass_top</span> Oczekujące
+                </span>
+                <!-- 4. Wydane -->
+                <span *ngIf="tbl.kitchenOrderStatus === 'completed'" class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 flex items-center gap-1">
+                  <span class="material-icons-round text-xs text-emerald-600 dark:text-emerald-400">done_all</span> Wydane
+                </span>
+              </ng-container>
+
+              <!-- Plakietka stanu płatności dla Sali -->
+              <span *ngIf="tbl.currentOrderTotal && tbl.isAllOrdersPaid" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-1">
+                <span class="material-icons-round text-xs text-emerald-500">check_circle</span>
+                Opłacone ({{ tbl.paymentMethod || 'Online' }})
               </span>
-              <!-- 2. W kuchni -->
-              <span *ngIf="tbl.kitchenOrderStatus === 'in_progress'" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 flex items-center gap-1">
-                <span class="material-icons-round text-xs">soup_kitchen</span> W kuchni
-              </span>
-              <!-- 1. Oczekujące -->
-              <span *ngIf="tbl.kitchenOrderStatus === 'pending'" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex items-center gap-1">
-                <span class="material-icons-round text-xs">hourglass_top</span> Oczekujące
-              </span>
-              <!-- 4. Wydane -->
-              <span *ngIf="tbl.kitchenOrderStatus === 'completed'" class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 flex items-center gap-1">
-                <span class="material-icons-round text-xs text-emerald-600 dark:text-emerald-400">done_all</span> Wydane
+              <span *ngIf="tbl.currentOrderTotal && !tbl.isAllOrdersPaid" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center gap-1">
+                <span class="material-icons-round text-xs text-amber-500">payments</span>
+                Do rozliczenia
               </span>
             </div>
 
@@ -374,9 +387,14 @@
               <span class="text-xs text-indigo-600/80 dark:text-indigo-400/80">
                 {{ tbl.currentOrderItemsCount ? (tbl.currentOrderItemsCount + ' poz.') : 'Oczekiwanie na wybór dań' }}
               </span>
-              <span class="text-base font-black text-slate-900 dark:text-white" *ngIf="tbl.currentOrderTotal">
-                {{ (tbl.currentOrderTotal || 0) | number:'1.2-2' }} zł
-              </span>
+              <div class="text-right" *ngIf="tbl.currentOrderTotal">
+                <span class="text-base font-black" [ngClass]="tbl.isAllOrdersPaid ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'">
+                  {{ (tbl.currentOrderTotal || 0) | number:'1.2-2' }} zł
+                </span>
+                <span class="block text-[10px] font-bold" [ngClass]="tbl.isAllOrdersPaid ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'">
+                  {{ tbl.isAllOrdersPaid ? '✓ Opłacone' : '⏳ Do rozliczenia' }}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -433,7 +451,12 @@
 
         <!-- Dla zajętego stolika -->
         <ng-container *ngIf="tbl.status === 'occupied'">
+          <span *ngIf="tbl.isAllOrdersPaid" class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            <span class="material-icons-round text-xs">task_alt</span>
+            Opłacony online
+          </span>
           <button 
+            *ngIf="!tbl.isAllOrdersPaid"
             type="button"
             (click)="quickRequestBill(tbl, $event)"
             title="Poproś o rachunek"

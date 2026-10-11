@@ -15,11 +15,89 @@
       </p>
     </div>
 
-    <div>
-      <button (click)="openAddModal()" class="gastro-btn-primary w-full sm:w-auto shadow-lg shadow-orange-500/20">
-        <span class="material-icons-round text-xl">add_box</span>
+    <!-- Split Button: Dodaj surowiec + Menu akcji (Zamów braki) -->
+    <div class="flex items-stretch rounded-xl shadow-lg shadow-orange-500/20 bg-orange-600 hover:bg-orange-500 transition-colors w-full sm:w-auto overflow-hidden">
+      <!-- Główna lewa akcja: Dodaj surowiec -->
+      <button
+        type="button"
+        (click)="openAddModal()"
+        class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 text-white font-bold text-xs transition-all hover:bg-black/5 active:scale-[0.99] cursor-pointer"
+      >
+        <span class="material-icons-round text-lg">add_box</span>
         <span>Dodaj surowiec</span>
       </button>
+
+      <!-- Pionowy separator -->
+      <div class="w-px bg-white/25 shrink-0 self-stretch my-1"></div>
+
+      <!-- Prawa część: Trigger rozwijanego menu ze strzałką -->
+      <button
+        type="button"
+        [matMenuTriggerFor]="inventoryActionsMenu"
+        class="relative inline-flex items-center justify-center px-3 py-2.5 text-white transition-all hover:bg-black/10 active:scale-[0.99] cursor-pointer shrink-0"
+        title="Więcej akcji (Zamów braki)"
+        aria-label="Więcej akcji magazynowych"
+      >
+        <span class="material-icons-round text-xl">arrow_drop_down</span>
+
+        <!-- Pulsująca czerwona kropka alertu na strzałce, gdy są braki lub niski stan -->
+        @if (inventoryService.criticalAlertsCount() > 0) {
+          <span class="absolute top-1.5 right-1.5 flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-rose-600 border-2 border-white dark:border-slate-800 shadow-sm"></span>
+          </span>
+        }
+      </button>
+
+      <!-- Menu rozwijane Angular Material -->
+      <mat-menu #inventoryActionsMenu="matMenu" xPosition="before" class="gastro-split-menu">
+        <button
+          mat-menu-item
+          [disabled]="inventoryService.criticalAlertsCount() === 0"
+          (click)="openBulkRestockModal()"
+          class="!h-auto !py-3 !px-4"
+        >
+          <div class="flex items-center justify-between gap-4 w-full">
+            <div class="flex items-center gap-3 min-w-0">
+              @if (inventoryService.criticalAlertsCount() > 0) {
+                <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                  <span class="material-icons-round text-lg">local_shipping</span>
+                </div>
+                <div class="text-left min-w-0">
+                  <div class="font-bold text-sm text-slate-900 dark:text-white leading-tight">
+                    Zamów braki
+                  </div>
+                  <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    Wygeneruj zbiorcze zamówienie
+                  </div>
+                </div>
+              } @else {
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                  <span class="material-icons-round text-lg">check_circle</span>
+                </div>
+                <div class="text-left min-w-0">
+                  <div class="font-bold text-sm text-slate-700 dark:text-slate-200 leading-tight">
+                    Zamów braki
+                  </div>
+                  <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+                    Wszystkie stany w normie
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (inventoryService.criticalAlertsCount() > 0) {
+              <span class="ml-3 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 shrink-0">
+                {{ inventoryService.criticalAlertsCount() }} alert(y)
+              </span>
+            } @else {
+              <span class="ml-3 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 shrink-0">
+                Zapas OK
+              </span>
+            }
+          </div>
+        </button>
+      </mat-menu>
     </div>
   </div>
 
@@ -456,8 +534,8 @@
 
 <!-- Modal: Potwierdzenie Usunięcia -->
 @if (itemToDelete()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-    <div class="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 text-center space-y-4">
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="cancelDeleteItem()">
+    <div class="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 text-center space-y-4" (click)="$event.stopPropagation()">
       <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 dark:text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20">
         <span class="material-icons-round text-2xl">warning</span>
       </div>
@@ -484,4 +562,13 @@
   <app-manage-inventory-categories-modal
     (close)="closeManageCategoriesModal()"
   ></app-manage-inventory-categories-modal>
+}
+
+<!-- Modal zbiorczego zamówienia dostawy braków -->
+@if (isBulkRestockModalOpen()) {
+  <app-bulk-restock-modal
+    [items]="itemsNeedingRestock()"
+    (close)="closeBulkRestockModal()"
+    (confirm)="onConfirmBulkRestock($event)"
+  ></app-bulk-restock-modal>
 }
