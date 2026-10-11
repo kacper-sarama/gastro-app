@@ -6,6 +6,7 @@ import { InventoryItem, StockStatus, formatStockAmount, getStockStatus } from '.
 import { AddEditIngredientModalComponent } from './add-edit-ingredient-modal.component';
 import { QuickDeliveryModalComponent } from './quick-delivery-modal.component';
 import { ManageInventoryCategoriesModalComponent } from './manage-inventory-categories-modal.component';
+import { BulkRestockModalComponent } from './bulk-restock-modal.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 
 @Component({
@@ -17,6 +18,7 @@ import { StatCardComponent } from '../../shared/components/stat-card/stat-card.c
     AddEditIngredientModalComponent, 
     QuickDeliveryModalComponent,
     ManageInventoryCategoriesModalComponent,
+    BulkRestockModalComponent,
     StatCardComponent
   ],
   templateUrl: './inventory-list.component.html'
@@ -49,7 +51,15 @@ export class InventoryListComponent {
 
   isManageCategoriesModalOpen = signal(false);
 
+  isBulkRestockModalOpen = signal(false);
+
   itemToDelete = signal<InventoryItem | null>(null);
+
+  // Lista surowców wymagających uzupełnienia (braki + niski stan)
+  readonly itemsNeedingRestock = computed(() => [
+    ...this.inventoryService.outOfStockItems(),
+    ...this.inventoryService.lowStockItems()
+  ]);
 
   // Unikalne kategorie
   readonly categories = computed(() => this.inventoryService.allCategories());
@@ -163,6 +173,21 @@ export class InventoryListComponent {
 
   closeManageCategoriesModal(): void {
     this.isManageCategoriesModalOpen.set(false);
+  }
+
+  openBulkRestockModal(): void {
+    this.isBulkRestockModalOpen.set(true);
+  }
+
+  closeBulkRestockModal(): void {
+    this.isBulkRestockModalOpen.set(false);
+  }
+
+  async onConfirmBulkRestock(deliveries: { id: string; addedAmount: number }[]): Promise<void> {
+    const success = await this.inventoryService.bulkRestock(deliveries);
+    if (success) {
+      this.closeBulkRestockModal();
+    }
   }
 
   promptDeleteItem(item: InventoryItem): void {

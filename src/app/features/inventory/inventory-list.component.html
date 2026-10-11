@@ -15,7 +15,26 @@
       </p>
     </div>
 
-    <div>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <!-- Przycisk zbiorczego zamówienia braków -->
+      <button
+        type="button"
+        (click)="openBulkRestockModal()"
+        [disabled]="inventoryService.criticalAlertsCount() === 0"
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm"
+        [ngClass]="inventoryService.criticalAlertsCount() > 0
+          ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-amber-500/20 active:scale-95 cursor-pointer'
+          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700'"
+      >
+        <span class="material-icons-round text-lg">local_shipping</span>
+        <span>Zamów braki</span>
+        @if (inventoryService.criticalAlertsCount() > 0) {
+          <span class="px-2 py-0.5 text-xs rounded-full bg-white/20 text-white font-extrabold backdrop-blur-xs">
+            {{ inventoryService.criticalAlertsCount() }}
+          </span>
+        }
+      </button>
+
       <button (click)="openAddModal()" class="gastro-btn-primary w-full sm:w-auto shadow-lg shadow-orange-500/20">
         <span class="material-icons-round text-xl">add_box</span>
         <span>Dodaj surowiec</span>
@@ -484,4 +503,13 @@
   <app-manage-inventory-categories-modal
     (close)="closeManageCategoriesModal()"
   ></app-manage-inventory-categories-modal>
+}
+
+<!-- Modal zbiorczego zamówienia dostawy braków -->
+@if (isBulkRestockModalOpen()) {
+  <app-bulk-restock-modal
+    [items]="itemsNeedingRestock()"
+    (close)="closeBulkRestockModal()"
+    (confirm)="onConfirmBulkRestock($event)"
+  ></app-bulk-restock-modal>
 }

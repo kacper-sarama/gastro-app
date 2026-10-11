@@ -399,6 +399,50 @@ export class InventoryService {
     }
   }
 
+  /**
+   * Zbiorcze przyjęcie dostawy brakujących surowców (Batch write w Firestore)
+   */
+  async bulkRestock(deliveries: { id: string; addedAmount: number }[]): Promise<boolean> {
+    const user = this.authService.currentUser();
+    if (!user || deliveries.length === 0) return false;
+
+    try {
+      const batch = writeBatch(this.firestore);
+      const now = new Date().toISOString();
+      let updatedCount = 0;
+
+      for (const d of deliveries) {
+        if (d.addedAmount <= 0) continue;
+        const item = this.items().find(i => i.id === d.id);
+        if (!item) continue;
+
+        const newAmount = item.amount + d.addedAmount;
+        const docRef = doc(this.firestore, `inventory/${item.id}`);
+        batch.update(docRef, {
+          amount: newAmount,
+          updatedAt: now
+        });
+        updatedCount++;
+      }
+
+      if (updatedCount === 0) {
+        this.toastService.warning('Nie wybrano żadnych pozycji o dodatniej ilości do dostawy.', 'Zbiorcza dostawa');
+        return false;
+      }
+
+      await batch.commit();
+      this.toastService.success(
+        `Zaksięgowano przyjęcie dostawy dla ${updatedCount} surowców. Magazyn został pomyślnie zaktualizowany!`,
+        'Dostawa przyjęta'
+      );
+      return true;
+    } catch (err) {
+      console.error('Błąd zapisu zbiorczej dostawy w Firestore:', err);
+      this.toastService.danger('Nie udało się zapisać zbiorczej dostawy w bazie danych.', 'Błąd magazynu');
+      return false;
+    }
+  }
+
   // ==========================================
   // ZARZĄDZANIE KATEGORIAMI SUROWCÓW
   // ==========================================
