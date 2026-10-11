@@ -6,109 +6,124 @@
     <!-- ======================================================== -->
     <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       
-      <!-- Tytuł & Ikonka -->
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
-          <span class="material-icons-round text-xl">
-            @if (currentStep() === 1) { restaurant_menu }
-            @else if (currentStep() === 2) { local_offer }
-            @else { table_restaurant }
-          </span>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
-              {{ isReorder() ? 'Domówienie dań' : 'Nowe Zamówienie (Bon)' }}
-            </h2>
-            <span *ngIf="isReorder()" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/40">
-              Kolejny bon • {{ tableNumber() }}
+      <!-- Wiersz 1 na mobile: Tytuł po lewej, Krzyżyk zamykania po prawej -->
+      <div class="flex items-center justify-between gap-3 w-full sm:w-auto">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
+            <span class="material-icons-round text-xl">
+              @if (currentStep() === 1) { restaurant_menu }
+              @else if (currentStep() === 2) { local_offer }
+              @else { table_restaurant }
             </span>
           </div>
-          <span class="text-[11px] text-slate-500 dark:text-slate-400">
-            @if (currentStep() === 1) { Krok 1 z 3: Wybór dań z karty }
-            @else if (currentStep() === 2) { Krok 2 z 3: Dobierz promocję i rabat }
-            @else { Krok 3 z 3: {{ isReorder() ? 'Potwierdź domówienie i wyślij na kuchnię' : 'Wybór stolika i finalizacja' }} }
-          </span>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
+                {{ isReorder() ? 'Domówienie dań' : 'Nowe Zamówienie (Bon)' }}
+              </h2>
+              <span *ngIf="isReorder()" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/40">
+                Kolejny bon • {{ tableNumber() }}
+              </span>
+            </div>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 block truncate">
+              @if (currentStep() === 1) { Krok 1 z 3: Wybór dań z karty }
+              @else if (currentStep() === 2) { Krok 2 z 3: Dobierz promocję i rabat }
+              @else { Krok 3 z 3: {{ isReorder() ? 'Potwierdź domówienie i wyślij na kuchnię' : 'Wybór stolika i finalizacja' }} }
+            </span>
+          </div>
         </div>
-      </div>
 
-      <!-- Pasek Steppera (Swobodne przeskakiwanie między 1, 2, 3) -->
-      <div class="flex items-center gap-1.5 bg-slate-200/60 dark:bg-slate-800/80 p-1 rounded-2xl shrink-0 self-start sm:self-auto">
-        <!-- Krok 1: Menu -->
-        <button
-          type="button"
-          (click)="goToStep(1)"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
-          [class.bg-white]="currentStep() === 1"
-          [class.dark:bg-slate-700]="currentStep() === 1"
-          [class.text-orange-600]="currentStep() === 1"
-          [class.dark:text-orange-400]="currentStep() === 1"
-          [class.shadow-xs]="currentStep() === 1"
-          [class.text-slate-600]="currentStep() !== 1"
-          [class.dark:text-slate-300]="currentStep() !== 1"
-          [class.hover:text-slate-900]="currentStep() !== 1"
-        >
-          <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px]" [class.bg-orange-500]="currentStep() === 1" [class.text-white]="currentStep() === 1" [class.bg-slate-300]="currentStep() !== 1" [class.dark:bg-slate-600]="currentStep() !== 1">
-            @if (selectedItems().length > 0 && currentStep() !== 1) { ✓ } @else { 1 }
-          </span>
-          <span>Dania ({{ totalItemsCount() }})</span>
-        </button>
-
-        <span class="text-slate-300 dark:text-slate-600 text-xs">/</span>
-
-        <!-- Krok 2: Promocje -->
-        <button
-          type="button"
-          (click)="goToStep(2)"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
-          [class.bg-white]="currentStep() === 2"
-          [class.dark:bg-slate-700]="currentStep() === 2"
-          [class.text-orange-600]="currentStep() === 2"
-          [class.dark:text-orange-400]="currentStep() === 2"
-          [class.shadow-xs]="currentStep() === 2"
-          [class.text-slate-600]="currentStep() !== 2"
-          [class.dark:text-slate-300]="currentStep() !== 2"
-          [class.hover:text-slate-900]="currentStep() !== 2"
-        >
-          <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px]" [class.bg-orange-500]="currentStep() === 2" [class.text-white]="currentStep() === 2" [class.bg-slate-300]="currentStep() !== 2" [class.dark:bg-slate-600]="currentStep() !== 2">
-            @if (discountAmount() > 0 && currentStep() !== 2) { % } @else { 2 }
-          </span>
-          <span>Promocje</span>
-          @if (discountAmount() > 0) {
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          }
-        </button>
-
-        <span class="text-slate-300 dark:text-slate-600 text-xs">/</span>
-
-        <!-- Krok 3: Stolik -->
-        <button
-          type="button"
-          (click)="goToStep(3)"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
-          [class.bg-white]="currentStep() === 3"
-          [class.dark:bg-slate-700]="currentStep() === 3"
-          [class.text-orange-600]="currentStep() === 3"
-          [class.dark:text-orange-400]="currentStep() === 3"
-          [class.shadow-xs]="currentStep() === 3"
-          [class.text-slate-600]="currentStep() !== 3"
-          [class.dark:text-slate-300]="currentStep() !== 3"
-          [class.hover:text-slate-900]="currentStep() !== 3"
-        >
-          <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px]" [class.bg-orange-500]="currentStep() === 3" [class.text-white]="currentStep() === 3" [class.bg-slate-300]="currentStep() !== 3" [class.dark:bg-slate-600]="currentStep() !== 3">
-            3
-          </span>
-          <span>Stolik</span>
-        </button>
-
-        <!-- Zamknij X -->
+        <!-- Krzyżyk 'X' widoczny TYLKO na urządzeniach mobilnych (obok nagłówka, wyrównany do prawej) -->
         <button
           type="button"
           (click)="close.emit()"
-          class="ml-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+          class="sm:hidden text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
           title="Zamknij"
         >
-          <span class="material-icons-round text-lg">close</span>
+          <span class="material-icons-round text-xl">close</span>
+        </button>
+      </div>
+
+      <!-- Prawa strona na desktopie: Czysty Stepper + Przycisk Zamknięcia X -->
+      <div class="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
+        <!-- Pasek Steppera (Swobodne przeskakiwanie między 1, 2, 3) BEZ KRZYŻYKA -->
+        <div class="flex items-center gap-1.5 bg-slate-200/60 dark:bg-slate-800/80 p-1 rounded-2xl shrink-0 overflow-x-auto">
+          <!-- Krok 1: Menu -->
+          <button
+            type="button"
+            (click)="goToStep(1)"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            [class.bg-white]="currentStep() === 1"
+            [class.dark:bg-slate-700]="currentStep() === 1"
+            [class.text-orange-600]="currentStep() === 1"
+            [class.dark:text-orange-400]="currentStep() === 1"
+            [class.shadow-xs]="currentStep() === 1"
+            [class.text-slate-600]="currentStep() !== 1"
+            [class.dark:text-slate-300]="currentStep() !== 1"
+            [class.hover:text-slate-900]="currentStep() !== 1"
+          >
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px]" [class.bg-orange-500]="currentStep() === 1" [class.text-white]="currentStep() === 1" [class.bg-slate-300]="currentStep() !== 1" [class.dark:bg-slate-600]="currentStep() !== 1">
+              @if (selectedItems().length > 0 && currentStep() !== 1) { ✓ } @else { 1 }
+            </span>
+            <span>Dania ({{ totalItemsCount() }})</span>
+          </button>
+
+          <span class="text-slate-300 dark:text-slate-600 text-xs">/</span>
+
+          <!-- Krok 2: Promocje -->
+          <button
+            type="button"
+            (click)="goToStep(2)"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            [class.bg-white]="currentStep() === 2"
+            [class.dark:bg-slate-700]="currentStep() === 2"
+            [class.text-orange-600]="currentStep() === 2"
+            [class.dark:text-orange-400]="currentStep() === 2"
+            [class.shadow-xs]="currentStep() === 2"
+            [class.text-slate-600]="currentStep() !== 2"
+            [class.dark:text-slate-300]="currentStep() !== 2"
+            [class.hover:text-slate-900]="currentStep() !== 2"
+          >
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px]" [class.bg-orange-500]="currentStep() === 2" [class.text-white]="currentStep() === 2" [class.bg-slate-300]="currentStep() !== 2" [class.dark:bg-slate-600]="currentStep() !== 2">
+              @if (discountAmount() > 0 && currentStep() !== 2) { % } @else { 2 }
+            </span>
+            <span>Promocje</span>
+            @if (discountAmount() > 0) {
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            }
+          </button>
+
+          <span class="text-slate-300 dark:text-slate-600 text-xs">/</span>
+
+          <!-- Krok 3: Stolik -->
+          <button
+            type="button"
+            (click)="goToStep(3)"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            [class.bg-white]="currentStep() === 3"
+            [class.dark:bg-slate-700]="currentStep() === 3"
+            [class.text-orange-600]="currentStep() === 3"
+            [class.dark:text-orange-400]="currentStep() === 3"
+            [class.shadow-xs]="currentStep() === 3"
+            [class.text-slate-600]="currentStep() !== 3"
+            [class.dark:text-slate-300]="currentStep() !== 3"
+            [class.hover:text-slate-900]="currentStep() !== 3"
+          >
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px]" [class.bg-orange-500]="currentStep() === 3" [class.text-white]="currentStep() === 3" [class.bg-slate-300]="currentStep() !== 3" [class.dark:bg-slate-600]="currentStep() !== 3">
+              3
+            </span>
+            <span>Stolik</span>
+          </button>
+        </div>
+
+        <!-- Krzyżyk 'X' widoczny TYLKO na desktopie (po prawej stronie, poza stepperem) -->
+        <button
+          type="button"
+          (click)="close.emit()"
+          class="hidden sm:flex text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0 ml-1"
+          title="Zamknij okno"
+        >
+          <span class="material-icons-round text-xl">close</span>
         </button>
       </div>
 
