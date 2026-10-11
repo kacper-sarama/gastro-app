@@ -218,3 +218,28 @@ html {
     color: #cbd5e1;
   }
 }
+
+/* Menu kontekstowe Split Button (Angular Material MatMenu) */
+.gastro-split-menu.mat-mdc-menu-panel,
+.mat-mdc-menu-panel {
+  border-radius: 0.875rem !important;
+  min-width: 220px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+  padding: 4px 0 !important;
+}
+
+.dark .mat-mdc-menu-panel {
+  background-color: #1e293b !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+
+  .mat-mdc-menu-item {
+    color: #f1f5f9 !important;
+
+    &:hover,
+    &.cdk-program-focused,
+    &.cdk-keyboard-focused {
+      background-color: rgba(51, 65, 85, 0.6) !important;
+    }
+  }
+}
+

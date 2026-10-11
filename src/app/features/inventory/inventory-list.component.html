@@ -15,30 +15,61 @@
       </p>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2.5">
-      <!-- Przycisk zbiorczego zamówienia braków -->
+    <!-- Split Button: Dodaj surowiec + Menu akcji (Zamów braki) -->
+    <div class="flex items-stretch rounded-xl shadow-lg shadow-orange-500/20 bg-orange-600 hover:bg-orange-500 transition-colors w-full sm:w-auto overflow-hidden">
+      <!-- Główna lewa akcja: Dodaj surowiec -->
       <button
         type="button"
-        (click)="openBulkRestockModal()"
-        [disabled]="inventoryService.criticalAlertsCount() === 0"
-        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm"
-        [ngClass]="inventoryService.criticalAlertsCount() > 0
-          ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-amber-500/20 active:scale-95 cursor-pointer'
-          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700'"
+        (click)="openAddModal()"
+        class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 text-white font-semibold text-sm transition-all hover:bg-black/5 active:scale-[0.99] cursor-pointer"
       >
-        <span class="material-icons-round text-lg">local_shipping</span>
-        <span>Zamów braki</span>
+        <span class="material-icons-round text-xl">add_box</span>
+        <span>Dodaj surowiec</span>
+      </button>
+
+      <!-- Pionowy separator -->
+      <div class="w-px bg-white/25 shrink-0 self-stretch my-1"></div>
+
+      <!-- Prawa część: Trigger rozwijanego menu ze strzałką -->
+      <button
+        type="button"
+        [matMenuTriggerFor]="inventoryActionsMenu"
+        class="relative inline-flex items-center justify-center px-3 py-2.5 text-white transition-all hover:bg-black/10 active:scale-[0.99] cursor-pointer shrink-0"
+        title="Więcej akcji (Zamów braki)"
+        aria-label="Więcej akcji magazynowych"
+      >
+        <span class="material-icons-round text-2xl">arrow_drop_down</span>
+
+        <!-- Pulsująca kropka alertu na strzałce, gdy są braki lub niski stan -->
         @if (inventoryService.criticalAlertsCount() > 0) {
-          <span class="px-2 py-0.5 text-xs rounded-full bg-white/20 text-white font-extrabold backdrop-blur-xs">
-            {{ inventoryService.criticalAlertsCount() }}
+          <span class="absolute top-2 right-2 flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-400 border border-orange-600"></span>
           </span>
         }
       </button>
 
-      <button (click)="openAddModal()" class="gastro-btn-primary w-full sm:w-auto shadow-lg shadow-orange-500/20">
-        <span class="material-icons-round text-xl">add_box</span>
-        <span>Dodaj surowiec</span>
-      </button>
+      <!-- Menu rozwijane Angular Material -->
+      <mat-menu #inventoryActionsMenu="matMenu" xPosition="before" class="gastro-split-menu">
+        <button
+          mat-menu-item
+          (click)="openBulkRestockModal()"
+          class="!flex !items-center !justify-between !gap-4 !py-2.5 !px-4"
+        >
+          <div class="flex items-center gap-2.5">
+            <span class="material-icons-round text-xl text-amber-500">local_shipping</span>
+            <span class="font-semibold text-sm text-slate-800 dark:text-slate-100">Zamów braki</span>
+          </div>
+
+          @if (inventoryService.criticalAlertsCount() > 0) {
+            <span class="ml-3 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+              {{ inventoryService.criticalAlertsCount() }} alert(y)
+            </span>
+          } @else {
+            <span class="ml-3 text-xs text-slate-400">0 braków</span>
+          }
+        </button>
+      </mat-menu>
     </div>
   </div>
 

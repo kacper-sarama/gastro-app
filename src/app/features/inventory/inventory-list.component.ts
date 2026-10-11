@@ -8,6 +8,7 @@ import { QuickDeliveryModalComponent } from './quick-delivery-modal.component';
 import { ManageInventoryCategoriesModalComponent } from './manage-inventory-categories-modal.component';
 import { BulkRestockModalComponent } from './bulk-restock-modal.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
+import { MatMenuModule } from '@angular/material/menu';
 
 @Component({
   selector: 'app-inventory-list',
@@ -19,7 +20,8 @@ import { StatCardComponent } from '../../shared/components/stat-card/stat-card.c
     QuickDeliveryModalComponent,
     ManageInventoryCategoriesModalComponent,
     BulkRestockModalComponent,
-    StatCardComponent
+    StatCardComponent,
+    MatMenuModule
   ],
   templateUrl: './inventory-list.component.html'
 })
