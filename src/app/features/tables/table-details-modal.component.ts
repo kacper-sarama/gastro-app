@@ -55,6 +55,30 @@ export class TableDetailsModalComponent {
     return this.orderService.getElapsedTime(startTime);
   });
 
+  // Czy wszystkie zamówienia na tym stoliku są już w 100% opłacone
+  readonly isAllPaid = computed<boolean>(() => {
+    const orders = this.activeOrders();
+    return orders.length > 0 && orders.every(o => o.paid === true);
+  });
+
+  // Kwota pozostała do uregulowania u kelnera
+  readonly unpaidTotal = computed<number>(() => {
+    const orders = this.activeOrders();
+    return orders.filter(o => !o.paid).reduce((sum, o) => sum + o.totalPrice, 0);
+  });
+
+  // Kwota już opłacona (np. Pay-at-Table BLIK / Google Pay)
+  readonly paidTotal = computed<number>(() => {
+    const orders = this.activeOrders();
+    return orders.filter(o => o.paid).reduce((sum, o) => sum + o.totalPrice, 0);
+  });
+
+  // Ostatnio użyta metoda płatności online
+  readonly lastPaymentMethod = computed<string>(() => {
+    const paid = this.activeOrders().find(o => o.paid && o.paymentMethod);
+    return paid?.paymentMethod || 'Online';
+  });
+
   async onRequestBill(): Promise<void> {
     await this.tableService.requestBill(this.table.id);
   }
@@ -69,6 +93,17 @@ export class TableDetailsModalComponent {
     try {
       const orderIds = this.activeOrders().map(o => o.id);
       await this.tableService.settleTableOrder(this.table.id, orderIds, paymentMethod);
+      this.close.emit();
+    } finally {
+      this.isSettling.set(false);
+    }
+  }
+
+  async onFinishPaidVisit(): Promise<void> {
+    this.isSettling.set(true);
+    try {
+      const orderIds = this.activeOrders().map(o => o.id);
+      await this.tableService.settleTableOrder(this.table.id, orderIds, this.lastPaymentMethod());
       this.close.emit();
     } finally {
       this.isSettling.set(false);

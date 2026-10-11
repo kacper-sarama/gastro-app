@@ -131,19 +131,13 @@
                 <span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
                   {{ order.tableNumber }}
                 </span>
-                @if (order.paid) {
-                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-1 cursor-help" [title]="order.stripePaymentIntentId ? ('ID Stripe: ' + order.stripePaymentIntentId) : 'Opłacone online'">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Opłacone ({{ order.paymentMethod || 'Online' }})</span>
-                  </span>
-                } @else if (order.paymentMethod) {
-                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center gap-1" title="Do rozliczenia">
-                    <span class="material-icons-round text-xs">payments</span>
-                    <span>Do zapłaty ({{ order.paymentMethod }})</span>
+                @if (order.isTakeout) {
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40">
+                    WYNOS
                   </span>
                 }
               </div>
-              <span class="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+              <span class="text-[11px] font-medium text-slate-400 flex items-center gap-1 font-mono">
                 <span class="material-icons-round text-xs">schedule</span>
                 {{ getElapsedTime(order.createdAt) }}
               </span>
@@ -160,31 +154,20 @@
             <!-- Lista dań w zamówieniu -->
             <div class="space-y-1.5 py-1">
               @for (item of order.items; track item.recipeId + $index) {
-                <div class="flex items-center justify-between text-xs">
-                  <div class="flex items-center gap-2">
-                    <span class="w-5 h-5 rounded bg-slate-100 dark:bg-slate-700 font-bold flex items-center justify-center text-slate-700 dark:text-slate-300">
-                      {{ item.quantity }}x
-                    </span>
-                    <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.recipeName }}</span>
-                  </div>
-                  <span class="text-slate-400 font-mono">{{ (item.unitPrice * item.quantity).toFixed(2) }} zł</span>
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-5 h-5 rounded bg-slate-100 dark:bg-slate-700 font-bold flex items-center justify-center text-slate-800 dark:text-slate-200 shrink-0">
+                    {{ item.quantity }}x
+                  </span>
+                  <span class="font-medium text-slate-800 dark:text-slate-100">{{ item.recipeName }}</span>
                 </div>
               }
             </div>
 
             <!-- Pasek podsumowania i przycisk akcji -->
             <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
-              <div>
-                <span class="text-[11px] text-slate-400 block">Razem</span>
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="font-bold text-slate-900 dark:text-white text-sm">{{ order.totalPrice.toFixed(2) }} zł</span>
-                  @if (order.appliedPromotionName) {
-                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 font-bold border border-orange-500/20 truncate max-w-[120px]" [title]="'Promocja: ' + order.appliedPromotionName">
-                      🏷️ -{{ (order.discountAmount || 0).toFixed(2) }} zł
-                    </span>
-                  }
-                </div>
-              </div>
+              <span class="text-xs text-slate-400 font-medium">
+                {{ order.items.length }} {{ order.items.length === 1 ? 'pozycja' : (order.items.length < 5 ? 'pozycje' : 'pozycji') }}
+              </span>
 
               <div class="flex items-center gap-1.5">
                 <button
@@ -199,7 +182,7 @@
                 <button
                   type="button"
                   (click)="advanceStatus(order)"
-                  class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs flex items-center gap-1 shadow-sm transition-all active:scale-95"
+                  class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs flex items-center gap-1 shadow-sm transition-all active:scale-95 cursor-pointer"
                 >
                   <span>Do kuchni</span>
                   <span class="material-icons-round text-sm">arrow_forward</span>
@@ -247,15 +230,9 @@
                 <span class="px-2 py-0.5 rounded text-xs font-semibold bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/50">
                   {{ order.tableNumber }}
                 </span>
-                @if (order.paid) {
-                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-1 cursor-help" [title]="order.stripePaymentIntentId ? ('ID Stripe: ' + order.stripePaymentIntentId) : 'Opłacone online'">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Opłacone ({{ order.paymentMethod || 'Online' }})</span>
-                  </span>
-                } @else if (order.paymentMethod) {
-                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center gap-1" title="Do rozliczenia">
-                    <span class="material-icons-round text-xs">payments</span>
-                    <span>Do zapłaty ({{ order.paymentMethod }})</span>
+                @if (order.isTakeout) {
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40">
+                    WYNOS
                   </span>
                 }
               </div>
@@ -276,14 +253,11 @@
             <!-- Lista dań w zamówieniu -->
             <div class="space-y-1.5 py-1">
               @for (item of order.items; track item.recipeId + $index) {
-                <div class="flex items-center justify-between text-xs">
-                  <div class="flex items-center gap-2">
-                    <span class="w-5 h-5 rounded bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-bold flex items-center justify-center">
-                      {{ item.quantity }}x
-                    </span>
-                    <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.recipeName }}</span>
-                  </div>
-                  <span class="text-slate-400 font-mono">{{ (item.unitPrice * item.quantity).toFixed(2) }} zł</span>
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-5 h-5 rounded bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-bold flex items-center justify-center shrink-0">
+                    {{ item.quantity }}x
+                  </span>
+                  <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.recipeName }}</span>
                 </div>
               }
             </div>
@@ -349,15 +323,9 @@
                 <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
                   {{ order.tableNumber }}
                 </span>
-                @if (order.paid) {
-                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-1 cursor-help" [title]="order.stripePaymentIntentId ? ('ID Stripe: ' + order.stripePaymentIntentId) : 'Opłacone online'">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    <span>Opłacone ({{ order.paymentMethod || 'Online' }})</span>
-                  </span>
-                } @else if (order.paymentMethod) {
-                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center gap-1" title="Do rozliczenia">
-                    <span class="material-icons-round text-xs">payments</span>
-                    <span>Do zapłaty ({{ order.paymentMethod }})</span>
+                @if (order.isTakeout) {
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40">
+                    WYNOS
                   </span>
                 }
               </div>
@@ -378,30 +346,22 @@
             <!-- Lista dań w zamówieniu -->
             <div class="space-y-1.5 py-1">
               @for (item of order.items; track item.recipeId + $index) {
-                <div class="flex items-center justify-between text-xs">
-                  <div class="flex items-center gap-2">
-                    <span class="w-5 h-5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center">
-                      {{ item.quantity }}x
-                    </span>
-                    <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.recipeName }}</span>
-                  </div>
-                  <span class="text-slate-400 font-mono">{{ (item.unitPrice * item.quantity).toFixed(2) }} zł</span>
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-5 h-5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center shrink-0">
+                    {{ item.quantity }}x
+                  </span>
+                  <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.recipeName }}</span>
                 </div>
               }
             </div>
 
-            <!-- Pasek podsumowania i przycisk wydania z odpisem magazynowym -->
+            <!-- Pasek akcji i wydania z odpisem magazynowym -->
             <div class="pt-2 border-t border-emerald-100 dark:border-emerald-900/40 space-y-2">
-              <div class="flex items-center justify-between text-xs">
-                <span class="text-slate-500">Do zapłaty:</span>
-                <div class="flex items-center gap-1.5">
-                  @if (order.appliedPromotionName) {
-                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 font-bold border border-orange-500/20 truncate max-w-[110px]" [title]="'Promocja: ' + order.appliedPromotionName">
-                      🏷️ -{{ (order.discountAmount || 0).toFixed(2) }} zł
-                    </span>
-                  }
-                  <span class="font-bold text-slate-900 dark:text-white font-mono">{{ order.totalPrice.toFixed(2) }} zł</span>
-                </div>
+              <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>{{ order.items.length }} {{ order.items.length === 1 ? 'pozycja' : (order.items.length < 5 ? 'pozycje' : 'pozycji') }}</span>
+                <span class="font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                  <span class="material-icons-round text-xs">room_service</span> Gotowe
+                </span>
               </div>
 
               <div class="flex items-center gap-2">
@@ -418,7 +378,7 @@
                   <button
                     type="button"
                     (click)="advanceStatus(order)"
-                    class="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all active:scale-95"
+                    class="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer"
                   >
                     <span class="material-icons-round text-sm">check_circle</span>
                     <span>Wydaj (Odpisz z magazynu)</span>
@@ -477,9 +437,9 @@
                 <span class="px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                   {{ order.tableNumber }}
                 </span>
-                @if (order.paid) {
-                  <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
-                    {{ order.paymentMethod || 'Opłacone' }}
+                @if (order.isTakeout) {
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">
+                    WYNOS
                   </span>
                 }
               </div>
@@ -500,27 +460,22 @@
             <!-- Lista dań w zamówieniu (skrócona) -->
             <div class="space-y-1 text-xs text-slate-600 dark:text-slate-400">
               @for (item of order.items; track item.recipeId + $index) {
-                <div class="flex items-center justify-between">
-                  <span>{{ item.quantity }}x {{ item.recipeName }}</span>
-                  <span class="font-mono text-slate-400">{{ (item.unitPrice * item.quantity).toFixed(2) }} zł</span>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-slate-700 dark:text-slate-300">{{ item.quantity }}x</span>
+                  <span>{{ item.recipeName }}</span>
                 </div>
               }
             </div>
 
-            <!-- Informacja o stanie magazynowym i kwota -->
+            <!-- Informacja o stanie magazynowym i liczbie pozycji -->
             <div class="pt-2 border-t border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
-              <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+              <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                 <span class="material-icons-round text-xs">inventory</span>
                 Składniki zdjęte z magazynu
               </span>
-              <div class="flex items-center gap-1.5">
-                @if (order.appliedPromotionName) {
-                  <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 font-bold border border-orange-500/20 truncate max-w-[100px]" [title]="'Promocja: ' + order.appliedPromotionName">
-                    🏷️ -{{ (order.discountAmount || 0).toFixed(2) }} zł
-                  </span>
-                }
-                <span class="font-bold text-slate-800 dark:text-slate-200 font-mono">{{ order.totalPrice.toFixed(2) }} zł</span>
-              </div>
+              <span class="text-slate-400 text-[11px]">
+                {{ order.items.length }} {{ order.items.length === 1 ? 'poz.' : 'poz.' }}
+              </span>
             </div>
           </div>
         } @empty {

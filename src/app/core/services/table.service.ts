@@ -55,6 +55,10 @@ export class TableService {
           activeOrderIds: undefined,
           ordersCount: 0,
           kitchenOrderStatus: undefined,
+          isAllOrdersPaid: undefined,
+          paidOrdersTotal: undefined,
+          unpaidOrdersTotal: undefined,
+          paymentMethod: undefined,
           occupiedSince: undefined
         };
       }
@@ -96,6 +100,11 @@ export class TableService {
           kitchenStatus = 'pending';
         }
 
+        const isAllPaid = matchingOrders.every(o => o.paid === true);
+        const paidTotal = matchingOrders.filter(o => o.paid).reduce((s, o) => s + o.totalPrice, 0);
+        const unpaidTotal = matchingOrders.filter(o => !o.paid).reduce((s, o) => s + o.totalPrice, 0);
+        const paymentMethod = latestOrder.paymentMethod || matchingOrders.find(o => o.paymentMethod)?.paymentMethod;
+
         return {
           ...tbl,
           currentOrderId: latestOrder.id,
@@ -105,6 +114,10 @@ export class TableService {
           activeOrderIds: matchingOrders.map(o => o.id),
           ordersCount: matchingOrders.length,
           kitchenOrderStatus: kitchenStatus,
+          isAllOrdersPaid: isAllPaid,
+          paidOrdersTotal: paidTotal,
+          unpaidOrdersTotal: unpaidTotal,
+          paymentMethod,
           occupiedSince: tbl.occupiedSince || matchingOrders[0].createdAt
         };
       }
