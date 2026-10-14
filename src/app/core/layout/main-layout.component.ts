@@ -23,6 +23,8 @@ const MOBILE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 499.98
 // Tablet / małe okno – automatyczny tryb kompaktowy (same ikony)
 const COMPACT_QUERY = '(max-width: 899.98px)';
 
+import { MatMenuModule } from '@angular/material/menu';
+
 interface NavItem {
   label: string;
   route: string;
@@ -32,7 +34,7 @@ interface NavItem {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, AccountSettingsModalComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, AccountSettingsModalComponent, MatMenuModule],
   templateUrl: './main-layout.component.html'
 })
 export class MainLayoutComponent implements OnInit {

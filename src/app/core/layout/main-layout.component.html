@@ -5,11 +5,6 @@
   <div (click)="closeMobileMenu()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"></div>
   }
 
-  <!-- Top Dropdown Menus Backdrop Overlay (Role, Notifications, Profile) - działa na całym ekranie poza headerem -->
-  @if (isAnyTopMenuOpen()) {
-  <div (click)="closeAllTopMenus()" (touchstart)="closeAllTopMenus()"
-    class="fixed inset-0 z-30 bg-transparent cursor-pointer" aria-hidden="true"></div>
-  }
 
   <!-- Sidebar Navigation (mobile: wysuwana szuflada, desktop/tablet: stały pasek) -->
   <aside [class.fixed]="isMobile()" [class.static]="!isMobile()" [class.shadow-2xl]="isMobile()"
@@ -144,254 +139,246 @@
 
       <div class="flex items-center gap-2.5">
         <!-- Interactive Role Switcher / Simulator -->
-        <div class="relative">
-          <button
-            type="button"
-            (click)="toggleRoleMenu()"
+        <div>
+          <button type="button" [matMenuTriggerFor]="roleMenu"
             class="px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer shadow-xs hover:shadow-sm"
-            [ngClass]="authService.currentRoleDefinition().badgeClass"
-            title="Przełącz aktywną rolę w systemie"
-          >
+            [ngClass]="authService.currentRoleDefinition().badgeClass" title="Przełącz aktywną rolę w systemie">
             <span class="material-icons-round text-base">{{ authService.currentRoleDefinition().icon }}</span>
             <span class="hidden sm:inline">{{ authService.currentRoleDefinition().label }}</span>
             <span class="material-icons-round text-sm">expand_more</span>
           </button>
 
-          <!-- Dropdown wyboru roli -->
-          @if (isRoleMenuOpen()) {
-            <div (click)="$event.stopPropagation()" (touchstart)="$event.stopPropagation()" class="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl z-50 p-2 space-y-1 animate-scale-in">
-              <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800/80 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <!-- Dropdown wyboru roli (MatMenu z automatycznym zamykaniem po kliknięciu poza) -->
+          <mat-menu #roleMenu="matMenu" xPosition="before" class="gastro-header-menu">
+            <div class="w-64 p-2 space-y-1">
+              <div
+                class="px-3 py-2 border-b border-slate-100 dark:border-slate-800/80 text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                (click)="$event.stopPropagation()">
                 Symuluj rolę / Urządzenie
               </div>
-              <button
-                type="button"
-                (click)="selectRole('owner')"
-                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+              <button type="button" (click)="selectRole('owner')"
+                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                 [class.bg-purple-50]="authService.currentUserRole() === 'owner'"
-                [class.dark:bg-purple-950/30]="authService.currentUserRole() === 'owner'"
-              >
+                [class.dark:bg-purple-950/30]="authService.currentUserRole() === 'owner'">
                 <div class="flex items-center gap-2">
-                  <span class="material-icons-round text-base text-purple-600 dark:text-purple-400">admin_panel_settings</span>
+                  <span
+                    class="material-icons-round text-base text-purple-600 dark:text-purple-400">admin_panel_settings</span>
                   <span class="text-slate-900 dark:text-white">Właściciel (Pełny)</span>
                 </div>
-                <span *ngIf="authService.currentUserRole() === 'owner'" class="material-icons-round text-sm text-purple-600">check</span>
+                <span *ngIf="authService.currentUserRole() === 'owner'"
+                  class="material-icons-round text-sm text-purple-600">check</span>
               </button>
 
-              <button
-                type="button"
-                (click)="selectRole('manager')"
-                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+              <button type="button" (click)="selectRole('manager')"
+                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                 [class.bg-indigo-50]="authService.currentUserRole() === 'manager'"
-                [class.dark:bg-indigo-950/30]="authService.currentUserRole() === 'manager'"
-              >
+                [class.dark:bg-indigo-950/30]="authService.currentUserRole() === 'manager'">
                 <div class="flex items-center gap-2">
-                  <span class="material-icons-round text-base text-indigo-600 dark:text-indigo-400">manage_accounts</span>
+                  <span
+                    class="material-icons-round text-base text-indigo-600 dark:text-indigo-400">manage_accounts</span>
                   <span class="text-slate-900 dark:text-white">Menedżer Sali</span>
                 </div>
-                <span *ngIf="authService.currentUserRole() === 'manager'" class="material-icons-round text-sm text-indigo-600">check</span>
+                <span *ngIf="authService.currentUserRole() === 'manager'"
+                  class="material-icons-round text-sm text-indigo-600">check</span>
               </button>
 
-              <button
-                type="button"
-                (click)="selectRole('waiter')"
-                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+              <button type="button" (click)="selectRole('waiter')"
+                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                 [class.bg-blue-50]="authService.currentUserRole() === 'waiter'"
-                [class.dark:bg-blue-950/30]="authService.currentUserRole() === 'waiter'"
-              >
+                [class.dark:bg-blue-950/30]="authService.currentUserRole() === 'waiter'">
                 <div class="flex items-center gap-2">
                   <span class="material-icons-round text-base text-blue-600 dark:text-blue-400">person</span>
                   <span class="text-slate-900 dark:text-white">Kelner / Kasjer (Sala & POS)</span>
                 </div>
-                <span *ngIf="authService.currentUserRole() === 'waiter'" class="material-icons-round text-sm text-blue-600">check</span>
+                <span *ngIf="authService.currentUserRole() === 'waiter'"
+                  class="material-icons-round text-sm text-blue-600">check</span>
               </button>
 
-              <button
-                type="button"
-                (click)="selectRole('kitchen')"
-                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+              <button type="button" (click)="selectRole('kitchen')"
+                class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                 [class.bg-amber-50]="authService.currentUserRole() === 'kitchen'"
-                [class.dark:bg-amber-950/30]="authService.currentUserRole() === 'kitchen'"
-              >
+                [class.dark:bg-amber-950/30]="authService.currentUserRole() === 'kitchen'">
                 <div class="flex items-center gap-2">
                   <span class="material-icons-round text-base text-amber-600 dark:text-amber-400">soup_kitchen</span>
                   <span class="text-slate-900 dark:text-white">Kucharz / Pizzer (KDS)</span>
                 </div>
-                <span *ngIf="authService.currentUserRole() === 'kitchen'" class="material-icons-round text-sm text-amber-600">check</span>
+                <span *ngIf="authService.currentUserRole() === 'kitchen'"
+                  class="material-icons-round text-sm text-amber-600">check</span>
               </button>
 
               <!-- Sekcja demonstracyjna: Klient / Gość lokalu -->
               <div class="pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-800/80">
-                <div class="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <div
+                  class="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between"
+                  (click)="$event.stopPropagation()">
                   <span>Widok Klienta (Demo)</span>
-                  <span class="px-1.5 py-0.5 rounded text-[9px] bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-extrabold">QR</span>
+                  <span
+                    class="px-1.5 py-0.5 rounded text-[9px] bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-extrabold">QR</span>
                 </div>
-                <button
-                  type="button"
-                  (click)="openGuestSimulator('Stolik 1')"
-                  class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-orange-50 dark:hover:bg-orange-950/30 text-slate-900 dark:text-white transition-colors group cursor-pointer"
-                >
+                <button type="button" (click)="openGuestSimulator('Stolik 1')"
+                  class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-left flex items-center justify-between hover:bg-orange-50 dark:hover:bg-orange-950/30 text-slate-900 dark:text-white transition-colors group cursor-pointer">
                   <div class="flex items-center gap-2">
-                    <span class="material-icons-round text-base text-orange-500 group-hover:scale-110 transition-transform">qr_code_scanner</span>
+                    <span
+                      class="material-icons-round text-base text-orange-500 group-hover:scale-110 transition-transform">qr_code_scanner</span>
                     <div>
                       <div class="font-bold text-slate-900 dark:text-white">Gość (Stolik 1)</div>
                       <div class="text-[10px] text-slate-400">Zamówienia & Płatność BLIK</div>
                     </div>
                   </div>
-                  <span class="material-icons-round text-sm text-slate-400 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-all">arrow_forward</span>
+                  <span
+                    class="material-icons-round text-sm text-slate-400 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-all">arrow_forward</span>
                 </button>
               </div>
             </div>
-          }
+          </mat-menu>
         </div>
 
         <!-- State-Driven Notifications Bell (Role-Based) -->
-        <div class="relative">
-          <button
-            type="button"
-            (click)="toggleNotificationsMenu()"
-            [title]="roleNotificationService.tooltipLabel()"
+        <div>
+          <button type="button" [matMenuTriggerFor]="notificationsMenu" [title]="roleNotificationService.tooltipLabel()"
             class="relative w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-all cursor-pointer shadow-xs"
             [class.border-rose-400]="roleNotificationService.unreadCount() > 0"
             [class.text-rose-600]="roleNotificationService.unreadCount() > 0"
-            [class.dark:text-rose-400]="roleNotificationService.unreadCount() > 0"
-          >
+            [class.dark:text-rose-400]="roleNotificationService.unreadCount() > 0">
             <span class="material-icons-round text-xl">
               {{ roleNotificationService.unreadCount() > 0 ? 'notifications_active' : 'notifications' }}
             </span>
 
-            <!-- Czerwona plakietka badge z cyfrą (Stanowa: znika samoczynnie gdy licznik osiągnie 0) -->
+            <!-- Czerwona plakietka badge z cyfrą -->
             @if (roleNotificationService.unreadCount() > 0) {
-              <span class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-rose-600 text-white font-extrabold text-[10px] flex items-center justify-center shadow-md shadow-rose-600/40 border-2 border-white dark:border-slate-900 animate-pulse">
-                {{ roleNotificationService.unreadCount() }}
-              </span>
+            <span
+              class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-rose-600 text-white font-extrabold text-[10px] flex items-center justify-center shadow-md shadow-rose-600/40 border-2 border-white dark:border-slate-900 animate-pulse">
+              {{ roleNotificationService.unreadCount() }}
+            </span>
             }
           </button>
 
-          <!-- Dropdown aktywnych spraw operacyjnych roli -->
-          @if (isNotificationsMenuOpen()) {
-            <div (click)="$event.stopPropagation()" (touchstart)="$event.stopPropagation()" class="absolute right-0 top-full mt-2 w-80 max-w-[90vw] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl z-50 p-2 space-y-1 animate-scale-in">
-              <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Zadania roli ({{ authService.currentRoleDefinition().label }})
-                </span>
-                @if (roleNotificationService.unreadCount() > 0) {
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">
+          <!-- Dropdown aktywnych spraw operacyjnych roli (MatMenu) -->
+          <mat-menu #notificationsMenu="matMenu" xPosition="before" class="gastro-header-menu">
+            <div class="max-w-[90vw] p-2 space-y-1">
+              <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800/80 text-center"
+                (click)="$event.stopPropagation()">
+                <div class="flex items-center justify-center gap-2">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">
+                    Zadania roli ({{ authService.currentRoleDefinition().label }})
+                  </span>
+                  @if (roleNotificationService.unreadCount() > 0) {
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0">
                     {{ roleNotificationService.unreadCount() }} do zrobienia
                   </span>
-                }
+                  }
+                </div>
               </div>
 
               <!-- Lista zadań -->
               <div class="max-h-64 overflow-y-auto space-y-1 p-1">
                 @for (item of roleNotificationService.activeAlertItems(); track item.id) {
-                  <button
-                    type="button"
-                    (click)="handleAlertClick(item)"
-                    class="w-full p-2.5 rounded-xl border text-left flex items-start gap-2.5 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
-                    [ngClass]="item.colorClass"
-                  >
-                    <span class="material-icons-round text-lg shrink-0 mt-0.5">{{ item.icon }}</span>
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center justify-between gap-1">
-                        <span class="font-bold text-xs truncate">{{ item.title }}</span>
-                        @if (item.timeAgo) {
-                          <span class="text-[9px] opacity-75 shrink-0">{{ item.timeAgo }}</span>
-                        }
-                      </div>
-                      <p class="text-[11px] opacity-85 truncate mt-0.5">{{ item.subtitle }}</p>
+                <button type="button" (click)="handleAlertClick(item)"
+                  class="w-full p-2.5 rounded-xl border text-left flex items-start gap-2.5 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                  [ngClass]="item.colorClass">
+                  <span class="material-icons-round text-lg shrink-0 mt-0.5">{{ item.icon }}</span>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-1">
+                      <span class="font-bold text-xs truncate">{{ item.title }}</span>
+                      @if (item.timeAgo) {
+                      <span class="text-[9px] opacity-75 shrink-0">{{ item.timeAgo }}</span>
+                      }
                     </div>
-                  </button>
-                } @empty {
-                  <div class="py-6 text-center text-slate-400">
-                    <span class="material-icons-round text-3xl mb-1 text-emerald-500">check_circle</span>
-                    <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Wszystko na bieżąco!</p>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Brak oczekujących zadań dla Twojej roli</p>
+                    <p class="text-[11px] opacity-85 truncate mt-0.5">{{ item.subtitle }}</p>
                   </div>
+                </button>
+                } @empty {
+                <div class="py-6 px-4 text-center text-slate-400 flex flex-col items-center justify-center"
+                  (click)="$event.stopPropagation()">
+                  <span class="material-icons-round text-3xl mb-1 text-emerald-500">check_circle</span>
+                  <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Wszystko na bieżąco!</p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Brak oczekujących zadań dla Twojej roli</p>
+                </div>
                 }
               </div>
             </div>
-          }
+          </mat-menu>
         </div>
 
         <!-- User Avatar Profile & Dropdown -->
-        <div class="relative">
-        <button type="button" (click)="toggleUserMenu()"
-          class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white font-bold text-base flex items-center justify-center shadow-md shadow-orange-500/25 hover:shadow-lg hover:shadow-orange-500/35 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none"
-          [class.ring-2]="isUserMenuOpen()" [class.ring-orange-500]="isUserMenuOpen()"
-          [class.ring-offset-2]="isUserMenuOpen()" [class.ring-offset-white]="isUserMenuOpen()"
-          [class.dark:ring-offset-slate-900]="isUserMenuOpen()" aria-expanded="isUserMenuOpen()" aria-haspopup="true"
-          title="Menu profilu">
-          {{ authService.restaurantName().charAt(0).toUpperCase() }}
-        </button>
+        <div>
+          <button type="button" [matMenuTriggerFor]="userMenu"
+            class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white font-bold text-base flex items-center justify-center shadow-md shadow-orange-500/25 hover:shadow-lg hover:shadow-orange-500/35 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none cursor-pointer"
+            title="Menu profilu">
+            {{ authService.restaurantName().charAt(0).toUpperCase() }}
+          </button>
 
-        <!-- Dropdown Menu -->
-        @if (isUserMenuOpen()) {
-        <div (click)="$event.stopPropagation()" (touchstart)="$event.stopPropagation()"
-          class="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl z-50 p-2 animate-scale-in">
-          <!-- Header inside menu -->
-          <div class="px-3.5 py-3 border-b border-slate-100 dark:border-slate-800/80 mb-1.5">
-            <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ authService.restaurantName() }}</p>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{{
-              authService.currentUser()?.email || 'Tryb demonstracyjny' }}</p>
-            <div class="mt-2 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span
-                class="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Właściciel
-                lokalu</span>
+          <!-- Dropdown Menu (MatMenu) -->
+          <mat-menu #userMenu="matMenu" xPosition="before" class="gastro-header-menu">
+            <div class="w-64 p-2">
+              <!-- Header inside menu -->
+              <div class="px-3.5 py-3 border-b border-slate-100 dark:border-slate-800/80 mb-1.5"
+                (click)="$event.stopPropagation()">
+                <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ authService.restaurantName() }}
+                </p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{{
+                  authService.currentUser()?.email || 'Tryb demonstracyjny' }}</p>
+                <div class="mt-2 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span
+                    class="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Właściciel
+                    lokalu</span>
+                </div>
+              </div>
+
+              <!-- Item 1: Dark Mode Toggle Switch (stopPropagation pozwala przełączać motyw bez zamykania menu) -->
+              <button type="button" (click)="$event.stopPropagation(); toggleTheme()"
+                class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors group cursor-pointer"
+                role="switch" [attr.aria-checked]="themeService.isDarkMode">
+                <div class="flex items-center gap-2.5">
+                  <span class="material-icons-round text-lg transition-colors"
+                    [class.text-amber-400]="themeService.isDarkMode" [class.text-slate-400]="!themeService.isDarkMode"
+                    [class.group-hover:text-amber-500]="!themeService.isDarkMode">
+                    dark_mode
+                  </span>
+                  <span>Ciemny motyw</span>
+                </div>
+
+                <!-- iOS Style Toggle Switch -->
+                <div
+                  class="w-10 h-5 rounded-full transition-colors duration-200 ease-in-out relative p-0.5 flex items-center"
+                  [class.bg-orange-500]="themeService.isDarkMode" [class.bg-slate-300]="!themeService.isDarkMode"
+                  [class.dark:bg-slate-700]="!themeService.isDarkMode">
+                  <div class="w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out"
+                    [class.translate-x-5]="themeService.isDarkMode" [class.translate-x-0]="!themeService.isDarkMode">
+                  </div>
+                </div>
+              </button>
+
+              <!-- Item 2: Account Settings -->
+              <button type="button" (click)="openAccountModal()"
+                class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors group cursor-pointer">
+                <span
+                  class="material-icons-round text-lg text-slate-400 group-hover:text-orange-500 transition-colors">settings</span>
+                <span>Ustawienia konta</span>
+              </button>
+
+              @if (authService.isDemoAccount()) {
+              <button type="button" (click)="resetDemo()" [disabled]="isResettingDemo()"
+                class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors group cursor-pointer">
+                <span class="material-icons-round text-lg text-amber-500 transition-colors"
+                  [class.animate-spin]="isResettingDemo()">refresh</span>
+                <span>Przywróć dane demo</span>
+              </button>
+              }
+
+              <div class="my-1.5 border-t border-slate-100 dark:border-slate-800/80"></div>
+
+              <!-- Item 3: Logout -->
+              <button type="button" (click)="logout()"
+                class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors group cursor-pointer">
+                <span class="material-icons-round text-lg text-rose-500 transition-colors">logout</span>
+                <span>Wyloguj się</span>
+              </button>
             </div>
-          </div>
-
-          <!-- Item 1: Dark Mode Toggle Switch -->
-          <button type="button" (click)="toggleTheme()"
-            class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors group cursor-pointer"
-            role="switch" [attr.aria-checked]="themeService.isDarkMode">
-            <div class="flex items-center gap-2.5">
-              <span class="material-icons-round text-lg transition-colors"
-                [class.text-amber-400]="themeService.isDarkMode" [class.text-slate-400]="!themeService.isDarkMode"
-                [class.group-hover:text-amber-500]="!themeService.isDarkMode">
-                dark_mode
-              </span>
-              <span>Ciemny motyw</span>
-            </div>
-
-            <!-- iOS Style Toggle Switch -->
-            <div
-              class="w-10 h-5 rounded-full transition-colors duration-200 ease-in-out relative p-0.5 flex items-center"
-              [class.bg-orange-500]="themeService.isDarkMode" [class.bg-slate-300]="!themeService.isDarkMode"
-              [class.dark:bg-slate-700]="!themeService.isDarkMode">
-              <div class="w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out"
-                [class.translate-x-5]="themeService.isDarkMode" [class.translate-x-0]="!themeService.isDarkMode"></div>
-            </div>
-          </button>
-
-          <!-- Item 2: Account Settings -->
-          <button type="button" (click)="openAccountModal()"
-            class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors group">
-            <span
-              class="material-icons-round text-lg text-slate-400 group-hover:text-orange-500 transition-colors">settings</span>
-            <span>Ustawienia konta</span>
-          </button>
-
-          @if (authService.isDemoAccount()) {
-          <button type="button" (click)="resetDemo()" [disabled]="isResettingDemo()"
-            class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors group cursor-pointer">
-            <span class="material-icons-round text-lg text-amber-500 transition-colors"
-              [class.animate-spin]="isResettingDemo()">refresh</span>
-            <span>Przywróć dane demo</span>
-          </button>
-          }
-
-          <div class="my-1.5 border-t border-slate-100 dark:border-slate-800/80"></div>
-
-          <!-- Item 3: Logout -->
-          <button type="button" (click)="logout()"
-            class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors group">
-            <span class="material-icons-round text-lg text-rose-500 transition-colors">logout</span>
-            <span>Wyloguj się</span>
-          </button>
+          </mat-menu>
         </div>
-        }
-      </div>
       </div>
     </header>
 

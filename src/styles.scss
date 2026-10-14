@@ -262,6 +262,19 @@ html {
   }
 }
 
+/* Panele menu w nagłówku (Rola, Powiadomienia, Profil) */
+.gastro-header-menu.mat-mdc-menu-panel {
+  min-width: unset !important;
+  border-radius: 1.25rem !important;
+  padding: 0 !important;
+  overflow: visible !important;
+
+  .mat-mdc-menu-content {
+    padding: 0 !important;
+  }
+}
+
+
 .dark .mat-mdc-menu-panel {
   background-color: #1e293b !important;
   --mat-menu-container-color: #1e293b !important;
