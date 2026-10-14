@@ -8,6 +8,7 @@ import { TableService } from '../../core/services/table.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PaymentService } from '../../core/services/payment.service';
 import { signal } from '@angular/core';
 import { Recipe } from '../../core/models/recipe.model';
 import { InventoryItem } from '../../core/models/inventory-item.model';
@@ -157,7 +158,15 @@ describe('GuestMenuComponent (Pay-at-Table & Online Payments with BLIK/Card)', (
         { provide: TableService, useValue: mockTableService },
         { provide: ToastService, useValue: mockToastService },
         { provide: ThemeService, useValue: mockThemeService },
-        { provide: AuthService, useValue: { currentUser: signal(null), isDemoAccount: signal(true) } }
+        { provide: AuthService, useValue: { currentUser: signal(null), isDemoAccount: signal(true) } },
+        {
+          provide: PaymentService,
+          useValue: {
+            processBlikPayment: jasmine.createSpy('processBlikPayment').and.resolveTo({ success: true }),
+            processWalletPayment: jasmine.createSpy('processWalletPayment').and.resolveTo({ success: true }),
+            processCardPayment: jasmine.createSpy('processCardPayment').and.resolveTo({ success: true })
+          }
+        }
       ]
     }).compileComponents();
 
@@ -254,6 +263,7 @@ describe('GuestMenuComponent (Pay-at-Table & Online Payments with BLIK/Card)', (
       component.blikCode.set('777888');
 
       component.proceedToPayment();
+      tick();
 
       // Stan oczekiwania na akceptację w banku
       expect(component.isAwaitingBankAuth()).toBeTrue();
@@ -309,7 +319,7 @@ describe('GuestMenuComponent (Pay-at-Table & Online Payments with BLIK/Card)', (
     }));
 
     it('powinien poprawnie zresetować widok po kliknięciu "Złóż kolejne zamówienie"', () => {
-      component.completedOrder.set({
+      component.sessionOrders.set([{
         id: 'ord-123',
         restaurantId: 'rest-123',
         orderNumber: 105,
@@ -320,7 +330,7 @@ describe('GuestMenuComponent (Pay-at-Table & Online Payments with BLIK/Card)', (
         stockDeducted: false,
         createdAt: '',
         updatedAt: ''
-      });
+      }]);
 
       component.resetOrderView();
       expect(component.completedOrder()).toBeNull();

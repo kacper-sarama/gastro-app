@@ -68,6 +68,9 @@ export class OrderService implements OnDestroy {
       .reduce((sum, o) => sum + (o.totalPrice || 0), 0)
   );
 
+  // Dzienny cel obrotu lokalu (domyślnie 3000 zł, reaktywny)
+  readonly dailyRevenueTarget = signal<number>(3000);
+
   // Reaktywny zegar aktualizowany co 15 sekund w pamięci (bez ruchu sieciowego)
   readonly currentTime = signal<number>(Date.now());
   private timeTickerInterval: any = null;

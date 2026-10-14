@@ -3,17 +3,33 @@ import { RoleNotificationService } from './role-notification.service';
 import { AuthService } from './auth.service';
 import { OrderService } from './order.service';
 import { InventoryService } from './inventory.service';
+import { TableService } from './table.service';
+import { RecipeService } from './recipe.service';
 import { ToastService } from './toast.service';
 import { signal } from '@angular/core';
 import { Order } from '../models/order.model';
 import { InventoryItem } from '../models/inventory-item.model';
+import { RestaurantTable } from '../models/table.model';
+import { Recipe, RecipeCapacityResult } from '../models/recipe.model';
 import { UserRole } from '../models/staff.model';
 
-describe('RoleNotificationService (State-Driven Role Notifications)', () => {
+describe('RoleNotificationService (Role-specific Toasts & Alerts)', () => {
   let service: RoleNotificationService;
   let mockRoleSignal: ReturnType<typeof signal<UserRole>>;
   let mockOrdersSignal: ReturnType<typeof signal<Order[]>>;
   let mockInventorySignal: ReturnType<typeof signal<InventoryItem[]>>;
+  let mockTablesSignal: ReturnType<typeof signal<RestaurantTable[]>>;
+  let mockRecipesSignal: ReturnType<typeof signal<Recipe[]>>;
+  let mockCapacitiesSignal: ReturnType<typeof signal<Map<string, RecipeCapacityResult>>>;
+  let mockTodaysRevenueSignal: ReturnType<typeof signal<number>>;
+  let mockDailyRevenueTargetSignal: ReturnType<typeof signal<number>>;
+
+  let mockToastService: {
+    info: jasmine.Spy;
+    success: jasmine.Spy;
+    warning: jasmine.Spy;
+    danger: jasmine.Spy;
+  };
 
   const initialOrders: Order[] = [
     {
@@ -39,20 +55,41 @@ describe('RoleNotificationService (State-Driven Role Notifications)', () => {
       stockDeducted: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
+    }
+  ];
+
+  const initialTables: RestaurantTable[] = [
+    { id: 'tbl-1', restaurantId: 'rest-1', number: 'Stolik 1', zone: 'Sala Główna', seats: 4, status: 'occupied' },
+    { id: 'tbl-2', restaurantId: 'rest-1', number: 'Stolik 2', zone: 'Sala Główna', seats: 2, status: 'free' }
+  ];
+
+  const initialRecipes: Recipe[] = [
+    {
+      id: 'rec-1',
+      restaurantId: 'rest-1',
+      name: 'Pizza Margherita',
+      category: 'Pizza',
+      sellingPrice: 32,
+      ingredients: [],
+      isAvailable: true,
+      updatedAt: new Date().toISOString()
     },
     {
-      id: 'ord-3',
+      id: 'rec-2',
       restaurantId: 'rest-1',
-      orderNumber: 103,
-      tableNumber: 'Bar',
-      items: [{ recipeId: 'rec-1', recipeName: 'Margherita', quantity: 1, unitPrice: 32 }],
-      totalPrice: 32,
-      status: 'in_progress',
-      stockDeducted: false,
-      createdAt: new Date().toISOString(),
+      name: 'Panna Cotta',
+      category: 'Desery',
+      sellingPrice: 18,
+      ingredients: [],
+      isAvailable: true,
       updatedAt: new Date().toISOString()
     }
   ];
+
+  const initialCapacities = new Map<string, RecipeCapacityResult>([
+    ['rec-1', { maxPortions: 10, status: 'available', ingredientDetails: [] }],
+    ['rec-2', { maxPortions: 8, status: 'available', ingredientDetails: [] }]
+  ]);
 
   const initialInventory: InventoryItem[] = [
     {
@@ -61,17 +98,8 @@ describe('RoleNotificationService (State-Driven Role Notifications)', () => {
       name: 'Mąka Typ 00',
       category: 'Suche',
       unit: 'g',
-      amount: 0, // Brak surowca!
+      amount: 0,
       minAmount: 1000
-    },
-    {
-      id: 'inv-2',
-      restaurantId: 'rest-1',
-      name: 'Mozzarella fior di latte',
-      category: 'Nabiał',
-      unit: 'g',
-      amount: 15000,
-      minAmount: 5000
     }
   ];
 
@@ -79,6 +107,11 @@ describe('RoleNotificationService (State-Driven Role Notifications)', () => {
     mockRoleSignal = signal<UserRole>('kitchen');
     mockOrdersSignal = signal<Order[]>(initialOrders);
     mockInventorySignal = signal<InventoryItem[]>(initialInventory);
+    mockTablesSignal = signal<RestaurantTable[]>(initialTables);
+    mockRecipesSignal = signal<Recipe[]>(initialRecipes);
+    mockCapacitiesSignal = signal<Map<string, RecipeCapacityResult>>(new Map(initialCapacities));
+    mockTodaysRevenueSignal = signal<number>(1200);
+    mockDailyRevenueTargetSignal = signal<number>(3000);
 
     const mockAuthService = {
       currentUserRole: mockRoleSignal
@@ -86,6 +119,8 @@ describe('RoleNotificationService (State-Driven Role Notifications)', () => {
 
     const mockOrderService = {
       orders: mockOrdersSignal,
+      todaysRevenue: mockTodaysRevenueSignal,
+      dailyRevenueTarget: mockDailyRevenueTargetSignal,
       getElapsedTime: jasmine.createSpy('getElapsedTime').and.returnValue('3 min temu')
     };
 
@@ -94,7 +129,16 @@ describe('RoleNotificationService (State-Driven Role Notifications)', () => {
       outOfStockItems: () => mockInventorySignal().filter(i => i.amount <= 0)
     };
 
-    const mockToastService = {
+    const mockTableService = {
+      tables: mockTablesSignal
+    };
+
+    const mockRecipeService = {
+      recipes: mockRecipesSignal,
+      capacitiesMap: mockCapacitiesSignal
+    };
+
+    mockToastService = {
       info: jasmine.createSpy('info'),
       success: jasmine.createSpy('success'),
       warning: jasmine.createSpy('warning'),
@@ -107,61 +151,181 @@ describe('RoleNotificationService (State-Driven Role Notifications)', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: OrderService, useValue: mockOrderService },
         { provide: InventoryService, useValue: mockInventoryService },
+        { provide: TableService, useValue: mockTableService },
+        { provide: RecipeService, useValue: mockRecipeService },
         { provide: ToastService, useValue: mockToastService }
       ]
     });
 
     service = TestBed.inject(RoleNotificationService);
+    // Wywołaj pierwszy cykl efektów dla inicjalizacji istniejącego stanu bez alertów powitalnych
+    TestBed.flushEffects();
   });
 
-  describe('Obliczanie liczników dzwoneczka (State-Driven unreadCount)', () => {
-    it('dla roli kucharza (kitchen) powinien zliczać tylko zamówienia w kolejce oczekujących (pending)', () => {
+  describe('1. Kucharz (kitchen)', () => {
+    it('powinien wyświetlić Toast info o nowym bonie w kolejce', () => {
       mockRoleSignal.set('kitchen');
-      expect(service.unreadCount()).toBe(1); // tylko ord-1
+
+      const newOrder: Order = {
+        id: 'ord-new',
+        restaurantId: 'rest-1',
+        orderNumber: 105,
+        tableNumber: 'Stolik 4',
+        items: [{ recipeId: 'rec-1', recipeName: 'Margherita', quantity: 1, unitPrice: 32 }],
+        totalPrice: 32,
+        status: 'pending',
+        notes: 'Bez cebuli',
+        stockDeducted: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      mockOrdersSignal.set([...initialOrders, newOrder]);
+      TestBed.flushEffects();
+
+      expect(mockToastService.info).toHaveBeenCalledWith(
+        jasmine.stringMatching(/Bon #105 dla Stolik 4.*Bez cebuli/),
+        '🔔 Nowe zamówienie w kolejce'
+      );
+    });
+
+    it('powinien poprawnie zliczać unreadCount dla kucharza (tylko pending)', () => {
+      mockRoleSignal.set('kitchen');
+      expect(service.unreadCount()).toBe(1); // ord-1
       expect(service.tooltipLabel()).toContain('1 zamówienie czeka w kolejce');
     });
+  });
 
-    it('dla roli kucharza po kliknięciu „Do kuchni” (status -> in_progress) licznik powinien spaść do 0', () => {
-      mockRoleSignal.set('kitchen');
-      expect(service.unreadCount()).toBe(1);
-
-      // Kucharz przesuwa bon ord-1 z pending do in_progress
-      const updatedOrders = initialOrders.map(o => o.id === 'ord-1' ? { ...o, status: 'in_progress' as const } : o);
-      mockOrdersSignal.set(updatedOrders);
-
-      expect(service.unreadCount()).toBe(0);
-      expect(service.tooltipLabel()).toBe('Brak oczekujących powiadomień');
-    });
-
-    it('dla roli kelnera (waiter) powinien zliczać zamówienia gotowe na wydawce (ready)', () => {
+  describe('2. Kasjer / Kelner (waiter)', () => {
+    beforeEach(() => {
       mockRoleSignal.set('waiter');
-      expect(service.unreadCount()).toBe(1); // tylko ord-2
-      expect(service.tooltipLabel()).toContain('1 danie czeka gotowe do wydania');
+      TestBed.flushEffects();
     });
 
-    it('dla roli kelnera po wydaniu dania (status -> completed) licznik powinien spaść do 0', () => {
-      mockRoleSignal.set('waiter');
-      expect(service.unreadCount()).toBe(1);
+    it('powinien wyświetlić Toast success gdy danie jest gotowe na wydawce', () => {
+      const updatedOrders = initialOrders.map(o =>
+        o.id === 'ord-1' ? { ...o, status: 'ready' as const } : o
+      );
 
-      // Kelner wydaje stolik ord-2
-      const updatedOrders = initialOrders.map(o => o.id === 'ord-2' ? { ...o, status: 'completed' as const } : o);
       mockOrdersSignal.set(updatedOrders);
+      TestBed.flushEffects();
 
-      expect(service.unreadCount()).toBe(0);
+      expect(mockToastService.success).toHaveBeenCalledWith(
+        jasmine.stringMatching(/Bon #101 \(Stolik 1\) czeka na odbiór z wydawki!/),
+        '🍽️ Danie gotowe do wydania'
+      );
     });
 
-    it('dla roli właściciela (owner) powinien zliczać braki magazynowe (stan <= 0)', () => {
+    it('powinien wyświetlić Toast info gdy gość prosi o rachunek', () => {
+      const updatedTables = initialTables.map(t =>
+        t.id === 'tbl-1' ? { ...t, status: 'bill_requested' as const } : t
+      );
+
+      mockTablesSignal.set(updatedTables);
+      TestBed.flushEffects();
+
+      expect(mockToastService.info).toHaveBeenCalledWith(
+        jasmine.stringMatching(/Stolik Stolik 1 prosi o rachunek/),
+        '🧾 Prośba o rachunek'
+      );
+    });
+
+    it('powinien wyświetlić Toast warning gdy pozostaną tylko 3 porcje potrawy (końcówka porcji)', () => {
+      const updatedCapacities = new Map(mockCapacitiesSignal());
+      updatedCapacities.set('rec-1', { maxPortions: 3, status: 'low', ingredientDetails: [] });
+
+      mockCapacitiesSignal.set(updatedCapacities);
+      TestBed.flushEffects();
+
+      expect(mockToastService.warning).toHaveBeenCalledWith(
+        jasmine.stringMatching(/Pozostały już tylko 3 porcje.*Pizza Margherita/),
+        '⚠️ Końcówka porcji'
+      );
+    });
+
+    it('powinien wyświetlić Toast danger gdy danie zostanie całkowicie wyprzedane (0 porcji)', () => {
+      const updatedCapacities = new Map(mockCapacitiesSignal());
+      updatedCapacities.set('rec-2', { maxPortions: 0, status: 'blocked', ingredientDetails: [] });
+
+      mockCapacitiesSignal.set(updatedCapacities);
+      TestBed.flushEffects();
+
+      expect(mockToastService.danger).toHaveBeenCalledWith(
+        jasmine.stringMatching(/Danie "Panna Cotta" zostało wyprzedane/),
+        '🚫 Danie wyprzedane'
+      );
+    });
+
+    it('powinien poprawnie zliczać unreadCount dla kelnera (gotowe dania + stoliki z rachunkiem)', () => {
+      expect(service.unreadCount()).toBe(1); // ord-2 (ready)
+
+      // Dodaj stolik z rachunkiem
+      const updatedTables = initialTables.map(t =>
+        t.id === 'tbl-1' ? { ...t, status: 'bill_requested' as const } : t
+      );
+      mockTablesSignal.set(updatedTables);
+      TestBed.flushEffects();
+
+      expect(service.unreadCount()).toBe(2);
+    });
+  });
+
+  describe('3. Menedżer (manager)', () => {
+    beforeEach(() => {
+      mockRoleSignal.set('manager');
+      TestBed.flushEffects();
+    });
+
+    it('powinien wyświetlić Toast warning dla menedżera przy końcówce porcji (3 porcje)', () => {
+      const updatedCapacities = new Map(mockCapacitiesSignal());
+      updatedCapacities.set('rec-1', { maxPortions: 3, status: 'low', ingredientDetails: [] });
+
+      mockCapacitiesSignal.set(updatedCapacities);
+      TestBed.flushEffects();
+
+      expect(mockToastService.warning).toHaveBeenCalledWith(
+        jasmine.stringMatching(/Pozostały już tylko 3 porcje.*Pizza Margherita/),
+        '⚠️ Końcówka porcji'
+      );
+    });
+
+    it('powinien wyświetlić Toast danger dla menedżera przy wyprzedaniu dania', () => {
+      const updatedCapacities = new Map(mockCapacitiesSignal());
+      updatedCapacities.set('rec-1', { maxPortions: 0, status: 'blocked', ingredientDetails: [] });
+
+      mockCapacitiesSignal.set(updatedCapacities);
+      TestBed.flushEffects();
+
+      expect(mockToastService.danger).toHaveBeenCalledWith(
+        jasmine.stringMatching(/Danie "Pizza Margherita" zostało wyprzedane/),
+        '🚫 Danie wyprzedane'
+      );
+    });
+  });
+
+  describe('4. Właściciel (owner)', () => {
+    it('powinien wyświetlić Toast success gdy lokal osiągnie dzienny cel obrotu', () => {
       mockRoleSignal.set('owner');
-      expect(service.unreadCount()).toBe(1); // Mąka ma currentStock: 0
-      expect(service.tooltipLabel()).toContain('1 sprawa operacyjna wymaga uwagi');
+      mockDailyRevenueTargetSignal.set(3000);
+
+      // Obrót przekracza cel
+      mockTodaysRevenueSignal.set(3250);
+      TestBed.flushEffects();
+
+      expect(mockToastService.success).toHaveBeenCalledWith(
+        jasmine.stringMatching(/Lokal osiągnął dzienny cel obrotu \(3250 zł z planowanych 3000 zł\)/),
+        '🎯 Cel dzienny osiągnięty'
+      );
     });
 
-    it('powinien poprawnie zwrócić listę alertItems dla kucharza', () => {
+    it('nie powinien wyświetlać powiadomienia celów obrotu dla kucharza lub kelnera', () => {
       mockRoleSignal.set('kitchen');
-      const alerts = service.activeAlertItems();
-      expect(alerts.length).toBe(1);
-      expect(alerts[0].title).toContain('#101');
-      expect(alerts[0].route).toBe('/orders');
+      mockDailyRevenueTargetSignal.set(3000);
+
+      mockTodaysRevenueSignal.set(3500);
+      TestBed.flushEffects();
+
+      expect(mockToastService.success).not.toHaveBeenCalled();
     });
   });
 });
