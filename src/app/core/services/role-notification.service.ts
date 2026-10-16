@@ -8,6 +8,7 @@ import { ToastService } from './toast.service';
 import { Order } from '../models/order.model';
 import { RestaurantTable } from '../models/table.model';
 import { Recipe, RecipeCapacityResult } from '../models/recipe.model';
+import { InventoryItem, formatStockAmount } from '../models/inventory-item.model';
 
 export interface RoleAlertItem {
   id: string;
@@ -48,6 +49,11 @@ export class RoleNotificationService {
   private hasNotifiedDailyTargetToday = false;
   private isRevenueInitialized = false;
 
+  // Śledzenie stanu surowców magazynowych (Właściciel / Menedżer)
+  private knownOutOfStockItemIds = new Set<string>();
+  private knownLowStockItemIds = new Set<string>();
+  private isInventoryInitialized = false;
+
   // Dźwięk Web Audio API
   private audioCtx: AudioContext | null = null;
 
@@ -81,6 +87,13 @@ export class RoleNotificationService {
       const currentRole = this.authService.currentUserRole();
       this.handleLiveDailyTargetTransition(revenue, target, currentRole);
     });
+
+    // 5. Reaktywne śledzenie stanów surowców magazynowych (brak i niski stan dla Właściciela / Menedżera)
+    effect(() => {
+      const items = this.inventoryService.items();
+      const currentRole = this.authService.currentUserRole();
+      this.handleLiveInventoryTransitions(items, currentRole);
+    });
   }
 
   /**
@@ -103,15 +116,16 @@ export class RoleNotificationService {
     }
 
     if (role === 'owner' || role === 'manager') {
-      // Dla właściciela / menedżera: braki magazynowe (stan 0) + zamówienia opóźnione (>30 min)
+      // Dla właściciela / menedżera: braki magazynowe (stan 0) + niski stan (<= minAmount) + zamówienia opóźnione (>30 min)
       const outOfStockCount = this.inventoryService.outOfStockItems().length;
+      const lowStockCount = this.inventoryService.lowStockItems().length;
       const now = Date.now();
       const delayedOrders = orders.filter(o => {
         if (o.status !== 'pending' && o.status !== 'in_progress') return false;
         const diffMinutes = (now - new Date(o.createdAt).getTime()) / 60000;
         return diffMinutes >= 30;
       }).length;
-      return outOfStockCount + delayedOrders;
+      return outOfStockCount + lowStockCount + delayedOrders;
     }
 
     return 0;
@@ -196,6 +210,21 @@ export class RoleNotificationService {
           subtitle: `Stan wynosi 0 ${item.unit} (wymagane uzupełnienie)`,
           icon: 'inventory_2',
           colorClass: 'text-rose-500 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/40',
+          route: '/inventory'
+        });
+      }
+
+      // 1b. Niski stan surowców
+      const lowStock = this.inventoryService.lowStockItems();
+      for (const item of lowStock) {
+        const currentStr = formatStockAmount(item.amount, item.unit).display;
+        const minStr = formatStockAmount(item.minAmount, item.unit).display;
+        list.push({
+          id: `inv-low-${item.id}`,
+          title: `Niski stan: ${item.name}`,
+          subtitle: `Pozostało ${currentStr} (próg ostrzegawczy: ${minStr})`,
+          icon: 'warning',
+          colorClass: 'text-amber-500 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40',
           route: '/inventory'
         });
       }
@@ -367,6 +396,52 @@ export class RoleNotificationService {
         this.knownSoldOutDishIds.delete(recipe.id);
       }
     }
+  }
+
+  /**
+   * Monitoruje stany surowców magazynowych na żywo:
+   * - Właściciel & Menedżer: Spadek stanu do ostrzegawczego "niski stan" (Toast warning)
+   * - Właściciel & Menedżer: Całkowity brak surowca w magazynie "stan 0" (Toast danger)
+   */
+  private handleLiveInventoryTransitions(items: InventoryItem[], currentRole: string): void {
+    if (items.length === 0) return;
+
+    const currentOutOfStockIds = new Set(items.filter(i => i.amount <= 0).map(i => i.id));
+    const currentLowStockIds = new Set(items.filter(i => i.amount > 0 && i.amount <= i.minAmount).map(i => i.id));
+
+    if (!this.isInventoryInitialized) {
+      this.knownOutOfStockItemIds = currentOutOfStockIds;
+      this.knownLowStockItemIds = currentLowStockIds;
+      this.isInventoryInitialized = true;
+      return;
+    }
+
+    if (currentRole === 'owner' || currentRole === 'manager') {
+      // 1. Sprawdź nowe całkowite braki (stan spadł do 0)
+      for (const item of items) {
+        if (item.amount <= 0 && !this.knownOutOfStockItemIds.has(item.id)) {
+          this.toastService.danger(
+            `Wyczerpano surowiec "${item.name}" (stan: 0 ${item.unit})! Powiązane pozycje w menu mogą zostać zablokowane.`,
+            '🚫 Brak surowca w magazynie'
+          );
+        }
+      }
+
+      // 2. Sprawdź nowe pozycje o niskim stanie (spadły <= minAmount, ale > 0)
+      for (const item of items) {
+        if (item.amount > 0 && item.amount <= item.minAmount && !this.knownLowStockItemIds.has(item.id)) {
+          const currentStr = formatStockAmount(item.amount, item.unit).display;
+          const minStr = formatStockAmount(item.minAmount, item.unit).display;
+          this.toastService.warning(
+            `Stan "${item.name}" spadł poniżej progu (${currentStr} / min. ${minStr}). Wymagane zamówienie!`,
+            '⚠️ Niski stan magazynowy'
+          );
+        }
+      }
+    }
+
+    this.knownOutOfStockItemIds = currentOutOfStockIds;
+    this.knownLowStockItemIds = currentLowStockIds;
   }
 
   /**

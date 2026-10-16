@@ -145,7 +145,7 @@ describe('OrderService (KDS & Automatic Warehouse Stock Deduction)', () => {
         updatedAt: new Date().toISOString()
       };
 
-      const depleted = await service.deductIngredientsForOrder(testOrder);
+      const { depletedItems } = await service.deductIngredientsForOrder(testOrder);
 
       // Składniki na 2 pizze:
       // Mąka: 250g * 2 = 500g
@@ -156,7 +156,7 @@ describe('OrderService (KDS & Automatic Warehouse Stock Deduction)', () => {
       expect(mockInventoryService.quickAdjustStock).toHaveBeenCalledWith('ing-sauce', -200, true);
 
       // Ponieważ w magazynie było sporo zapasu, żaden surowiec nie spadł do zera
-      expect(depleted.length).toBe(0);
+      expect(depletedItems.length).toBe(0);
     });
 
     it('powinien zidentyfikować surowce, których stan spadł do 0 lub poniżej', async () => {
@@ -182,9 +182,36 @@ describe('OrderService (KDS & Automatic Warehouse Stock Deduction)', () => {
         updatedAt: new Date().toISOString()
       };
 
-      const depleted = await service.deductIngredientsForOrder(testOrder);
+      const { depletedItems } = await service.deductIngredientsForOrder(testOrder);
 
-      expect(depleted).toContain('Mozzarella');
+      expect(depletedItems).toContain('Mozzarella');
+    });
+
+    it('powinien zidentyfikować surowce, których stan spadł do ostrzegawczego niskiego stanu', async () => {
+      // Przypadek: mozzarella miała 350g, po zamówieniu 300g zostaje 50g (minAmount = 100g)
+      mockInventoryService.items.set([
+        mockInventoryItems[0],
+        { ...mockInventoryItems[1], amount: 350, minAmount: 100 },
+        mockInventoryItems[2]
+      ]);
+
+      const testOrder: Order = {
+        id: 'ord-test-low',
+        restaurantId: 'rest-1',
+        orderNumber: 206,
+        tableNumber: 'Stolik 1',
+        items: [
+          { recipeId: 'rec-margherita', recipeName: 'Pizza Margherita', quantity: 2, unitPrice: 35 }
+        ],
+        totalPrice: 70,
+        status: 'pending',
+        stockDeducted: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const { lowStockItems } = await service.deductIngredientsForOrder(testOrder);
+      expect(lowStockItems).toContain('Mozzarella');
     });
 
     it('powinien zagregować składniki, gdy zamówienie zawiera tę samą pozycję w kilku wpisach', async () => {
@@ -228,7 +255,7 @@ describe('OrderService (KDS & Automatic Warehouse Stock Deduction)', () => {
       };
 
       service.orders.set([alreadyDeductedOrder]);
-      const deductSpy = spyOn(service, 'deductIngredientsForOrder').and.resolveTo([]);
+      const deductSpy = spyOn(service, 'deductIngredientsForOrder').and.resolveTo({ depletedItems: [], lowStockItems: [] });
 
       // Zmiana statusu na completed
       await service.updateOrderStatus('ord-test-4', 'completed');
@@ -237,7 +264,34 @@ describe('OrderService (KDS & Automatic Warehouse Stock Deduction)', () => {
       expect(deductSpy).not.toHaveBeenCalled();
     });
 
-    it('powinien odpisać składniki z magazynu przy przejściu na status ready (Gotowe do wydania)', async () => {
+    it('powinien zwrócić składniki do magazynu przy anulowaniu zamówienia (cancelled)', async () => {
+      const orderToCancel: Order = {
+        id: 'ord-test-cancel',
+        restaurantId: 'rest-1',
+        orderNumber: 207,
+        tableNumber: 'Stolik 3',
+        items: [
+          { recipeId: 'rec-margherita', recipeName: 'Pizza Margherita', quantity: 1, unitPrice: 35 }
+        ],
+        totalPrice: 35,
+        status: 'pending',
+        stockDeducted: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      service.orders.set([orderToCancel]);
+      const restoreSpy = spyOn(service, 'restoreStockForOrder').and.callThrough();
+
+      await service.updateOrderStatus('ord-test-cancel', 'cancelled');
+
+      expect(restoreSpy).toHaveBeenCalledWith(orderToCancel);
+      expect(mockInventoryService.quickAdjustStock).toHaveBeenCalledWith('ing-flour', 250, true);
+      expect(mockInventoryService.quickAdjustStock).toHaveBeenCalledWith('ing-mozzarella', 150, true);
+      expect(mockInventoryService.quickAdjustStock).toHaveBeenCalledWith('ing-sauce', 100, true);
+    });
+
+    it('powinien odpisać składniki z magazynu przy przejściu na status ready (Gotowe do wydania) jako fallback', async () => {
       const pendingOrder: Order = {
         id: 'ord-test-5',
         restaurantId: 'rest-1',
@@ -254,7 +308,7 @@ describe('OrderService (KDS & Automatic Warehouse Stock Deduction)', () => {
       };
 
       service.orders.set([pendingOrder]);
-      const deductSpy = spyOn(service, 'deductIngredientsForOrder').and.resolveTo([]);
+      const deductSpy = spyOn(service, 'deductIngredientsForOrder').and.resolveTo({ depletedItems: [], lowStockItems: [] });
 
       await service.updateOrderStatus('ord-test-5', 'ready');
 

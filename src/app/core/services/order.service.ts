@@ -21,6 +21,11 @@ import { PromotionService } from './promotion.service';
 import { Order, OrderItem, OrderStatus, CreateOrderDto } from '../models/order.model';
 import { Recipe } from '../models/recipe.model';
 
+export interface OrderStockDeductionResult {
+  depletedItems: string[];
+  lowStockItems: string[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -393,7 +398,7 @@ export class OrderService implements OnDestroy {
       customerPhone: dto.customerPhone?.trim() || undefined,
       isTakeout: dto.isTakeout ?? false,
       status: 'pending' as OrderStatus,
-      stockDeducted: false,
+      stockDeducted: true,
       createdAt: now,
       updatedAt: now
     });
@@ -401,6 +406,7 @@ export class OrderService implements OnDestroy {
     try {
       const col = collection(this.firestore, 'orders');
       const docRef = await addDoc(col, orderData);
+      const createdOrder = { id: docRef.id, ...orderData } as Order;
 
       // Zarejestruj użycie promocji w statystykach ROI
       if (dto.appliedPromotionId) {
@@ -411,7 +417,22 @@ export class OrderService implements OnDestroy {
         `Zarejestrowano zamówienie #${orderNumber} (${tableNumber}, ${dto.items.length} pozycji).`,
         'Nowe zamówienie'
       );
-      return { id: docRef.id, ...orderData } as Order;
+
+      // Automatyczny odpis ze stanu magazynowego natychmiast przy złożeniu zamówienia
+      const deductionRes = await this.deductIngredientsForOrder(createdOrder);
+      if (deductionRes.depletedItems.length > 0) {
+        this.toastService.danger(
+          `Wyczerpano zapas do zera: ${deductionRes.depletedItems.join(', ')}! Dania powiązane mogą zostać zablokowane.`,
+          'Brak surowca w magazynie'
+        );
+      } else if (deductionRes.lowStockItems.length > 0) {
+        this.toastService.warning(
+          `Niski stan po złożeniu zamówienia: ${deductionRes.lowStockItems.join(', ')}. Wymagane uzupełnienie!`,
+          'Niski stan magazynowy'
+        );
+      }
+
+      return createdOrder;
     } catch (err) {
       console.error('Błąd zapisu zamówienia do Firestore:', err);
       this.toastService.danger('Nie udało się zarejestrować zamówienia w bazie.', 'Błąd zamówienia');
@@ -452,7 +473,7 @@ export class OrderService implements OnDestroy {
       customerPhone: dto.customerPhone?.trim() || undefined,
       isTakeout: dto.isTakeout ?? false,
       status: 'pending' as OrderStatus,
-      stockDeducted: false,
+      stockDeducted: true,
       createdAt: now,
       updatedAt: now
     });
@@ -460,7 +481,12 @@ export class OrderService implements OnDestroy {
     try {
       const col = collection(this.firestore, 'orders');
       const docRef = await addDoc(col, orderData);
-      return { id: docRef.id, ...orderData } as Order;
+      const createdOrder = { id: docRef.id, ...orderData } as Order;
+
+      // Automatyczny odpis ze stanu magazynowego dla zamówienia gościa
+      await this.deductIngredientsForOrder(createdOrder);
+
+      return createdOrder;
     } catch (err) {
       console.error('Błąd zapisu zamówienia gościa do Firestore:', err);
       throw err;
@@ -498,16 +524,25 @@ export class OrderService implements OnDestroy {
     if (!target) return;
 
     let stockDeducted = target.stockDeducted;
-
     let depletedIngredients: string[] = [];
+    let lowStockIngredients: string[] = [];
 
-    // AUTOMATYCZNY ODPIS Z MAGAZYNU:
-    // Następuje w momencie, gdy kuchnia kończy danie (status: 'ready' - "Gotowe do wydania").
-    // Stanowi też zabezpieczenie (fallback) przy natychmiastowym wydaniu ('completed'),
-    // jeśli dane zamówienie pominęło status 'ready' (np. szybka sprzedaż przy barze).
-    const shouldDeduct = (newStatus === 'ready' || newStatus === 'completed') && !target.stockDeducted;
-    if (shouldDeduct) {
-      depletedIngredients = await this.deductIngredientsForOrder(target);
+    // 1. ZWROT DO MAGAZYNU: jeśli zamówienie zostaje anulowane, a surowce były odpisane
+    if (newStatus === 'cancelled' && target.stockDeducted) {
+      await this.restoreStockForOrder(target);
+      stockDeducted = false;
+      this.toastService.info(
+        `Zwrócono składniki zamówienia #${target.orderNumber} do magazynu.`,
+        'Zwrot do magazynu'
+      );
+    }
+
+    // 2. FALLBACK ODPISU: dla starszych/archiwalnych zamówień z stockDeducted: false
+    const shouldDeductFallback = (newStatus === 'ready' || newStatus === 'completed') && !target.stockDeducted && target.status !== 'cancelled';
+    if (shouldDeductFallback) {
+      const deductionRes = await this.deductIngredientsForOrder(target);
+      depletedIngredients = deductionRes.depletedItems;
+      lowStockIngredients = deductionRes.lowStockItems;
       stockDeducted = true;
     }
 
@@ -529,27 +564,28 @@ export class OrderService implements OnDestroy {
     // Powiadomienia Toast w zależności od nowego statusu
     const num = target.orderNumber || target.id.slice(-4);
     if (newStatus === 'ready') {
-      // 1. Toast informacyjny: danie gotowe i składniki odpisane w kuchni
       this.toastService.success(
-        `Zamówienie #${num} (${target.tableNumber}) jest gotowe do wydania. Składniki zostały odpisane z magazynu.`,
+        `Zamówienie #${num} (${target.tableNumber}) jest gotowe do wydania.`,
         'Gotowe do wydania'
       );
 
-      // 2. Alert ostrzegawczy, jeśli jakikolwiek składnik wyczerpał się do zera
       if (depletedIngredients.length > 0) {
         this.toastService.danger(
           `Wyczerpano zapas do zera: ${depletedIngredients.join(', ')}! Powiązane pozycje mogą zostać zablokowane.`,
           'Brak surowca w magazynie'
         );
+      } else if (lowStockIngredients.length > 0) {
+        this.toastService.warning(
+          `Niski stan po realizacji: ${lowStockIngredients.join(', ')}. Wymagane uzupełnienie!`,
+          'Niski stan magazynowy'
+        );
       }
     } else if (newStatus === 'completed') {
-      // 1. Toast informacyjny: kelner wydał danie gościom
       this.toastService.success(
         `Wydano zamówienie #${num} (${target.tableNumber}).`,
         'Wydano zamówienie'
       );
 
-      // 2. Alert ostrzegawczy (w przypadku fallbacku odpisu)
       if (depletedIngredients.length > 0) {
         this.toastService.danger(
           `Wyczerpano zapas do zera: ${depletedIngredients.join(', ')}! Powiązane pozycje mogą zostać zablokowane.`,
@@ -567,12 +603,13 @@ export class OrderService implements OnDestroy {
   /**
    * Automatycznie zdejmuje z magazynu odpowiednie gramatury/ilości składników
    * dla wszystkich dań zawartych w danym zamówieniu.
-   * Agreguje zużycie surowców i wykonuje cichy odpis bez spamu wieloma powiadomieniami.
+   * Agreguje zużycie surowców i wykrywa braki oraz stany ostrzegawcze.
    */
-  async deductIngredientsForOrder(order: Order): Promise<string[]> {
+  async deductIngredientsForOrder(order: Order): Promise<OrderStockDeductionResult> {
     const allRecipes = this.recipeService.recipes();
     const inventoryItems = this.inventoryService.items();
     const depletedItems: string[] = [];
+    const lowStockItems: string[] = [];
 
     // 1. Zagreguj łączne ilości do odjęcia dla każdego składnika w zamówieniu
     const deductions = new Map<string, number>();
@@ -592,20 +629,59 @@ export class OrderService implements OnDestroy {
       }
     }
 
-    // 2. Wykonaj cichy odpis magazynowy dla każdego surowca (silent = true)
+    // 2. Wykonaj odpis magazynowy dla każdego surowca i zweryfikuj progi
     for (const [inventoryItemId, totalAmount] of deductions.entries()) {
       const item = inventoryItems.find(i => i.id === inventoryItemId);
-      if (item && item.amount - totalAmount <= 0) {
-        depletedItems.push(item.name);
+      if (item) {
+        const newAmount = item.amount - totalAmount;
+        if (newAmount <= 0) {
+          depletedItems.push(item.name);
+        } else if (newAmount <= item.minAmount) {
+          lowStockItems.push(item.name);
+        }
       }
       await this.inventoryService.quickAdjustStock(inventoryItemId, -totalAmount, true);
     }
 
-    return depletedItems;
+    return { depletedItems, lowStockItems };
+  }
+
+  /**
+   * Automatycznie przywraca składniki zamówienia z powrotem na stan magazynowy
+   * (np. przy anulowaniu lub usunięciu zamówienia przed wydaniem).
+   */
+  async restoreStockForOrder(order: Order): Promise<void> {
+    if (!order.stockDeducted) return;
+
+    const allRecipes = this.recipeService.recipes();
+    const deductions = new Map<string, number>();
+
+    for (const item of order.items) {
+      const recipe = allRecipes.find(r => r.id === item.recipeId || r.name.toLowerCase() === item.recipeName.toLowerCase());
+      if (!recipe || !recipe.ingredients) continue;
+
+      for (const ing of recipe.ingredients) {
+        const totalAmountToRestore = ing.amount * item.quantity;
+        if (totalAmountToRestore > 0 && ing.inventoryItemId) {
+          deductions.set(
+            ing.inventoryItemId,
+            (deductions.get(ing.inventoryItemId) || 0) + totalAmountToRestore
+          );
+        }
+      }
+    }
+
+    for (const [inventoryItemId, totalAmount] of deductions.entries()) {
+      await this.inventoryService.quickAdjustStock(inventoryItemId, totalAmount, true);
+    }
   }
 
   async deleteOrder(orderId: string): Promise<void> {
     try {
+      const target = this.orders().find(o => o.id === orderId);
+      if (target && target.stockDeducted && target.status !== 'completed') {
+        await this.restoreStockForOrder(target);
+      }
       const docRef = doc(this.firestore, `orders/${orderId}`);
       await deleteDoc(docRef);
       this.toastService.danger('Usunięto zamówienie z bazy.', 'Zamówienia');

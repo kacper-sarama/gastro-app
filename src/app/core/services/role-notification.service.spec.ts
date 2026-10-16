@@ -126,7 +126,8 @@ describe('RoleNotificationService (Role-specific Toasts & Alerts)', () => {
 
     const mockInventoryService = {
       items: mockInventorySignal,
-      outOfStockItems: () => mockInventorySignal().filter(i => i.amount <= 0)
+      outOfStockItems: () => mockInventorySignal().filter(i => i.amount <= 0),
+      lowStockItems: () => mockInventorySignal().filter(i => i.amount > 0 && i.amount <= i.minAmount)
     };
 
     const mockTableService = {
@@ -300,6 +301,75 @@ describe('RoleNotificationService (Role-specific Toasts & Alerts)', () => {
         jasmine.stringMatching(/Danie "Pizza Margherita" zostało wyprzedane/),
         '🚫 Danie wyprzedane'
       );
+    });
+
+    it('powinien wyświetlić Toast warning dla menedżera, gdy surowiec w magazynie spadnie do niskiego stanu', () => {
+      // Inicjalizacja już nastąpiła z initialInventory, teraz dodajemy/aktualizujemy surowiec, którego stan spada do niskiego
+      const updatedInventory: InventoryItem[] = [
+        ...mockInventorySignal(),
+        {
+          id: 'inv-mozzarella',
+          restaurantId: 'rest-1',
+          name: 'Ser Mozzarella',
+          category: 'Nabiał',
+          unit: 'g',
+          amount: 800,
+          minAmount: 1500
+        }
+      ];
+
+      mockInventorySignal.set(updatedInventory);
+      TestBed.flushEffects();
+
+      expect(mockToastService.warning).toHaveBeenCalledWith(
+        jasmine.stringMatching(/Stan "Ser Mozzarella" spadł poniżej progu.*Wymagane zamówienie!/),
+        '⚠️ Niski stan magazynowy'
+      );
+    });
+
+    it('powinien wyświetlić Toast danger dla menedżera, gdy surowiec w magazynie zostanie wyczerpany do zera', () => {
+      const updatedInventory: InventoryItem[] = [
+        ...mockInventorySignal(),
+        {
+          id: 'inv-basil',
+          restaurantId: 'rest-1',
+          name: 'Świeża Bazylia',
+          category: 'Zioła',
+          unit: 'g',
+          amount: 0,
+          minAmount: 200
+        }
+      ];
+
+      mockInventorySignal.set(updatedInventory);
+      TestBed.flushEffects();
+
+      expect(mockToastService.danger).toHaveBeenCalledWith(
+        jasmine.stringMatching(/Wyczerpano surowiec "Świeża Bazylia" \(stan: 0 g\)/),
+        '🚫 Brak surowca w magazynie'
+      );
+    });
+
+    it('powinien uwzględniać zarówno braki, jak i niski stan w unreadCount dla menedżera', () => {
+      // initialInventory: inv-1 ma stan 0 (1 brak)
+      // Dodajmy 1 pozycję z niskim stanem
+      const updatedInventory: InventoryItem[] = [
+        ...initialInventory,
+        {
+          id: 'inv-low',
+          restaurantId: 'rest-1',
+          name: 'Pomidory San Marzano',
+          category: 'Warzywa',
+          unit: 'g',
+          amount: 500,
+          minAmount: 2000
+        }
+      ];
+      mockInventorySignal.set(updatedInventory);
+      TestBed.flushEffects();
+
+      // 1 out of stock + 1 low stock + 0 delayed orders = 2
+      expect(service.unreadCount()).toBe(2);
     });
   });
 
