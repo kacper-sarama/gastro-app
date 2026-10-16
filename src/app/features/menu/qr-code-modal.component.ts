@@ -1,5 +1,11 @@
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+
+export interface QrCodeModalData {
+  restaurantName?: string;
+  menuUrl?: string;
+}
 
 @Component({
   selector: 'app-qr-code-modal',
@@ -7,12 +13,29 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   templateUrl: './qr-code-modal.component.html'
 })
-export class QrCodeModalComponent {
+export class QrCodeModalComponent implements OnInit {
+  private dialogRef = inject<MatDialogRef<QrCodeModalComponent>>(MatDialogRef, { optional: true });
+  private dialogData = inject<QrCodeModalData>(MAT_DIALOG_DATA, { optional: true });
+
   @Input() restaurantName = 'Nasz Lokal';
   @Input() menuUrl = '';
   @Output() close = new EventEmitter<void>();
 
   copied = signal<boolean>(false);
+
+  ngOnInit(): void {
+    if (this.dialogData?.restaurantName) {
+      this.restaurantName = this.dialogData.restaurantName;
+    }
+    if (this.dialogData?.menuUrl) {
+      this.menuUrl = this.dialogData.menuUrl;
+    }
+  }
+
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close();
+  }
 
   get qrCodeImageUrl(): string {
     const encoded = encodeURIComponent(this.menuUrl || window.location.origin);

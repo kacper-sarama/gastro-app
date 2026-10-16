@@ -1,7 +1,12 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { InventoryItem, formatStockAmount } from '../../core/models/inventory-item.model';
+
+export interface QuickDeliveryModalData {
+  item: InventoryItem;
+}
 
 @Component({
   selector: 'app-quick-delivery-modal',
@@ -10,7 +15,10 @@ import { InventoryItem, formatStockAmount } from '../../core/models/inventory-it
   templateUrl: './quick-delivery-modal.component.html'
 })
 export class QuickDeliveryModalComponent implements OnInit {
-  @Input({ required: true }) item!: InventoryItem;
+  private dialogRef = inject<MatDialogRef<QuickDeliveryModalComponent>>(MatDialogRef, { optional: true });
+  private dialogData = inject<QuickDeliveryModalData>(MAT_DIALOG_DATA, { optional: true });
+
+  @Input() item!: InventoryItem;
   @Output() close = new EventEmitter<void>();
   @Output() confirm = new EventEmitter<number>();
 
@@ -29,6 +37,10 @@ export class QuickDeliveryModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (this.dialogData?.item) {
+      this.item = this.dialogData.item;
+    }
+
     if (this.item.unit === 'g') {
       this.customMultiplier = 1000; // domyślnie kg
       this.presets = [
@@ -75,9 +87,15 @@ export class QuickDeliveryModalComponent implements OnInit {
     this.addedBaseAmount = Math.max(0, Math.round(val * this.customMultiplier));
   }
 
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close();
+  }
+
   confirmDelivery(): void {
     if (this.addedBaseAmount > 0) {
       this.confirm.emit(this.addedBaseAmount);
+      this.dialogRef?.close(this.addedBaseAmount);
     }
   }
 }

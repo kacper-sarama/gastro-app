@@ -527,30 +527,5 @@
       </div>
     </div>
   </ng-template>
-
-  <!-- 5. Modale -->
-  <!-- Modal Szczegółów stolika & Rozliczenia -->
-  <app-table-details-modal 
-    *ngIf="currentDetailsTable() as tbl"
-    [table]="tbl"
-    (close)="closeTableDetails()"
-    (editTable)="openEditTableModal($event)"
-    (openNewOrder)="openNewOrderModal($event)"
-  ></app-table-details-modal>
-
-  <!-- Modal Dodawania / Edycji stolika -->
-  <app-add-edit-table-modal
-    *ngIf="isAddModalOpen()"
-    [tableToEdit]="selectedTableForEdit()"
-    (close)="closeAddEditModal()"
-    (saved)="closeAddEditModal()"
-  ></app-add-edit-table-modal>
-
-  <!-- Modal Nowego Zamówienia (z predefiniowanym numerem stolika) -->
-  <app-new-order-modal
-    *ngIf="isNewOrderModalOpen()"
-    [initialTableNumber]="tableForNewOrder()"
-    (close)="closeNewOrderModal()"
-    (created)="closeNewOrderModal()"
-  ></app-new-order-modal>
 </div>
+

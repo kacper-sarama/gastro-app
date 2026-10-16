@@ -1,33 +1,27 @@
 <div 
-  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in"
-  (click)="close.emit()"
+  class="gastro-card w-full max-w-lg border border-slate-200 dark:border-slate-800 p-0 shadow-2xl overflow-hidden"
 >
-  <!-- Modal Card Window -->
-  <div 
-    class="gastro-card w-full max-w-lg border border-slate-200 dark:border-slate-800 p-0 shadow-2xl overflow-hidden animate-scale-in"
-    (click)="$event.stopPropagation()"
-  >
-    <!-- Modal Header -->
-    <div class="p-6 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center shadow-sm">
-          <span class="material-icons-round text-2xl">manage_accounts</span>
-        </div>
-        <div>
-          <h2 class="text-base font-bold text-slate-900 dark:text-white">Ustawienia konta i lokalu</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Zarządzaj profilem restauracji, danymi logowania i hasłem</p>
-        </div>
+  <!-- Modal Header -->
+  <div class="p-6 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center shadow-sm">
+        <span class="material-icons-round text-2xl">manage_accounts</span>
       </div>
-
-      <button
-        type="button"
-        (click)="close.emit()"
-        class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors"
-        title="Zamknij"
-      >
-        <span class="material-icons-round text-xl">close</span>
-      </button>
+      <div>
+        <h2 class="text-base font-bold text-slate-900 dark:text-white">Ustawienia konta i lokalu</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Zarządzaj profilem restauracji, danymi logowania i hasłem</p>
+      </div>
     </div>
+
+    <button
+      type="button"
+      (click)="closeModal()"
+      class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors"
+      title="Zamknij"
+    >
+      <span class="material-icons-round text-xl">close</span>
+    </button>
+  </div>
 
     <!-- Navigation Tabs -->
     <div class="flex border-b border-slate-200 dark:border-slate-800 px-6 bg-slate-50/30 dark:bg-slate-900/30 gap-1 pt-2">
@@ -143,7 +137,7 @@
           <div class="pt-2 flex justify-end gap-2">
             <button
               type="button"
-              (click)="close.emit()"
+              (click)="closeModal()"
               class="gastro-btn-secondary px-4 py-2 text-xs"
             >
               Anuluj
@@ -268,7 +262,7 @@
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
-              (click)="close.emit()"
+              (click)="closeModal()"
               class="gastro-btn-secondary px-4 py-2 text-xs"
             >
               Anuluj
@@ -351,7 +345,7 @@
           <div class="pt-2 flex justify-end gap-2">
             <button
               type="button"
-              (click)="close.emit()"
+              (click)="closeModal()"
               class="gastro-btn-secondary px-4 py-2 text-xs"
             >
               Anuluj
@@ -447,7 +441,7 @@
           <div class="pt-3 flex justify-end gap-2">
             <button
               type="button"
-              (click)="close.emit()"
+              (click)="closeModal()"
               class="gastro-btn-secondary px-4 py-2 text-xs"
             >
               Anuluj
@@ -470,4 +464,3 @@
       }
     </div>
   </div>
-</div>

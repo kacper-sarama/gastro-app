@@ -308,11 +308,3 @@
   }
 </div>
 
-<!-- Modal: QR Kod na stoliki -->
-@if (isQrModalOpen()) {
-  <app-qr-code-modal
-    [restaurantName]="authService.restaurantName()"
-    [menuUrl]="publicMenuUrl()"
-    (close)="closeQrModal()"
-  ></app-qr-code-modal>
-}

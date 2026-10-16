@@ -1,11 +1,16 @@
 import { Component, EventEmitter, Input, Output, OnInit, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Recipe, RecipeIngredient, RecipeFormData, calculateRecipeCapacity, resolveFallbackIngredient } from '../../core/models/recipe.model';
 import { InventoryService } from '../../core/services/inventory.service';
 import { RecipeService } from '../../core/services/recipe.service';
 import { InventoryItem, InventoryUnit } from '../../core/models/inventory-item.model';
 import { CategorySelectorComponent } from '../../shared/components/category-selector/category-selector.component';
+
+export interface AddEditRecipeModalData {
+  recipeToEdit?: Recipe;
+}
 
 @Component({
   selector: 'app-add-edit-recipe-modal',
@@ -17,6 +22,8 @@ export class AddEditRecipeModalComponent implements OnInit {
   private fb = inject(FormBuilder);
   readonly inventoryService = inject(InventoryService);
   readonly recipeService = inject(RecipeService);
+  private dialogRef = inject(MatDialogRef<AddEditRecipeModalComponent>, { optional: true });
+  readonly dialogData = inject<AddEditRecipeModalData>(MAT_DIALOG_DATA, { optional: true });
 
   @Input() recipeToEdit?: Recipe;
   @Output() close = new EventEmitter<void>();
@@ -27,8 +34,17 @@ export class AddEditRecipeModalComponent implements OnInit {
 
   readonly availableCategories = computed(() => this.recipeService.allCategories());
 
+  get currentRecipe(): Recipe | undefined {
+    return this.recipeToEdit || this.dialogData?.recipeToEdit;
+  }
+
   get isEditMode(): boolean {
-    return !!this.recipeToEdit;
+    return !!this.currentRecipe;
+  }
+
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close();
   }
 
   get ingredientsArray(): FormArray {
@@ -36,7 +52,7 @@ export class AddEditRecipeModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const edit = this.recipeToEdit;
+    const edit = this.currentRecipe;
 
     this.form = this.fb.group({
       name: [edit?.name || '', [Validators.required, Validators.minLength(2)]],
@@ -165,5 +181,6 @@ export class AddEditRecipeModalComponent implements OnInit {
     }
 
     this.save.emit(recipeData);
+    this.dialogRef?.close(recipeData);
   }
 }

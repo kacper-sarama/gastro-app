@@ -1,24 +1,23 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="close.emit()">
-  <div class="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()">
-    <!-- Header -->
-    <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center border border-orange-500/20">
-          <span class="material-icons-round text-xl">menu_book</span>
-        </div>
-        <div>
-          <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">
-            {{ recipe.name }}
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Analiza receptury i symulacja wydajności kuchni
-          </p>
-        </div>
+<div class="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+  <!-- Header -->
+  <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center border border-orange-500/20">
+        <span class="material-icons-round text-xl">menu_book</span>
       </div>
-      <button (click)="close.emit()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-        <span class="material-icons-round text-2xl">close</span>
-      </button>
+      <div>
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">
+          {{ recipe.name }}
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Analiza receptury i symulacja wydajności kuchni
+        </p>
+      </div>
     </div>
+    <button (click)="closeModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+      <span class="material-icons-round text-2xl">close</span>
+    </button>
+  </div>
 
     <!-- Body -->
     <div class="p-6 space-y-6 overflow-y-auto flex-1">
@@ -141,20 +140,19 @@
 
     <!-- Footer -->
     <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 flex items-center justify-between">
-      <a routerLink="/inventory" (click)="close.emit()" class="text-xs text-orange-600 dark:text-orange-400 hover:underline font-semibold flex items-center gap-1">
+      <a routerLink="/inventory" (click)="closeModal()" class="text-xs text-orange-600 dark:text-orange-400 hover:underline font-semibold flex items-center gap-1">
         <span class="material-icons-round text-base">inventory_2</span>
         <span>Przejdź do magazynu i uzupełnij braki</span>
       </a>
 
       <div class="flex items-center gap-2">
-        <button (click)="close.emit()" type="button" class="gastro-btn-secondary py-2 text-xs">
+        <button (click)="closeModal()" type="button" class="gastro-btn-secondary py-2 text-xs">
           Zamknij
         </button>
-        <button (click)="edit.emit(recipe); close.emit()" type="button" class="gastro-btn-primary py-2 text-xs">
+        <button (click)="handleEdit()" type="button" class="gastro-btn-primary py-2 text-xs">
           <span class="material-icons-round text-base">edit</span>
           <span>Edytuj recepturę</span>
         </button>
       </div>
     </div>
   </div>
-</div>

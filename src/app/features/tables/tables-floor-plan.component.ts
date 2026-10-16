@@ -8,7 +8,7 @@ import { RestaurantTable, TableStatus } from '../../core/models/table.model';
 import { AddEditTableModalComponent } from './add-edit-table-modal.component';
 import { TableDetailsModalComponent } from './table-details-modal.component';
 import { NewOrderModalComponent } from '../orders/new-order-modal.component';
-
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 
 @Component({
@@ -20,7 +20,8 @@ import { StatCardComponent } from '../../shared/components/stat-card/stat-card.c
     StatCardComponent,
     AddEditTableModalComponent, 
     TableDetailsModalComponent, 
-    NewOrderModalComponent
+    NewOrderModalComponent,
+    MatDialogModule
   ],
   templateUrl: './tables-floor-plan.component.html'
 })
@@ -28,6 +29,7 @@ export class TablesFloorPlanComponent {
   readonly tableService = inject(TableService);
   readonly orderService = inject(OrderService);
   readonly authService = inject(AuthService);
+  private dialog = inject(MatDialog);
 
   // Filtry
   statusFilter = signal<TableStatus | 'all'>('all');
@@ -106,7 +108,18 @@ export class TablesFloorPlanComponent {
   }
 
   openTableDetails(tbl: RestaurantTable): void {
-    this.selectedTableForDetails.set(tbl);
+    const dialogRef = this.dialog.open(TableDetailsModalComponent, {
+      data: { table: tbl },
+      panelClass: 'gastro-dialog-panel'
+    });
+
+    dialogRef.afterClosed().subscribe((res?: { action: string; table?: RestaurantTable }) => {
+      if (res?.action === 'newOrder' && res.table) {
+        this.openNewOrderModal(res.table);
+      } else if (res?.action === 'edit' && res.table) {
+        this.openEditTableModal(res.table);
+      }
+    });
   }
 
   closeTableDetails(): void {
@@ -114,13 +127,17 @@ export class TablesFloorPlanComponent {
   }
 
   openAddTableModal(): void {
-    this.selectedTableForEdit.set(null);
-    this.isAddModalOpen.set(true);
+    this.dialog.open(AddEditTableModalComponent, {
+      data: { tableToEdit: null },
+      panelClass: 'gastro-dialog-panel'
+    });
   }
 
   openEditTableModal(tbl: RestaurantTable): void {
-    this.selectedTableForEdit.set(tbl);
-    this.isAddModalOpen.set(true);
+    this.dialog.open(AddEditTableModalComponent, {
+      data: { tableToEdit: tbl },
+      panelClass: 'gastro-dialog-panel'
+    });
   }
 
   closeAddEditModal(): void {
@@ -130,7 +147,10 @@ export class TablesFloorPlanComponent {
 
   openNewOrderModal(tbl?: RestaurantTable): void {
     this.tableForNewOrder.set(tbl ? tbl.number : undefined);
-    this.isNewOrderModalOpen.set(true);
+    this.dialog.open(NewOrderModalComponent, {
+      data: { initialTableNumber: tbl ? tbl.number : undefined },
+      panelClass: 'gastro-dialog-panel'
+    });
   }
 
   closeNewOrderModal(): void {

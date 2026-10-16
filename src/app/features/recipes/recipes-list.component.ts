@@ -9,6 +9,7 @@ import { AddEditRecipeModalComponent } from './add-edit-recipe-modal.component';
 import { RecipeDetailsModalComponent } from './recipe-details-modal.component';
 import { ManageCategoriesModalComponent } from './manage-categories-modal.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-recipes-list',
@@ -19,13 +20,15 @@ import { StatCardComponent } from '../../shared/components/stat-card/stat-card.c
     AddEditRecipeModalComponent, 
     RecipeDetailsModalComponent,
     ManageCategoriesModalComponent,
-    StatCardComponent
+    StatCardComponent,
+    MatDialogModule
   ],
   templateUrl: './recipes-list.component.html'
 })
 export class RecipesListComponent {
   readonly recipeService = inject(RecipeService);
   readonly inventoryService = inject(InventoryService);
+  private dialog = inject(MatDialog);
 
   searchQuery = signal<string>('');
   selectedCategory = signal<string>('all');
@@ -93,13 +96,26 @@ export class RecipesListComponent {
   }
 
   openAddModal(): void {
-    this.recipeToEdit.set(undefined);
-    this.isAddEditModalOpen.set(true);
+    const ref = this.dialog.open(AddEditRecipeModalComponent, {
+      panelClass: 'gastro-dialog-panel'
+    });
+    ref.afterClosed().subscribe(async (data: RecipeFormData | undefined) => {
+      if (data) {
+        await this.recipeService.addRecipe(data);
+      }
+    });
   }
 
   openEditModal(recipe: Recipe): void {
-    this.recipeToEdit.set(recipe);
-    this.isAddEditModalOpen.set(true);
+    const ref = this.dialog.open(AddEditRecipeModalComponent, {
+      data: { recipeToEdit: recipe },
+      panelClass: 'gastro-dialog-panel'
+    });
+    ref.afterClosed().subscribe(async (data: RecipeFormData | undefined) => {
+      if (data) {
+        await this.recipeService.updateRecipe(recipe.id, data);
+      }
+    });
   }
 
   closeAddEditModal(): void {
@@ -118,8 +134,17 @@ export class RecipesListComponent {
   }
 
   openDetailsModal(recipe: Recipe): void {
-    this.selectedRecipeForDetails.set(recipe);
-    this.isDetailsModalOpen.set(true);
+    const capacity = this.getCapacity(recipe.id);
+    const dialogRef = this.dialog.open(RecipeDetailsModalComponent, {
+      data: { recipe, capacity },
+      panelClass: 'gastro-dialog-panel'
+    });
+
+    dialogRef.afterClosed().subscribe((res?: { action: string; recipe?: Recipe }) => {
+      if (res?.action === 'edit' && res.recipe) {
+        this.openEditModal(res.recipe);
+      }
+    });
   }
 
   closeDetailsModal(): void {
@@ -128,11 +153,9 @@ export class RecipesListComponent {
   }
 
   openManageCategoriesModal(): void {
-    this.isManageCategoriesModalOpen.set(true);
-  }
-
-  closeManageCategoriesModal(): void {
-    this.isManageCategoriesModalOpen.set(false);
+    this.dialog.open(ManageCategoriesModalComponent, {
+      panelClass: 'gastro-dialog-panel'
+    });
   }
 
   promptDelete(recipe: Recipe): void {

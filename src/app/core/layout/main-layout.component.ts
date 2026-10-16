@@ -24,6 +24,7 @@ const MOBILE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 499.98
 const COMPACT_QUERY = '(max-width: 899.98px)';
 
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 interface NavItem {
   label: string;
@@ -34,7 +35,7 @@ interface NavItem {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, AccountSettingsModalComponent, MatMenuModule],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, AccountSettingsModalComponent, MatMenuModule, MatDialogModule],
   templateUrl: './main-layout.component.html'
 })
 export class MainLayoutComponent implements OnInit {
@@ -52,6 +53,7 @@ export class MainLayoutComponent implements OnInit {
   private router = inject(Router);
   private breakpointObserver = inject(BreakpointObserver);
   private destroyRef = inject(DestroyRef);
+  private dialog = inject(MatDialog);
 
   isMobileMenuOpen = signal(false);
   isSidebarCollapsed = signal(false);
@@ -147,8 +149,10 @@ export class MainLayoutComponent implements OnInit {
   }
 
   openAccountModal(): void {
-    this.isUserMenuOpen.set(false);
-    this.isAccountModalOpen.set(true);
+    this.closeUserMenu();
+    this.dialog.open(AccountSettingsModalComponent, {
+      panelClass: 'gastro-dialog-panel'
+    });
   }
 
   toggleRoleMenu(): void {

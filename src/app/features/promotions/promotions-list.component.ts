@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PromotionService } from '../../core/services/promotion.service';
 import { AuthService } from '../../core/services/auth.service';
 import { RecipeService } from '../../core/services/recipe.service';
@@ -12,7 +13,7 @@ import { PromotionModalComponent } from './promotion-modal.component';
 @Component({
   selector: 'app-promotions-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, PromotionModalComponent],
+  imports: [CommonModule, FormsModule, PromotionModalComponent, MatDialogModule],
   templateUrl: './promotions-list.component.html'
 })
 export class PromotionsListComponent {
@@ -21,6 +22,7 @@ export class PromotionsListComponent {
   readonly recipeService = inject(RecipeService);
   readonly inventoryService = inject(InventoryService);
   readonly toastService = inject(ToastService);
+  private dialog = inject(MatDialog);
 
   // Filtrowanie
   searchQuery = signal<string>('');
@@ -59,19 +61,28 @@ export class PromotionsListComponent {
   openCreateModal(): void {
     this.selectedPromotionToEdit.set(null);
     this.selectedRecommendationToApply.set(null);
-    this.isModalOpen.set(true);
+    this.dialog.open(PromotionModalComponent, {
+      data: { promotionToEdit: null, initialRecommendation: null },
+      panelClass: 'gastro-dialog-panel'
+    });
   }
 
   openEditModal(promo: Promotion): void {
     this.selectedPromotionToEdit.set(promo);
     this.selectedRecommendationToApply.set(null);
-    this.isModalOpen.set(true);
+    this.dialog.open(PromotionModalComponent, {
+      data: { promotionToEdit: promo, initialRecommendation: null },
+      panelClass: 'gastro-dialog-panel'
+    });
   }
 
   applyRecommendation(rec: PromotionRecommendation): void {
     this.selectedPromotionToEdit.set(null);
     this.selectedRecommendationToApply.set(rec);
-    this.isModalOpen.set(true);
+    this.dialog.open(PromotionModalComponent, {
+      data: { promotionToEdit: null, initialRecommendation: rec },
+      panelClass: 'gastro-dialog-panel'
+    });
   }
 
   async quickActivateRecommendation(rec: PromotionRecommendation): Promise<void> {

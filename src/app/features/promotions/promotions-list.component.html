@@ -451,12 +451,3 @@
   </div>
 </div>
 
-<!-- Modal tworzenia / edycji -->
-@if (isModalOpen()) {
-  <app-promotion-modal
-    [promotionToEdit]="selectedPromotionToEdit()"
-    [initialRecommendation]="selectedRecommendationToApply()"
-    (close)="isModalOpen.set(false)"
-    (saved)="isModalOpen.set(false)"
-  ></app-promotion-modal>
-}

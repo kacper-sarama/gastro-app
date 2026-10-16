@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { InventoryItem, StockStatus, formatStockAmount, getStockStatus } from '../../core/models/inventory-item.model';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -12,6 +13,10 @@ export interface BulkRestockRow {
   unitOptions: { label: string; multiplier: number }[];
 }
 
+export interface BulkRestockModalData {
+  items: InventoryItem[];
+}
+
 @Component({
   selector: 'app-bulk-restock-modal',
   standalone: true,
@@ -20,8 +25,10 @@ export interface BulkRestockRow {
 })
 export class BulkRestockModalComponent implements OnInit {
   private toastService = inject(ToastService);
+  private dialogRef = inject<MatDialogRef<BulkRestockModalComponent>>(MatDialogRef, { optional: true });
+  private dialogData = inject<BulkRestockModalData>(MAT_DIALOG_DATA, { optional: true });
 
-  @Input({ required: true }) items: InventoryItem[] = [];
+  @Input() items: InventoryItem[] = [];
   @Output() close = new EventEmitter<void>();
   @Output() confirm = new EventEmitter<{ id: string; addedAmount: number }[]>();
 
@@ -29,6 +36,10 @@ export class BulkRestockModalComponent implements OnInit {
   isSubmitting = signal(false);
 
   ngOnInit(): void {
+    if (this.dialogData?.items) {
+      this.items = this.dialogData.items;
+    }
+
     // Posortuj: najpierw zupełne braki ('out'), potem niski stan ('low')
     const sorted = [...this.items].sort((a, b) => {
       const statusOrder: Record<StockStatus, number> = { out: 0, low: 1, ok: 2 };
@@ -211,6 +222,11 @@ export class BulkRestockModalComponent implements OnInit {
     }
   }
 
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close();
+  }
+
   submitRestock(): void {
     const deliveries = this.rows
       .filter(r => r.selected)
@@ -227,5 +243,6 @@ export class BulkRestockModalComponent implements OnInit {
 
     this.isSubmitting.set(true);
     this.confirm.emit(deliveries);
+    this.dialogRef?.close(deliveries);
   }
 }

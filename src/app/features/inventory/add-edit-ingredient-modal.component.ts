@@ -1,9 +1,14 @@
 import { Component, EventEmitter, Input, Output, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { InventoryItem, InventoryUnit } from '../../core/models/inventory-item.model';
 import { InventoryService } from '../../core/services/inventory.service';
 import { CategorySelectorComponent } from '../../shared/components/category-selector/category-selector.component';
+
+export interface AddEditIngredientModalData {
+  itemToEdit?: InventoryItem;
+}
 
 @Component({
   selector: 'app-add-edit-ingredient-modal',
@@ -14,6 +19,8 @@ import { CategorySelectorComponent } from '../../shared/components/category-sele
 export class AddEditIngredientModalComponent implements OnInit {
   private fb = inject(FormBuilder);
   readonly inventoryService = inject(InventoryService);
+  private dialogRef = inject(MatDialogRef<AddEditIngredientModalComponent>, { optional: true });
+  readonly dialogData = inject<AddEditIngredientModalData>(MAT_DIALOG_DATA, { optional: true });
 
   @Input() itemToEdit?: InventoryItem;
   @Output() close = new EventEmitter<void>();
@@ -30,25 +37,34 @@ export class AddEditIngredientModalComponent implements OnInit {
     return Array.from(set);
   });
 
+  get currentItem(): InventoryItem | undefined {
+    return this.itemToEdit || this.dialogData?.itemToEdit;
+  }
+
   get isEditMode(): boolean {
-    return !!this.itemToEdit;
+    return !!this.currentItem;
   }
 
   get selectedUnit(): InventoryUnit {
     return this.form?.get('unit')?.value || 'g';
   }
 
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close();
+  }
+
   private uniqueNameValidator(control: AbstractControl): ValidationErrors | null {
     if (!control.value) return null;
     const name = control.value.toString().trim().toLowerCase();
     const existing = this.inventoryService.items().find(i => 
-      i.id !== this.itemToEdit?.id && i.name.trim().toLowerCase() === name
+      i.id !== this.currentItem?.id && i.name.trim().toLowerCase() === name
     );
     return existing ? { duplicateName: true } : null;
   }
 
   ngOnInit(): void {
-    const edit = this.itemToEdit;
+    const edit = this.currentItem;
 
     // Przeliczanie na przyjazne jednostki w edycji
     let amountMultiplier = 1;
@@ -116,5 +132,6 @@ export class AddEditIngredientModalComponent implements OnInit {
     }
 
     this.save.emit(itemData);
+    this.dialogRef?.close(itemData);
   }
 }

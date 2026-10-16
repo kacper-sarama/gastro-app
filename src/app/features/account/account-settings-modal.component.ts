@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDialogRef } from '@angular/material/dialog';
 import { AuthService } from '../../core/services/auth.service';
 
 import { PaymentService } from '../../core/services/payment.service';
@@ -17,8 +18,14 @@ export type AccountTab = 'profile' | 'payments' | 'email' | 'password';
 export class AccountSettingsModalComponent {
   readonly authService = inject(AuthService);
   readonly paymentService = inject(PaymentService);
+  private dialogRef = inject<MatDialogRef<AccountSettingsModalComponent>>(MatDialogRef, { optional: true });
 
   @Output() close = new EventEmitter<void>();
+
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close();
+  }
 
   activeTab = signal<AccountTab>('profile');
   isLoading = signal<boolean>(false);
@@ -56,7 +63,7 @@ export class AccountSettingsModalComponent {
 
     try {
       await this.paymentService.saveSettings(uid, this.paymentSettings());
-      this.close.emit();
+      this.closeModal();
     } catch (err: any) {
       this.errorMessage.set('Nie udało się zapisać konfiguracji płatności.');
     } finally {
@@ -95,7 +102,7 @@ export class AccountSettingsModalComponent {
 
     try {
       await this.authService.updateRestaurantName(name);
-      this.close.emit();
+      this.closeModal();
     } catch (err: any) {
       this.errorMessage.set(this.authService.formatFirebaseError(err.code || err.message));
     } finally {
@@ -124,7 +131,7 @@ export class AccountSettingsModalComponent {
       await this.authService.changeEmail(email, pass);
       this.newEmail.set('');
       this.emailCurrentPassword.set('');
-      this.close.emit();
+      this.closeModal();
     } catch (err: any) {
       this.errorMessage.set(this.authService.formatFirebaseError(err.code || err.message));
     } finally {
@@ -160,7 +167,7 @@ export class AccountSettingsModalComponent {
       this.currentPassword.set('');
       this.newPassword.set('');
       this.confirmPassword.set('');
-      this.close.emit();
+      this.closeModal();
     } catch (err: any) {
       this.errorMessage.set(this.authService.formatFirebaseError(err.code || err.message));
     } finally {

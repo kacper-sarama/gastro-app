@@ -9,12 +9,14 @@ import { Recipe, RecipeCapacityResult } from '../../core/models/recipe.model';
 import { QrCodeModalComponent } from './qr-code-modal.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+
 export type MenuStatusFilter = 'all' | 'available' | 'hidden' | 'sold_out';
 
 @Component({
   selector: 'app-menu-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, QrCodeModalComponent, StatCardComponent],
+  imports: [CommonModule, FormsModule, RouterLink, QrCodeModalComponent, StatCardComponent, MatDialogModule],
   templateUrl: './menu-management.component.html'
 })
 export class MenuManagementComponent {
@@ -22,6 +24,7 @@ export class MenuManagementComponent {
   readonly inventoryService = inject(InventoryService);
   readonly authService = inject(AuthService);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
 
   // Filtry
   searchQuery = signal<string>('');
@@ -178,11 +181,13 @@ export class MenuManagementComponent {
   }
 
   openQrModal(): void {
-    this.isQrModalOpen.set(true);
-  }
-
-  closeQrModal(): void {
-    this.isQrModalOpen.set(false);
+    this.dialog.open(QrCodeModalComponent, {
+      data: {
+        restaurantName: this.authService.restaurantName(),
+        menuUrl: this.publicMenuUrl()
+      },
+      panelClass: 'gastro-dialog-panel'
+    });
   }
 
   openGuestPreview(): void {

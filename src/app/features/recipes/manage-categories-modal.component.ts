@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDialogRef } from '@angular/material/dialog';
 import { RecipeService } from '../../core/services/recipe.service';
 
 @Component({
@@ -11,8 +12,14 @@ import { RecipeService } from '../../core/services/recipe.service';
 })
 export class ManageCategoriesModalComponent {
   readonly recipeService = inject(RecipeService);
+  private dialogRef = inject<MatDialogRef<ManageCategoriesModalComponent>>(MatDialogRef, { optional: true });
 
   @Output() close = new EventEmitter<void>();
+
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close();
+  }
 
   // Nowa kategoria
   newCategoryName = signal<string>('');

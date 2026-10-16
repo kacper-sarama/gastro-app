@@ -263,24 +263,6 @@
   }
 </div>
 
-<!-- Modal: Dodaj / Edytuj Recepturę -->
-@if (isAddEditModalOpen()) {
-  <app-add-edit-recipe-modal
-    [recipeToEdit]="recipeToEdit()"
-    (close)="closeAddEditModal()"
-    (save)="onSaveRecipe($event)"
-  ></app-add-edit-recipe-modal>
-}
-
-<!-- Modal: Szczegóły Receptury & Analiza Wydajności -->
-@if (isDetailsModalOpen() && selectedRecipeForDetails()) {
-  <app-recipe-details-modal
-    [recipe]="selectedRecipeForDetails()!"
-    [capacity]="getCapacity(selectedRecipeForDetails()!.id)"
-    (close)="closeDetailsModal()"
-    (edit)="openEditModal($event)"
-  ></app-recipe-details-modal>
-}
 
 <!-- Modal: Potwierdzenie Usunięcia Receptury -->
 @if (recipeToDelete()) {
@@ -307,10 +289,4 @@
   </div>
 }
 
-<!-- Modal: Zarządzanie Kategoriami Dań -->
-@if (isManageCategoriesModalOpen()) {
-  <app-manage-categories-modal
-    (close)="closeManageCategoriesModal()"
-  ></app-manage-categories-modal>
-}
 

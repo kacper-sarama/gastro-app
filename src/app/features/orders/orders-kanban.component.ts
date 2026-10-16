@@ -4,16 +4,18 @@ import { OrderService } from '../../core/services/order.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Order, OrderStatus } from '../../core/models/order.model';
 import { NewOrderModalComponent } from './new-order-modal.component';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-orders-kanban',
   standalone: true,
-  imports: [CommonModule, NewOrderModalComponent],
+  imports: [CommonModule, NewOrderModalComponent, MatDialogModule],
   templateUrl: './orders-kanban.component.html'
 })
 export class OrdersKanbanComponent {
   readonly orderService = inject(OrderService);
   readonly authService = inject(AuthService);
+  private dialog = inject(MatDialog);
 
   // Kontrola modala nowego zamówienia
   isNewOrderModalOpen = signal<boolean>(false);
@@ -39,7 +41,9 @@ export class OrdersKanbanComponent {
   );
 
   openNewOrderModal(): void {
-    this.isNewOrderModalOpen.set(true);
+    this.dialog.open(NewOrderModalComponent, {
+      panelClass: 'gastro-dialog-panel'
+    });
   }
 
   closeNewOrderModal(): void {

@@ -1,8 +1,13 @@
 import { Component, EventEmitter, Input, Output, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { RestaurantTable, TableStatus } from '../../core/models/table.model';
 import { TableService } from '../../core/services/table.service';
+
+export interface AddEditTableModalData {
+  tableToEdit?: RestaurantTable | null;
+}
 
 @Component({
   selector: 'app-add-edit-table-modal',
@@ -12,6 +17,8 @@ import { TableService } from '../../core/services/table.service';
 })
 export class AddEditTableModalComponent implements OnInit {
   private tableService = inject(TableService);
+  private dialogRef = inject<MatDialogRef<AddEditTableModalComponent>>(MatDialogRef, { optional: true });
+  private dialogData = inject<AddEditTableModalData>(MAT_DIALOG_DATA, { optional: true });
 
   @Input() tableToEdit: RestaurantTable | null = null;
   @Output() close = new EventEmitter<void>();
@@ -30,6 +37,10 @@ export class AddEditTableModalComponent implements OnInit {
   readonly seatOptions: number[] = [1, 2, 3, 4, 6, 8, 10, 12];
 
   ngOnInit(): void {
+    if (this.dialogData?.tableToEdit !== undefined) {
+      this.tableToEdit = this.dialogData.tableToEdit;
+    }
+
     if (this.tableToEdit) {
       this.number.set(this.tableToEdit.number);
       this.zone.set(this.tableToEdit.zone || 'Sala Główna');
@@ -42,6 +53,11 @@ export class AddEditTableModalComponent implements OnInit {
       const count = existing.length + 1;
       this.number.set(`Stolik ${count}`);
     }
+  }
+
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close();
   }
 
   setZone(z: string): void {
@@ -82,6 +98,7 @@ export class AddEditTableModalComponent implements OnInit {
       }
       this.saved.emit();
       this.close.emit();
+      this.dialogRef?.close(true);
     } catch {
       this.errorMessage.set('Wystąpił błąd podczas zapisywania stolika.');
     } finally {
@@ -95,6 +112,7 @@ export class AddEditTableModalComponent implements OnInit {
       await this.tableService.deleteTable(this.tableToEdit.id);
       this.saved.emit();
       this.close.emit();
+      this.dialogRef?.close(true);
     } catch {
       // obsłużone w serwisie
     }

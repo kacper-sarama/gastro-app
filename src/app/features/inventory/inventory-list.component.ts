@@ -9,6 +9,7 @@ import { ManageInventoryCategoriesModalComponent } from './manage-inventory-cate
 import { BulkRestockModalComponent } from './bulk-restock-modal.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-inventory-list',
@@ -21,12 +22,14 @@ import { MatMenuModule } from '@angular/material/menu';
     ManageInventoryCategoriesModalComponent,
     BulkRestockModalComponent,
     StatCardComponent,
-    MatMenuModule
+    MatMenuModule,
+    MatDialogModule
   ],
   templateUrl: './inventory-list.component.html'
 })
 export class InventoryListComponent {
   readonly inventoryService = inject(InventoryService);
+  private dialog = inject(MatDialog);
 
   // Filtry i sortowanie
   searchQuery = signal<string>('');
@@ -127,13 +130,26 @@ export class InventoryListComponent {
 
   // Akcje modali
   openAddModal(): void {
-    this.itemToEdit.set(undefined);
-    this.isAddEditModalOpen.set(true);
+    const ref = this.dialog.open(AddEditIngredientModalComponent, {
+      panelClass: 'gastro-dialog-panel'
+    });
+    ref.afterClosed().subscribe(async (data: Omit<InventoryItem, 'id' | 'restaurantId'> | undefined) => {
+      if (data) {
+        await this.inventoryService.addItem(data);
+      }
+    });
   }
 
   openEditModal(item: InventoryItem): void {
-    this.itemToEdit.set(item);
-    this.isAddEditModalOpen.set(true);
+    const ref = this.dialog.open(AddEditIngredientModalComponent, {
+      data: { itemToEdit: item },
+      panelClass: 'gastro-dialog-panel'
+    });
+    ref.afterClosed().subscribe(async (data: Omit<InventoryItem, 'id' | 'restaurantId'> | undefined) => {
+      if (data) {
+        await this.inventoryService.updateItem(item.id, data);
+      }
+    });
   }
 
   closeAddEditModal(): void {
@@ -152,8 +168,16 @@ export class InventoryListComponent {
   }
 
   openDeliveryModal(item: InventoryItem): void {
-    this.deliveryTargetItem.set(item);
-    this.isDeliveryModalOpen.set(true);
+    const dialogRef = this.dialog.open(QuickDeliveryModalComponent, {
+      data: { item },
+      panelClass: 'gastro-dialog-panel'
+    });
+
+    dialogRef.afterClosed().subscribe(async (addedAmount: number | undefined) => {
+      if (addedAmount && addedAmount > 0) {
+        await this.inventoryService.quickAdjustStock(item.id, addedAmount);
+      }
+    });
   }
 
   closeDeliveryModal(): void {
@@ -170,15 +194,22 @@ export class InventoryListComponent {
   }
 
   openManageCategoriesModal(): void {
-    this.isManageCategoriesModalOpen.set(true);
-  }
-
-  closeManageCategoriesModal(): void {
-    this.isManageCategoriesModalOpen.set(false);
+    this.dialog.open(ManageInventoryCategoriesModalComponent, {
+      panelClass: 'gastro-dialog-panel'
+    });
   }
 
   openBulkRestockModal(): void {
-    this.isBulkRestockModalOpen.set(true);
+    const dialogRef = this.dialog.open(BulkRestockModalComponent, {
+      data: { items: this.itemsNeedingRestock() },
+      panelClass: 'gastro-dialog-panel'
+    });
+
+    dialogRef.afterClosed().subscribe(async (deliveries: { id: string; addedAmount: number }[] | undefined) => {
+      if (deliveries && deliveries.length > 0) {
+        await this.inventoryService.bulkRestock(deliveries);
+      }
+    });
   }
 
   closeBulkRestockModal(): void {

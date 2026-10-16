@@ -1,12 +1,13 @@
-import { Component, EventEmitter, Input, Output, inject, signal, computed } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { RecipeService } from '../../core/services/recipe.service';
 import { OrderService } from '../../core/services/order.service';
 import { TableService } from '../../core/services/table.service';
 import { PromotionService } from '../../core/services/promotion.service';
 import { Recipe, RecipeCapacityResult } from '../../core/models/recipe.model';
-import { OrderItem } from '../../core/models/order.model';
+import { Order, OrderItem } from '../../core/models/order.model';
 import { Promotion } from '../../core/models/promotion.model';
 import { RestaurantTable } from '../../core/models/table.model';
 
@@ -16,17 +17,23 @@ export interface QuickTableOption {
   type?: 'table' | 'bar' | 'takeout' | 'outdoor';
 }
 
+export interface NewOrderModalData {
+  initialTableNumber?: string;
+}
+
 @Component({
   selector: 'app-new-order-modal',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './new-order-modal.component.html'
 })
-export class NewOrderModalComponent {
+export class NewOrderModalComponent implements OnInit {
   readonly recipeService = inject(RecipeService);
   readonly orderService = inject(OrderService);
   readonly tableService = inject(TableService);
   readonly promotionService = inject(PromotionService);
+  private dialogRef = inject(MatDialogRef<NewOrderModalComponent>, { optional: true });
+  readonly dialogData = inject<NewOrderModalData>(MAT_DIALOG_DATA, { optional: true });
 
   @Input() set initialTableNumber(val: string | undefined) {
     if (val && val.trim()) {
@@ -51,6 +58,17 @@ export class NewOrderModalComponent {
 
   @Output() close = new EventEmitter<void>();
   @Output() created = new EventEmitter<void>();
+
+  ngOnInit(): void {
+    if (this.dialogData?.initialTableNumber) {
+      this.initialTableNumber = this.dialogData.initialTableNumber;
+    }
+  }
+
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close();
+  }
 
   // 3-krokowy Stepper: 1 (Menu) -> 2 (Promocje) -> 3 (Stolik)
   currentStep = signal<1 | 2 | 3>(1);
@@ -413,6 +431,7 @@ export class NewOrderModalComponent {
 
       this.created.emit();
       this.close.emit();
+      this.dialogRef?.close(createdOrder);
     } catch {
       this.errorMessage.set('Wystąpił błąd podczas rejestracji zamówienia.');
     } finally {

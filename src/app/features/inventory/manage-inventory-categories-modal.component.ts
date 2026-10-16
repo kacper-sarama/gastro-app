@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDialogRef } from '@angular/material/dialog';
 import { InventoryService } from '../../core/services/inventory.service';
 
 @Component({
@@ -11,8 +12,14 @@ import { InventoryService } from '../../core/services/inventory.service';
 })
 export class ManageInventoryCategoriesModalComponent {
   readonly inventoryService = inject(InventoryService);
+  private dialogRef = inject<MatDialogRef<ManageInventoryCategoriesModalComponent>>(MatDialogRef, { optional: true });
 
   @Output() close = new EventEmitter<void>();
+
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close();
+  }
 
   // Nowa kategoria
   newCategoryName = signal<string>('');

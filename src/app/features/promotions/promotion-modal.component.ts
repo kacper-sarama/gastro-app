@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { PromotionService } from '../../core/services/promotion.service';
 import { RecipeService } from '../../core/services/recipe.service';
 import {
@@ -9,6 +10,11 @@ import {
   PromotionCondition,
   PromotionReward
 } from '../../core/models/promotion.model';
+
+export interface PromotionModalData {
+  promotionToEdit?: Promotion | null;
+  initialRecommendation?: any | null;
+}
 
 @Component({
   selector: 'app-promotion-modal',
@@ -19,6 +25,8 @@ import {
 export class PromotionModalComponent implements OnInit {
   private promotionService = inject(PromotionService);
   readonly recipeService = inject(RecipeService);
+  private dialogRef = inject<MatDialogRef<PromotionModalComponent>>(MatDialogRef, { optional: true });
+  private dialogData = inject<PromotionModalData>(MAT_DIALOG_DATA, { optional: true });
 
   @Input() promotionToEdit: Promotion | null = null;
   @Input() initialRecommendation: any | null = null;
@@ -74,6 +82,15 @@ export class PromotionModalComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    if (this.dialogData) {
+      if (this.dialogData.promotionToEdit !== undefined) {
+        this.promotionToEdit = this.dialogData.promotionToEdit;
+      }
+      if (this.dialogData.initialRecommendation !== undefined) {
+        this.initialRecommendation = this.dialogData.initialRecommendation;
+      }
+    }
+
     if (this.promotionToEdit) {
       const p = this.promotionToEdit;
       this.name.set(p.name);
@@ -176,6 +193,11 @@ export class PromotionModalComponent implements OnInit {
     return this.selectedDays().includes(dayId);
   }
 
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close();
+  }
+
   async onSave(): Promise<void> {
     const nameVal = this.name().trim();
     if (!nameVal) {
@@ -232,6 +254,7 @@ export class PromotionModalComponent implements OnInit {
       }
       this.saved.emit();
       this.close.emit();
+      this.dialogRef?.close(true);
     } catch (err: any) {
       this.errorMessage.set(err?.message || 'Wystąpił błąd podczas zapisywania promocji.');
     } finally {

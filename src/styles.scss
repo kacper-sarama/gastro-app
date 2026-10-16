@@ -291,3 +291,35 @@ html {
   }
 }
 
+/* ======================================================== */
+/* Angular Material Dialog (MatDialog) - GastroApp Styling  */
+/* ======================================================== */
+.cdk-overlay-dark-backdrop {
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+.gastro-dialog-panel {
+  max-width: 95vw !important;
+  max-height: 96vh !important;
+  overflow: visible !important;
+
+  .mat-mdc-dialog-container {
+    --mdc-dialog-container-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 1.5rem !important;
+    overflow: visible !important;
+
+    .mdc-dialog__surface {
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      border-radius: 1.5rem !important;
+      overflow: visible !important;
+    }
+  }
+}
+

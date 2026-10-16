@@ -1,28 +1,27 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm" (click)="close.emit()">
-  <div class="w-full max-w-4xl max-h-[90vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150" (click)="$event.stopPropagation()">
-    <!-- Header -->
-    <div class="px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60 shrink-0">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20 shrink-0">
-          <span class="material-icons-round text-2xl">local_shipping</span>
-        </div>
-        <div>
-          <h3 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-tight">
-            Zbiorcze zamówienie dostawy
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Zestawienie brakujących surowców i pozycji na wyczerpaniu z sugerowanymi ilościami.
-          </p>
-        </div>
+<div class="w-full max-w-4xl max-h-[90vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+  <!-- Header -->
+  <div class="px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20 shrink-0">
+        <span class="material-icons-round text-2xl">local_shipping</span>
       </div>
-      <button 
-        (click)="close.emit()" 
-        type="button"
-        class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-      >
-        <span class="material-icons-round text-2xl">close</span>
-      </button>
+      <div>
+        <h3 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-tight">
+          Zbiorcze zamówienie dostawy
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Zestawienie brakujących surowców i pozycji na wyczerpaniu z sugerowanymi ilościami.
+        </p>
+      </div>
     </div>
+    <button 
+      (click)="closeModal()" 
+      type="button"
+      class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+    >
+      <span class="material-icons-round text-2xl">close</span>
+    </button>
+  </div>
 
     <!-- Alert / Summary Toolbar -->
     <div class="px-5 sm:px-6 py-3 border-b border-slate-200/80 dark:border-slate-800 bg-amber-50/50 dark:bg-amber-950/20 flex flex-wrap items-center justify-between gap-3 shrink-0">
@@ -168,7 +167,7 @@
 
       <div class="flex items-center gap-2.5 w-full sm:w-auto">
         <button 
-          (click)="close.emit()" 
+          (click)="closeModal()" 
           type="button" 
           [disabled]="isSubmitting()"
           class="gastro-btn-secondary flex-1 sm:flex-initial"
@@ -188,4 +187,3 @@
       </div>
     </div>
   </div>
-</div>

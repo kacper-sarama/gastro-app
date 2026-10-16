@@ -1,0 +1,140 @@
+<div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+  <!-- Nagłówek modala -->
+  <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+        <span class="material-icons-round text-lg">{{ member ? 'edit' : 'person_add' }}</span>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">
+          {{ member ? 'Edycja Pracownika' : 'Nowy Pracownik Zespołu' }}
+        </h3>
+        <p class="text-xs text-slate-400">
+          {{ member ? 'Zmień dane i rolę pracownika' : 'Wprowadź dane i przydziel rolę w systemie' }}
+        </p>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      (click)="closeModal()"
+      class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+    >
+      <span class="material-icons-round text-xl">close</span>
+    </button>
+  </div>
+
+  <!-- Formularz -->
+  <form [formGroup]="staffForm" (ngSubmit)="onSubmit()" class="p-6 space-y-4">
+    <!-- Imię i nazwisko -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+        Imię i Nazwisko *
+      </label>
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="np. Kasia Kowalska"
+        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+      />
+      <span *ngIf="staffForm.get('name')?.touched && staffForm.get('name')?.invalid" class="text-xs text-rose-500 mt-1 block">
+        Imię i nazwisko jest wymagane (min. 2 znaki).
+      </span>
+    </div>
+
+    <!-- Email -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+        Adres E-mail (login do systemu) *
+      </label>
+      <input
+        type="email"
+        formControlName="email"
+        placeholder="np. kasia.kelnerka@twojalokal.pl"
+        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+      />
+      <span *ngIf="staffForm.get('email')?.touched && staffForm.get('email')?.invalid" class="text-xs text-rose-500 mt-1 block">
+        Podaj poprawny adres e-mail.
+      </span>
+    </div>
+
+    <!-- Wybór roli -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+        Stanowisko / Rola w lokalu *
+      </label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        @for (role of availableRoles; track role.key) {
+          <label 
+            class="p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between gap-1.5"
+            [ngClass]="staffForm.get('role')?.value === role.key
+              ? 'border-orange-500 bg-orange-50/20 dark:bg-orange-950/20 ring-2 ring-orange-500/20'
+              : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="material-icons-round text-base" [class.text-orange-500]="staffForm.get('role')?.value === role.key">
+                  {{ role.icon }}
+                </span>
+                <span class="font-bold text-xs text-slate-900 dark:text-white">{{ role.label }}</span>
+              </div>
+              <input
+                type="radio"
+                formControlName="role"
+                [value]="role.key"
+                class="text-orange-500 focus:ring-orange-500"
+              />
+            </div>
+            <p class="text-[10px] text-slate-400 leading-tight">
+              {{ role.description }}
+            </p>
+          </label>
+        }
+      </div>
+    </div>
+
+    <!-- Telefon & Notatki -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+          Telefon (opcjonalnie)
+        </label>
+        <input
+          type="text"
+          formControlName="phone"
+          placeholder="+48 500 000 000"
+          class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+          Notatka / Sekcja
+        </label>
+        <input
+          type="text"
+          formControlName="notes"
+          placeholder="np. Zmiana poranna, Bar"
+          class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+        />
+      </div>
+    </div>
+
+    <!-- Przyciski akcji -->
+    <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        Anuluj
+      </button>
+      <button
+        type="submit"
+        class="gastro-btn-primary text-xs py-2 px-5 font-bold shadow-md shadow-orange-500/20 cursor-pointer"
+      >
+        {{ member ? 'Zapisz Zmiany' : 'Dodaj do Zespołu' }}
+      </button>
+    </div>
+  </form>
+</div>

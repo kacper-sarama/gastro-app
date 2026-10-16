@@ -1,36 +1,25 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { StaffService } from '../../core/services/staff.service';
 import { AuthService } from '../../core/services/auth.service';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { StaffMember, UserRole, ROLE_DEFINITIONS, RoleDefinition } from '../../core/models/staff.model';
+import { AddEditStaffModalComponent } from './add-edit-staff-modal.component';
 
 @Component({
   selector: 'app-staff-management',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, StatCardComponent],
+  imports: [CommonModule, StatCardComponent, MatDialogModule],
   templateUrl: './staff-management.component.html'
 })
 export class StaffManagementComponent {
   readonly staffService = inject(StaffService);
   readonly authService = inject(AuthService);
-  private fb = inject(FormBuilder);
+  private dialog = inject(MatDialog);
 
-  isModalOpen = signal(false);
-  editingMember = signal<StaffMember | null>(null);
   searchQuery = signal('');
   roleFilter = signal<string>('all');
-
-  staffForm: FormGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    email: ['', [Validators.required, Validators.email]],
-    role: ['waiter', [Validators.required]],
-    phone: [''],
-    notes: ['']
-  });
-
-  readonly availableRoles: RoleDefinition[] = Object.values(ROLE_DEFINITIONS);
 
   get filteredStaff(): StaffMember[] {
     let list = this.staffService.staff();
@@ -58,62 +47,17 @@ export class StaffManagementComponent {
   }
 
   openAddModal(): void {
-    this.editingMember.set(null);
-    this.staffForm.reset({
-      name: '',
-      email: '',
-      role: 'waiter',
-      phone: '',
-      notes: ''
+    this.dialog.open(AddEditStaffModalComponent, {
+      data: { member: null },
+      panelClass: 'gastro-dialog-panel'
     });
-    this.isModalOpen.set(true);
   }
 
   openEditModal(member: StaffMember): void {
-    this.editingMember.set(member);
-    this.staffForm.patchValue({
-      name: member.name,
-      email: member.email,
-      role: member.role,
-      phone: member.phone || '',
-      notes: member.notes || ''
+    this.dialog.open(AddEditStaffModalComponent, {
+      data: { member },
+      panelClass: 'gastro-dialog-panel'
     });
-    this.isModalOpen.set(true);
-  }
-
-  closeModal(): void {
-    this.isModalOpen.set(false);
-    this.editingMember.set(null);
-  }
-
-  async onSubmit(): Promise<void> {
-    if (this.staffForm.invalid) {
-      this.staffForm.markAllAsTouched();
-      return;
-    }
-
-    const val = this.staffForm.value;
-    const current = this.editingMember();
-
-    if (current) {
-      await this.staffService.updateStaffMember(current.id, {
-        name: val.name.trim(),
-        email: val.email.trim().toLowerCase(),
-        role: val.role,
-        phone: val.phone?.trim() || undefined,
-        notes: val.notes?.trim() || undefined
-      });
-    } else {
-      await this.staffService.addStaffMember({
-        name: val.name,
-        email: val.email,
-        role: val.role,
-        phone: val.phone,
-        notes: val.notes
-      });
-    }
-
-    this.closeModal();
   }
 
   async toggleStatus(member: StaffMember): Promise<void> {

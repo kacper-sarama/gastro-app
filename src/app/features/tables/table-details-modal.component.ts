@@ -1,9 +1,19 @@
-import { Component, EventEmitter, Input, Output, inject, computed, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, computed, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { RestaurantTable } from '../../core/models/table.model';
 import { TableService } from '../../core/services/table.service';
 import { OrderService } from '../../core/services/order.service';
 import { Order } from '../../core/models/order.model';
+
+export interface TableDetailsModalData {
+  table: RestaurantTable;
+}
+
+export interface TableDetailsModalResult {
+  action: 'close' | 'newOrder' | 'edit' | 'settled';
+  table?: RestaurantTable;
+}
 
 @Component({
   selector: 'app-table-details-modal',
@@ -11,11 +21,13 @@ import { Order } from '../../core/models/order.model';
   imports: [CommonModule],
   templateUrl: './table-details-modal.component.html'
 })
-export class TableDetailsModalComponent {
+export class TableDetailsModalComponent implements OnInit {
   readonly tableService = inject(TableService);
   readonly orderService = inject(OrderService);
+  private dialogRef = inject<MatDialogRef<TableDetailsModalComponent>>(MatDialogRef, { optional: true });
+  private dialogData = inject<TableDetailsModalData>(MAT_DIALOG_DATA, { optional: true });
 
-  @Input({ required: true }) table!: RestaurantTable;
+  @Input() table!: RestaurantTable;
   @Output() close = new EventEmitter<void>();
   @Output() editTable = new EventEmitter<RestaurantTable>();
   @Output() openNewOrder = new EventEmitter<RestaurantTable>();
@@ -79,6 +91,17 @@ export class TableDetailsModalComponent {
     return paid?.paymentMethod || 'Online';
   });
 
+  ngOnInit(): void {
+    if (this.dialogData?.table) {
+      this.table = this.dialogData.table;
+    }
+  }
+
+  closeModal(): void {
+    this.close.emit();
+    this.dialogRef?.close({ action: 'close' });
+  }
+
   async onRequestBill(): Promise<void> {
     await this.tableService.requestBill(this.table.id);
   }
@@ -86,6 +109,7 @@ export class TableDetailsModalComponent {
   async onFreeTable(): Promise<void> {
     await this.tableService.cleanAndFreeTable(this.table.id);
     this.close.emit();
+    this.dialogRef?.close({ action: 'settled', table: this.table });
   }
 
   async onSettle(paymentMethod: 'Karta' | 'Gotówka' | 'BLIK'): Promise<void> {
@@ -94,6 +118,7 @@ export class TableDetailsModalComponent {
       const orderIds = this.activeOrders().map(o => o.id);
       await this.tableService.settleTableOrder(this.table.id, orderIds, paymentMethod);
       this.close.emit();
+      this.dialogRef?.close({ action: 'settled', table: this.table });
     } finally {
       this.isSettling.set(false);
     }
@@ -105,6 +130,7 @@ export class TableDetailsModalComponent {
       const orderIds = this.activeOrders().map(o => o.id);
       await this.tableService.settleTableOrder(this.table.id, orderIds, this.lastPaymentMethod());
       this.close.emit();
+      this.dialogRef?.close({ action: 'settled', table: this.table });
     } finally {
       this.isSettling.set(false);
     }
@@ -113,15 +139,18 @@ export class TableDetailsModalComponent {
   async onCleanTable(): Promise<void> {
     await this.tableService.cleanAndFreeTable(this.table.id);
     this.close.emit();
+    this.dialogRef?.close({ action: 'settled', table: this.table });
   }
 
   handleOpenNewOrder(): void {
     this.openNewOrder.emit(this.table);
     this.close.emit();
+    this.dialogRef?.close({ action: 'newOrder', table: this.table });
   }
 
   handleEditTable(): void {
     this.editTable.emit(this.table);
     this.close.emit();
+    this.dialogRef?.close({ action: 'edit', table: this.table });
   }
 }

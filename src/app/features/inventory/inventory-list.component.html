@@ -514,23 +514,6 @@
   </div>
 </div>
 
-<!-- Modal: Dodaj / Edytuj Składnik -->
-@if (isAddEditModalOpen()) {
-  <app-add-edit-ingredient-modal
-    [itemToEdit]="itemToEdit()"
-    (close)="closeAddEditModal()"
-    (save)="onSaveItem($event)"
-  ></app-add-edit-ingredient-modal>
-}
-
-<!-- Modal: Szybka Dostawa -->
-@if (isDeliveryModalOpen() && deliveryTargetItem()) {
-  <app-quick-delivery-modal
-    [item]="deliveryTargetItem()!"
-    (close)="closeDeliveryModal()"
-    (confirm)="onConfirmDelivery($event)"
-  ></app-quick-delivery-modal>
-}
 
 <!-- Modal: Potwierdzenie Usunięcia -->
 @if (itemToDelete()) {
@@ -557,18 +540,3 @@
   </div>
 }
 
-<!-- Modal zarządzania kategoriami surowców -->
-@if (isManageCategoriesModalOpen()) {
-  <app-manage-inventory-categories-modal
-    (close)="closeManageCategoriesModal()"
-  ></app-manage-inventory-categories-modal>
-}
-
-<!-- Modal zbiorczego zamówienia dostawy braków -->
-@if (isBulkRestockModalOpen()) {
-  <app-bulk-restock-modal
-    [items]="itemsNeedingRestock()"
-    (close)="closeBulkRestockModal()"
-    (confirm)="onConfirmBulkRestock($event)"
-  ></app-bulk-restock-modal>
-}
