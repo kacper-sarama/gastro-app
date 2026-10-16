@@ -615,7 +615,7 @@
       <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-0 animate-fade-in">
         
         <!-- Lewa strona: Siatka kafelków stolików (7 kolumn) -->
-        <div class="lg:col-span-7 p-4 sm:p-6 flex flex-col min-h-0 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 overflow-y-auto">
+        <div class="lg:col-span-7 p-4 sm:p-6 min-h-0 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 overflow-y-auto">
           <div class="mb-3 shrink-0">
             <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <span class="material-icons-round text-orange-500">pin_drop</span>
@@ -627,12 +627,12 @@
           </div>
 
           <!-- Pasek wyboru strefy stolików (Filtry jak na Planie Sali) -->
-          <div class="flex flex-wrap items-center gap-1.5 mb-3 shrink-0">
+          <div class="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1 scrollbar-none sm:flex-wrap shrink-0">
             <!-- Wszystkie strefy -->
             <button
               type="button"
               (click)="selectModalZone('all')"
-              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               [ngClass]="selectedModalZone() === 'all'
                 ? 'bg-orange-500 text-white shadow-sm'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
@@ -652,7 +652,7 @@
               <button
                 type="button"
                 (click)="selectModalZone(zone)"
-                class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 [ngClass]="selectedModalZone() === zone
                   ? 'bg-orange-500 text-white shadow-sm'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
@@ -671,7 +671,7 @@
             <button
               type="button"
               (click)="selectModalZone('takeout')"
-              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               [ngClass]="selectedModalZone() === 'takeout'
                 ? 'bg-orange-500 text-white shadow-sm'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
@@ -731,7 +731,7 @@
             </div>
           } @else {
             <!-- Dynamiczna siatka kafelków stolików w lokalu -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-4 max-h-60 overflow-y-auto p-0.5">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-4 p-0.5">
               @for (tbl of modalTables(); track tbl.id) {
                 @let isSelected = tableNumber() === tbl.number;
                 <button
