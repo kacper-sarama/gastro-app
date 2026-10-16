@@ -54,7 +54,7 @@
         <button
           type="button"
           (click)="copyListToClipboard()"
-          title="Skopiuj listę do schowka, aby wysłać hurtownikowi przez SMS / WhatsApp"
+          matTooltip="Skopiuj listę do schowka, aby wysłać hurtownikowi przez SMS / WhatsApp"
           class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors"
         >
           <span class="material-icons-round text-sm text-slate-500">content_copy</span>
@@ -132,15 +132,16 @@
                       placeholder="0"
                       class="gastro-input w-24 py-1.5 px-2.5 text-sm font-bold text-right"
                     />
-                    <select
-                      [(ngModel)]="row.multiplier"
-                      [disabled]="!row.selected"
-                      class="gastro-input py-1.5 px-2 text-xs font-medium w-24"
-                    >
-                      @for (opt of row.unitOptions; track opt.label) {
-                        <option [value]="opt.multiplier">{{ opt.label }}</option>
-                      }
-                    </select>
+                    <mat-form-field appearance="outline" class="w-24 shrink-0 gastro-select-field gastro-select-compact" subscriptSizing="dynamic">
+                      <mat-select
+                        [(ngModel)]="row.multiplier"
+                        [disabled]="!row.selected"
+                      >
+                        @for (opt of row.unitOptions; track opt.label) {
+                          <mat-option [value]="opt.multiplier">{{ opt.label }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
                   </div>
                 </div>
 

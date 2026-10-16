@@ -11,12 +11,16 @@ import { StatCardComponent } from '../../shared/components/stat-card/stat-card.c
 
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 export type MenuStatusFilter = 'all' | 'available' | 'hidden' | 'sold_out';
 
 @Component({
   selector: 'app-menu-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, QrCodeModalComponent, StatCardComponent, MatDialogModule],
+  imports: [CommonModule, FormsModule, RouterLink, StatCardComponent, MatDialogModule, MatSelectModule, MatFormFieldModule, MatTooltipModule],
   templateUrl: './menu-management.component.html'
 })
 export class MenuManagementComponent {

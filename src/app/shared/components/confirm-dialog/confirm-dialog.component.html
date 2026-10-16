@@ -1,0 +1,41 @@
+<div class="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl overflow-hidden animate-scale-in">
+  <div class="flex items-start gap-4 mb-4">
+    <div 
+      class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+      [ngClass]="isDestructive 
+        ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50' 
+        : 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50'"
+    >
+      <span class="material-icons-round text-2xl">{{ icon }}</span>
+    </div>
+
+    <div class="flex-1 pt-0.5">
+      <h3 class="text-base font-bold text-slate-900 dark:text-white leading-snug">
+        {{ data.title }}
+      </h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+        {{ data.message }}
+      </p>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+    <button 
+      type="button" 
+      (click)="onCancel()" 
+      class="gastro-btn-secondary px-4 py-2 text-xs"
+    >
+      {{ cancelText }}
+    </button>
+    <button 
+      type="button" 
+      (click)="onConfirm()" 
+      class="text-xs font-bold py-2 px-5 rounded-xl text-white transition-all duration-150 shadow-md cursor-pointer active:scale-95"
+      [ngClass]="isDestructive
+        ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'
+        : 'bg-orange-600 hover:bg-orange-500 shadow-orange-500/20'"
+    >
+      {{ confirmText }}
+    </button>
+  </div>
+</div>

@@ -125,18 +125,18 @@
                         </p>
                       </div>
                     </div>
-
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
-                      <select
-                        [ngModel]="targetReassignCategory()"
-                        (ngModelChange)="targetReassignCategory.set($event)"
-                        class="gastro-input text-xs py-1.5 flex-1"
-                      >
-                        @for (alt of alternativeCategories(); track alt) {
-                          <option [value]="alt">{{ alt }}</option>
-                        }
-                        <option value="Inne">Inne (Domyślna)</option>
-                      </select>
+                      <mat-form-field appearance="outline" class="flex-1 gastro-select-field gastro-select-compact" subscriptSizing="dynamic">
+                        <mat-select
+                          [ngModel]="targetReassignCategory()"
+                          (ngModelChange)="targetReassignCategory.set($event)"
+                        >
+                          @for (alt of alternativeCategories(); track alt) {
+                            <mat-option [value]="alt">{{ alt }}</mat-option>
+                          }
+                          <mat-option value="Inne">Inne (Domyślna)</mat-option>
+                        </mat-select>
+                      </mat-form-field>
 
                       <div class="flex items-center gap-2">
                         <button
@@ -220,7 +220,7 @@
                       type="button"
                       (click)="startEdit(cat)"
                       class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      title="Zmień nazwę kategorii"
+                      matTooltip="Zmień nazwę kategorii"
                     >
                       <span class="material-icons-round text-base">edit</span>
                     </button>
@@ -230,7 +230,7 @@
                       type="button"
                       (click)="startDelete(cat)"
                       class="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                      title="Usuń kategorię"
+                      matTooltip="Usuń kategorię"
                     >
                       <span class="material-icons-round text-base">delete</span>
                     </button>

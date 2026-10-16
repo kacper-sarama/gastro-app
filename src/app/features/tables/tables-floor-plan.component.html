@@ -237,7 +237,7 @@
         type="button"
         (click)="setStatusFilter('all')"
         class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition-colors shrink-0"
-        title="Pokaż wszystkie stoliki"
+        matTooltip="Pokaż wszystkie stoliki"
       >
         <span class="material-icons-round text-sm text-slate-400">filter_alt_off</span>
         <span>Wyczyść filtr</span>
@@ -312,7 +312,7 @@
           <button 
             type="button"
             (click)="$event.stopPropagation(); openEditTableModal(tbl)"
-            title="Edytuj stolik"
+            matTooltip="Edytuj stolik"
             class="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
           >
             <span class="material-icons-round text-sm">more_vert</span>
@@ -459,7 +459,7 @@
             *ngIf="!tbl.isAllOrdersPaid"
             type="button"
             (click)="quickRequestBill(tbl, $event)"
-            title="Poproś o rachunek"
+            matTooltip="Poproś o rachunek"
             class="text-[11px] font-semibold text-slate-400 hover:text-amber-500 flex items-center gap-1 transition-colors"
           >
             <span class="material-icons-round text-xs">receipt</span>

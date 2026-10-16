@@ -2,6 +2,7 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { PromotionService } from '../../core/services/promotion.service';
 import { AuthService } from '../../core/services/auth.service';
 import { RecipeService } from '../../core/services/recipe.service';
@@ -9,11 +10,12 @@ import { InventoryService } from '../../core/services/inventory.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Promotion, PromotionRecommendation } from '../../core/models/promotion.model';
 import { PromotionModalComponent } from './promotion-modal.component';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-promotions-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, PromotionModalComponent, MatDialogModule],
+  imports: [CommonModule, FormsModule, MatDialogModule, MatTooltipModule],
   templateUrl: './promotions-list.component.html'
 })
 export class PromotionsListComponent {
@@ -23,6 +25,7 @@ export class PromotionsListComponent {
   readonly inventoryService = inject(InventoryService);
   readonly toastService = inject(ToastService);
   private dialog = inject(MatDialog);
+  private confirmDialogService = inject(ConfirmDialogService);
 
   // Filtrowanie
   searchQuery = signal<string>('');
@@ -108,7 +111,16 @@ export class PromotionsListComponent {
   }
 
   async deletePromotion(promo: Promotion): Promise<void> {
-    await this.promotionService.deletePromotion(promo.id);
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Usunąć promocję?',
+      message: `Czy na pewno chcesz usunąć promocję "${promo.name}"? Ta operacja jest nieodwracalna.`,
+      confirmText: 'Usuń',
+      isDestructive: true
+    });
+
+    if (confirmed) {
+      await this.promotionService.deletePromotion(promo.id);
+    }
   }
 
   async loadStarterPromotions(): Promise<void> {
@@ -116,7 +128,14 @@ export class PromotionsListComponent {
     if (!user) return;
 
     if (this.promotionService.promotions().length > 0) {
-      if (!confirm('Czy chcesz załadować gotowe szablony promocji (zastąpią one obecną listę)?')) {
+      const confirmed = await this.confirmDialogService.confirm({
+        title: 'Załadować szablony?',
+        message: 'Czy na pewno chcesz załadować gotowe szablony promocji (zastąpią one obecną listę)?',
+        confirmText: 'Załaduj',
+        isDestructive: false,
+        icon: 'auto_fix_high'
+      });
+      if (!confirmed) {
         return;
       }
     }

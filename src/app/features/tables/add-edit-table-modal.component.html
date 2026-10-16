@@ -122,16 +122,14 @@
         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
           Status techniczny
         </label>
-        <select 
-          [ngModel]="status()"
-          (ngModelChange)="status.set($event)"
-          class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none"
-        >
-          <option value="free">🟢 Wolny i przygotowany</option>
-          <option value="occupied">🟣 Zajęty przez gości</option>
-          <option value="bill_requested">🟠 Prośba o rachunek</option>
-          <option value="dirty">🧹 Do posprzątania / przetarcia</option>
-        </select>
+        <mat-form-field appearance="outline" class="w-full gastro-select-field" subscriptSizing="dynamic">
+          <mat-select [ngModel]="status()" (ngModelChange)="status.set($event)">
+            <mat-option value="free">🟢 Wolny i przygotowany</mat-option>
+            <mat-option value="occupied">🟣 Zajęty przez gości</mat-option>
+            <mat-option value="bill_requested">🟠 Prośba o rachunek</mat-option>
+            <mat-option value="dirty">🧹 Do posprzątania / przetarcia</mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
     </div>
 

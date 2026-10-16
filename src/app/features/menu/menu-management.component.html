@@ -117,7 +117,7 @@
           type="button"
           (click)="selectedStatusFilter.set('all')"
           class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition-colors shrink-0"
-          title="Pokaż wszystkie pozycje"
+          matTooltip="Pokaż wszystkie pozycje"
         >
           <span class="material-icons-round text-sm text-slate-400">filter_alt_off</span>
           <span>Wyczyść filtr</span>
@@ -125,16 +125,17 @@
       }
 
       <span class="text-xs text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">Dział:</span>
-      <select
-        [ngModel]="selectedCategory()"
-        (ngModelChange)="selectedCategory.set($event)"
-        class="gastro-input py-2 text-xs flex-1 md:w-48"
-      >
-        <option value="all">Wszystkie działy karty</option>
-        @for (cat of categories(); track cat) {
-          <option [value]="cat">{{ cat }}</option>
-        }
-      </select>
+      <mat-form-field appearance="outline" class="flex-1 md:w-48 gastro-select-field" subscriptSizing="dynamic">
+        <mat-select
+          [ngModel]="selectedCategory()"
+          (ngModelChange)="selectedCategory.set($event)"
+        >
+          <mat-option value="all">Wszystkie działy karty</mat-option>
+          @for (cat of categories(); track cat) {
+            <mat-option [value]="cat">{{ cat }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
     </div>
   </div>
 
@@ -259,7 +260,7 @@
                       [ngClass]="dish.isFeatured 
                         ? 'text-amber-500 hover:text-amber-600 bg-amber-50 dark:bg-amber-950/40' 
                         : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'"
-                      title="Wyróżnij w karcie (Hit lokalu)"
+                      matTooltip="Wyróżnij w karcie (Hit lokalu)"
                     >
                       <span class="material-icons-round text-lg">{{ dish.isFeatured ? 'star' : 'star_border' }}</span>
                     </button>
@@ -269,7 +270,7 @@
                       type="button"
                       (click)="toggleAvailability(dish)"
                       class="flex items-center gap-2 group/toggle cursor-pointer select-none focus:outline-none p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors shrink-0"
-                      [title]="isManualActive ? 'Danie aktywne w karcie (kliknij, aby ukryć przed gośćmi)' : 'Danie ukryte (kliknij, aby włączyć do karty)'"
+                      [matTooltip]="isManualActive ? 'Danie aktywne w karcie (kliknij, aby ukryć przed gośćmi)' : 'Danie ukryte (kliknij, aby włączyć do karty)'"
                     >
                       <span
                         class="text-xs font-semibold whitespace-nowrap transition-colors"

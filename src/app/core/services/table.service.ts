@@ -386,7 +386,6 @@ export class TableService {
   }
 
   async deleteTable(id: string): Promise<void> {
-    if (!confirm('Czy na pewno chcesz usunąć ten stolik z planu sali?')) return;
     const docRef = doc(this.firestore, `tables/${id}`);
     try {
       await deleteDoc(docRef);

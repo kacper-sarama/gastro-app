@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export type ToastType = 'warning' | 'danger' | 'success' | 'info';
 
@@ -22,7 +23,7 @@ export interface ToastItem {
 @Component({
   selector: 'app-toast-notification',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatTooltipModule],
   templateUrl: './toast-notification.component.html',
   styles: [`
     :host {

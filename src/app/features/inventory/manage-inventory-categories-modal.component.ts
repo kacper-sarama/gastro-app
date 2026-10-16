@@ -2,12 +2,15 @@ import { Component, EventEmitter, Output, inject, signal, computed } from '@angu
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { InventoryService } from '../../core/services/inventory.service';
 
 @Component({
   selector: 'app-manage-inventory-categories-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule, MatTooltipModule],
   templateUrl: './manage-inventory-categories-modal.component.html'
 })
 export class ManageInventoryCategoriesModalComponent {

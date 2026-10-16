@@ -1,22 +1,25 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { StaffService } from '../../core/services/staff.service';
 import { AuthService } from '../../core/services/auth.service';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { StaffMember, UserRole, ROLE_DEFINITIONS, RoleDefinition } from '../../core/models/staff.model';
 import { AddEditStaffModalComponent } from './add-edit-staff-modal.component';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-staff-management',
   standalone: true,
-  imports: [CommonModule, StatCardComponent, MatDialogModule],
+  imports: [CommonModule, StatCardComponent, MatDialogModule, MatTooltipModule],
   templateUrl: './staff-management.component.html'
 })
 export class StaffManagementComponent {
   readonly staffService = inject(StaffService);
   readonly authService = inject(AuthService);
   private dialog = inject(MatDialog);
+  private confirmDialogService = inject(ConfirmDialogService);
 
   searchQuery = signal('');
   roleFilter = signal<string>('all');
@@ -65,7 +68,14 @@ export class StaffManagementComponent {
   }
 
   async deleteMember(member: StaffMember): Promise<void> {
-    if (confirm(`Czy na pewno chcesz usunąć pracownika: ${member.name}?`)) {
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Usunąć pracownika?',
+      message: `Czy na pewno chcesz usunąć pracownika "${member.name}"?`,
+      confirmText: 'Usuń',
+      isDestructive: true
+    });
+
+    if (confirmed) {
       await this.staffService.deleteStaffMember(member.id, member.name);
     }
   }

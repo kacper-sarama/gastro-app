@@ -9,6 +9,7 @@ import { AddEditTableModalComponent } from './add-edit-table-modal.component';
 import { TableDetailsModalComponent } from './table-details-modal.component';
 import { NewOrderModalComponent } from '../orders/new-order-modal.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 
 @Component({
@@ -18,10 +19,8 @@ import { StatCardComponent } from '../../shared/components/stat-card/stat-card.c
     CommonModule, 
     FormsModule, 
     StatCardComponent,
-    AddEditTableModalComponent, 
-    TableDetailsModalComponent, 
-    NewOrderModalComponent,
-    MatDialogModule
+    MatDialogModule,
+    MatTooltipModule
   ],
   templateUrl: './tables-floor-plan.component.html'
 })

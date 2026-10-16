@@ -230,16 +230,17 @@
               <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                 Wymagana kategoria dań
               </label>
-              <select
-                [ngModel]="requiredCategory()"
-                (ngModelChange)="requiredCategory.set($event)"
-                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="">Wszystkie kategorie</option>
-                @for (cat of availableCategories(); track cat) {
-                  <option [value]="cat">{{ cat }}</option>
-                }
-              </select>
+              <mat-form-field appearance="outline" class="w-full gastro-select-field gastro-select-compact" subscriptSizing="dynamic">
+                <mat-select
+                  [ngModel]="requiredCategory()"
+                  (ngModelChange)="requiredCategory.set($event)"
+                >
+                  <mat-option value="">Wszystkie kategorie</mat-option>
+                  @for (cat of availableCategories(); track cat) {
+                    <mat-option [value]="cat">{{ cat }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
             </div>
 
             <div>
@@ -339,16 +340,17 @@
               <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                 Rodzaj rabatu / bonusu
               </label>
-              <select
-                [ngModel]="rewardType()"
-                (ngModelChange)="rewardType.set($event)"
-                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="discount_percent">Rabat procentowy (%)</option>
-                <option value="discount_amount">Rabat kwotowy (PLN)</option>
-                <option value="special_price_item">Produkt w stałej cenie (np. 4 zł)</option>
-                <option value="free_item">Darmowy produkt (0 zł)</option>
-              </select>
+              <mat-form-field appearance="outline" class="w-full gastro-select-field gastro-select-compact" subscriptSizing="dynamic">
+                <mat-select
+                  [ngModel]="rewardType()"
+                  (ngModelChange)="rewardType.set($event)"
+                >
+                  <mat-option value="discount_percent">Rabat procentowy (%)</mat-option>
+                  <mat-option value="discount_amount">Rabat kwotowy (PLN)</mat-option>
+                  <mat-option value="special_price_item">Produkt w stałej cenie (np. 4 zł)</mat-option>
+                  <mat-option value="free_item">Darmowy produkt (0 zł)</mat-option>
+                </mat-select>
+              </mat-form-field>
             </div>
 
             @if (rewardType() === 'discount_percent' || rewardType() === 'discount_amount') {
@@ -371,16 +373,18 @@
                 <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                   Wybierz produkt z karty dań
                 </label>
-                <select
-                  [ngModel]="rewardRecipeId()"
-                  (ngModelChange)="rewardRecipeId.set($event)"
-                  class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="">Wybierz danie...</option>
-                  @for (r of availableRecipes(); track r.id) {
-                    <option [value]="r.id">{{ r.name }} ({{ r.sellingPrice }} zł)</option>
-                  }
-                </select>
+                <mat-form-field appearance="outline" class="w-full gastro-select-field gastro-select-compact" subscriptSizing="dynamic">
+                  <mat-select
+                    [ngModel]="rewardRecipeId()"
+                    (ngModelChange)="rewardRecipeId.set($event)"
+                    placeholder="Wybierz danie..."
+                  >
+                    <mat-option value="">Wybierz danie...</mat-option>
+                    @for (r of availableRecipes(); track r.id) {
+                      <mat-option [value]="r.id">{{ r.name }} ({{ r.sellingPrice }} zł)</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
               </div>
 
               @if (rewardType() === 'special_price_item') {

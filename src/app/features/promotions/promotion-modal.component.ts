@@ -2,6 +2,8 @@ import { Component, EventEmitter, Input, Output, inject, OnInit, signal, compute
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { PromotionService } from '../../core/services/promotion.service';
 import { RecipeService } from '../../core/services/recipe.service';
 import {
@@ -19,7 +21,7 @@ export interface PromotionModalData {
 @Component({
   selector: 'app-promotion-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule],
   templateUrl: './promotion-modal.component.html'
 })
 export class PromotionModalComponent implements OnInit {

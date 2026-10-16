@@ -2,6 +2,7 @@ import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../core/services/auth.service';
 
 import { PaymentService } from '../../core/services/payment.service';
@@ -12,7 +13,7 @@ export type AccountTab = 'profile' | 'payments' | 'email' | 'password';
 @Component({
   selector: 'app-account-settings-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatTooltipModule],
   templateUrl: './account-settings-modal.component.html'
 })
 export class AccountSettingsModalComponent {

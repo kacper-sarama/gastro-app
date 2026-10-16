@@ -2,6 +2,9 @@ import { Component, EventEmitter, Input, Output, OnInit, inject, computed, signa
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Recipe, RecipeIngredient, RecipeFormData, calculateRecipeCapacity, resolveFallbackIngredient } from '../../core/models/recipe.model';
 import { InventoryService } from '../../core/services/inventory.service';
 import { RecipeService } from '../../core/services/recipe.service';
@@ -15,7 +18,7 @@ export interface AddEditRecipeModalData {
 @Component({
   selector: 'app-add-edit-recipe-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CategorySelectorComponent],
+  imports: [CommonModule, ReactiveFormsModule, CategorySelectorComponent, MatSelectModule, MatFormFieldModule, MatTooltipModule],
   templateUrl: './add-edit-recipe-modal.component.html'
 })
 export class AddEditRecipeModalComponent implements OnInit {

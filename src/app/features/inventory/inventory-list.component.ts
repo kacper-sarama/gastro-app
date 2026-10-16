@@ -10,6 +10,10 @@ import { BulkRestockModalComponent } from './bulk-restock-modal.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-inventory-list',
@@ -17,19 +21,19 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
   imports: [
     CommonModule, 
     FormsModule, 
-    AddEditIngredientModalComponent, 
-    QuickDeliveryModalComponent,
-    ManageInventoryCategoriesModalComponent,
-    BulkRestockModalComponent,
     StatCardComponent,
     MatMenuModule,
-    MatDialogModule
+    MatDialogModule,
+    MatSelectModule,
+    MatFormFieldModule,
+    MatTooltipModule
   ],
   templateUrl: './inventory-list.component.html'
 })
 export class InventoryListComponent {
   readonly inventoryService = inject(InventoryService);
   private dialog = inject(MatDialog);
+  private confirmDialogService = inject(ConfirmDialogService);
 
   // Filtry i sortowanie
   searchQuery = signal<string>('');
@@ -57,8 +61,6 @@ export class InventoryListComponent {
   isManageCategoriesModalOpen = signal(false);
 
   isBulkRestockModalOpen = signal(false);
-
-  itemToDelete = signal<InventoryItem | null>(null);
 
   // Lista surowców wymagających uzupełnienia (braki + niski stan)
   readonly itemsNeedingRestock = computed(() => [
@@ -223,19 +225,16 @@ export class InventoryListComponent {
     }
   }
 
-  promptDeleteItem(item: InventoryItem): void {
-    this.itemToDelete.set(item);
-  }
+  async promptDeleteItem(item: InventoryItem): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Usunąć surowiec?',
+      message: `Czy na pewno chcesz usunąć "${item.name}" z magazynu? Ta operacja jest nieodwracalna.`,
+      confirmText: 'Usuń',
+      isDestructive: true
+    });
 
-  cancelDeleteItem(): void {
-    this.itemToDelete.set(null);
-  }
-
-  async confirmDeleteItem(): Promise<void> {
-    const target = this.itemToDelete();
-    if (target) {
-      await this.inventoryService.deleteItem(target.id);
-      this.itemToDelete.set(null);
+    if (confirmed) {
+      await this.inventoryService.deleteItem(item.id);
     }
   }
 }

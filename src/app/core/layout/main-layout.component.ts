@@ -25,6 +25,7 @@ const COMPACT_QUERY = '(max-width: 899.98px)';
 
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmDialogService } from '../services/confirm-dialog.service';
 
 interface NavItem {
   label: string;
@@ -35,7 +36,7 @@ interface NavItem {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, AccountSettingsModalComponent, MatMenuModule, MatDialogModule],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, MatMenuModule, MatDialogModule],
   templateUrl: './main-layout.component.html'
 })
 export class MainLayoutComponent implements OnInit {
@@ -54,6 +55,7 @@ export class MainLayoutComponent implements OnInit {
   private breakpointObserver = inject(BreakpointObserver);
   private destroyRef = inject(DestroyRef);
   private dialog = inject(MatDialog);
+  private confirmDialogService = inject(ConfirmDialogService);
 
   isMobileMenuOpen = signal(false);
   isSidebarCollapsed = signal(false);
@@ -219,7 +221,16 @@ export class MainLayoutComponent implements OnInit {
 
   async resetDemo(): Promise<void> {
     if (this.isResettingDemo()) return;
-    if (!confirm('Czy na pewno chcesz przywrócić początkowy stan magazynu, dań i zamówień na koncie Demo?')) {
+    
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Zresetować konto demo?',
+      message: 'Czy na pewno chcesz przywrócić początkowy stan magazynu, dań i zamówień na koncie Demo?',
+      confirmText: 'Przywróć stan',
+      isDestructive: true,
+      icon: 'restart_alt'
+    });
+
+    if (!confirmed) {
       return;
     }
 

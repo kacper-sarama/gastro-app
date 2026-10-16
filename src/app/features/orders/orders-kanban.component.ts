@@ -5,17 +5,20 @@ import { AuthService } from '../../core/services/auth.service';
 import { Order, OrderStatus } from '../../core/models/order.model';
 import { NewOrderModalComponent } from './new-order-modal.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-orders-kanban',
   standalone: true,
-  imports: [CommonModule, NewOrderModalComponent, MatDialogModule],
+  imports: [CommonModule, MatDialogModule, MatTooltipModule],
   templateUrl: './orders-kanban.component.html'
 })
 export class OrdersKanbanComponent {
   readonly orderService = inject(OrderService);
   readonly authService = inject(AuthService);
   private dialog = inject(MatDialog);
+  private confirmDialogService = inject(ConfirmDialogService);
 
   // Kontrola modala nowego zamówienia
   isNewOrderModalOpen = signal<boolean>(false);
@@ -96,7 +99,14 @@ export class OrdersKanbanComponent {
    * Anuluje zamówienie (np. gdy gość zrezygnował)
    */
   async cancelOrder(order: Order): Promise<void> {
-    if (confirm(`Czy na pewno chcesz anulować zamówienie #${order.orderNumber} (${order.tableNumber})?`)) {
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Anulować zamówienie?',
+      message: `Czy na pewno chcesz anulować zamówienie #${order.orderNumber} (${order.tableNumber})?`,
+      confirmText: 'Anuluj zamówienie',
+      isDestructive: true
+    });
+
+    if (confirmed) {
       await this.orderService.updateOrderStatus(order.id, 'cancelled');
     }
   }
@@ -105,7 +115,14 @@ export class OrdersKanbanComponent {
    * Całkowite usunięcie z archiwum
    */
   async deleteOrder(order: Order): Promise<void> {
-    if (confirm(`Czy na pewno trwale usunąć zamówienie #${order.orderNumber}?`)) {
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Usunąć zamówienie?',
+      message: `Czy na pewno chcesz trwale usunąć zamówienie #${order.orderNumber} z archiwum?`,
+      confirmText: 'Usuń trwale',
+      isDestructive: true
+    });
+
+    if (confirmed) {
       await this.orderService.deleteOrder(order.id);
     }
   }

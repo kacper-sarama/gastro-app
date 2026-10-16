@@ -10,6 +10,10 @@ import { RecipeDetailsModalComponent } from './recipe-details-modal.component';
 import { ManageCategoriesModalComponent } from './manage-categories-modal.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-recipes-list',
@@ -17,11 +21,11 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
   imports: [
     CommonModule, 
     FormsModule, 
-    AddEditRecipeModalComponent, 
-    RecipeDetailsModalComponent,
-    ManageCategoriesModalComponent,
     StatCardComponent,
-    MatDialogModule
+    MatDialogModule,
+    MatSelectModule,
+    MatFormFieldModule,
+    MatTooltipModule
   ],
   templateUrl: './recipes-list.component.html'
 })
@@ -29,6 +33,7 @@ export class RecipesListComponent {
   readonly recipeService = inject(RecipeService);
   readonly inventoryService = inject(InventoryService);
   private dialog = inject(MatDialog);
+  private confirmDialogService = inject(ConfirmDialogService);
 
   searchQuery = signal<string>('');
   selectedCategory = signal<string>('all');
@@ -50,8 +55,6 @@ export class RecipesListComponent {
   selectedRecipeForDetails = signal<Recipe | undefined>(undefined);
 
   isManageCategoriesModalOpen = signal(false);
-
-  recipeToDelete = signal<Recipe | undefined>(undefined);
 
   readonly categories = computed(() => this.recipeService.allCategories());
 
@@ -158,19 +161,16 @@ export class RecipesListComponent {
     });
   }
 
-  promptDelete(recipe: Recipe): void {
-    this.recipeToDelete.set(recipe);
-  }
+  async promptDelete(recipe: Recipe): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Usunąć recepturę?',
+      message: `Czy na pewno chcesz usunąć recepturę "${recipe.name}"?`,
+      confirmText: 'Usuń',
+      isDestructive: true
+    });
 
-  cancelDelete(): void {
-    this.recipeToDelete.set(undefined);
-  }
-
-  async confirmDelete(): Promise<void> {
-    const r = this.recipeToDelete();
-    if (r) {
-      await this.recipeService.deleteRecipe(r.id);
-      this.cancelDelete();
+    if (confirmed) {
+      await this.recipeService.deleteRecipe(recipe.id);
     }
   }
 }

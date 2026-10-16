@@ -35,7 +35,7 @@
         type="button"
         [matMenuTriggerFor]="inventoryActionsMenu"
         class="relative inline-flex items-center justify-center px-3 py-2.5 text-white transition-all hover:bg-black/10 active:scale-[0.99] cursor-pointer shrink-0"
-        title="Więcej akcji (Zamów braki)"
+        matTooltip="Więcej akcji (Zamów braki)"
         aria-label="Więcej akcji magazynowych"
       >
         <span class="material-icons-round text-xl">arrow_drop_down</span>
@@ -177,29 +177,30 @@
           type="button"
           (click)="selectedStatusFilter.set('all')"
           class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition-colors shrink-0"
-          title="Pokaż wszystkie surowce"
+          matTooltip="Pokaż wszystkie surowce"
         >
           <span class="material-icons-round text-sm text-slate-400">filter_alt_off</span>
           <span>Wyczyść filtr</span>
         </button>
       }
 
-      <select
-        [ngModel]="selectedCategory()"
-        (ngModelChange)="selectedCategory.set($event)"
-        class="gastro-input py-2 text-sm w-full sm:w-48 cursor-pointer"
-      >
-        <option value="all">Wszystkie kategorie</option>
-        @for (cat of categories(); track cat) {
-          <option [value]="cat">{{ cat }}</option>
-        }
-      </select>
+      <mat-form-field appearance="outline" class="w-full sm:w-48 gastro-select-field" subscriptSizing="dynamic">
+        <mat-select
+          [ngModel]="selectedCategory()"
+          (ngModelChange)="selectedCategory.set($event)"
+        >
+          <mat-option value="all">Wszystkie kategorie</mat-option>
+          @for (cat of categories(); track cat) {
+            <mat-option [value]="cat">{{ cat }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
       <button
         type="button"
         (click)="openManageCategoriesModal()"
         class="gastro-btn-secondary py-2 px-3 text-xs whitespace-nowrap flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 shadow-sm"
-        title="Zarządzaj kategoriami surowców (dodaj, zmień nazwę, usuń)"
+        matTooltip="Zarządzaj kategoriami surowców (dodaj, zmień nazwę, usuń)"
       >
         <span class="material-icons-round text-base text-orange-500">tune</span>
         <span>Zarządzaj kategoriami</span>
@@ -285,7 +286,7 @@
               type="button"
               (click)="openEditModal(item)"
               class="p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-              title="Edytuj"
+              matTooltip="Edytuj"
             >
               <span class="material-icons-round text-base">edit</span>
             </button>
@@ -293,7 +294,7 @@
               type="button"
               (click)="promptDeleteItem(item)"
               class="p-2 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-              title="Usuń"
+              matTooltip="Usuń"
             >
               <span class="material-icons-round text-base">delete</span>
             </button>
@@ -313,7 +314,7 @@
             <th 
               (click)="toggleSort('name')"
               class="py-3.5 px-4 sm:px-6 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors group"
-              title="Kliknij, aby posortować po nazwie"
+              matTooltip="Kliknij, aby posortować po nazwie"
             >
               <div class="flex items-center gap-1.5">
                 <span [class.text-orange-600]="sortColumn() === 'name'" [class.dark:text-orange-400]="sortColumn() === 'name'" [class.font-bold]="sortColumn() === 'name'">
@@ -336,7 +337,7 @@
             <th 
               (click)="toggleSort('amount')"
               class="py-3.5 px-4 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors group"
-              title="Kliknij, aby posortować po stanie magazynowym"
+              matTooltip="Kliknij, aby posortować po stanie magazynowym"
             >
               <div class="flex items-center gap-1.5">
                 <span [class.text-orange-600]="sortColumn() === 'amount'" [class.dark:text-orange-400]="sortColumn() === 'amount'" [class.font-bold]="sortColumn() === 'amount'">
@@ -359,7 +360,7 @@
             <th 
               (click)="toggleSort('minAmount')"
               class="py-3.5 px-4 hidden md:table-cell cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors group"
-              title="Kliknij, aby posortować po progu alertu"
+              matTooltip="Kliknij, aby posortować po progu alertu"
             >
               <div class="flex items-center gap-1.5">
                 <span [class.text-orange-600]="sortColumn() === 'minAmount'" [class.dark:text-orange-400]="sortColumn() === 'minAmount'" [class.font-bold]="sortColumn() === 'minAmount'">
@@ -382,7 +383,7 @@
             <th 
               (click)="toggleSort('status')"
               class="py-3.5 px-4 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors group"
-              title="Kliknij, aby posortować po statusie"
+              matTooltip="Kliknij, aby posortować po statusie"
             >
               <div class="flex items-center gap-1.5">
                 <span [class.text-orange-600]="sortColumn() === 'status'" [class.dark:text-orange-400]="sortColumn() === 'status'" [class.font-bold]="sortColumn() === 'status'">
@@ -480,7 +481,7 @@
                 <button
                   (click)="openDeliveryModal(item)"
                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold transition-all hover:scale-105 active:scale-95"
-                  title="Wprowadź szybką dostawę towaru"
+                  matTooltip="Wprowadź szybką dostawę towaru"
                 >
                   <span class="material-icons-round text-base">local_shipping</span>
                   <span>+ Dostawa</span>
@@ -493,14 +494,14 @@
                   <button
                     (click)="openEditModal(item)"
                     class="p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    title="Edytuj surowiec"
+                    matTooltip="Edytuj surowiec"
                   >
                     <span class="material-icons-round text-lg">edit</span>
                   </button>
                   <button
                     (click)="promptDeleteItem(item)"
                     class="p-2 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
-                    title="Usuń surowiec"
+                    matTooltip="Usuń surowiec"
                   >
                     <span class="material-icons-round text-lg">delete</span>
                   </button>
@@ -513,30 +514,3 @@
     </div>
   </div>
 </div>
-
-
-<!-- Modal: Potwierdzenie Usunięcia -->
-@if (itemToDelete()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="cancelDeleteItem()">
-    <div class="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 text-center space-y-4" (click)="$event.stopPropagation()">
-      <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 dark:text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20">
-        <span class="material-icons-round text-2xl">warning</span>
-      </div>
-      <div>
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Usunąć surowiec?</h3>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Czy na pewno chcesz usunąć <strong class="text-slate-900 dark:text-white">{{ itemToDelete()?.name }}</strong> z magazynu? Ta operacja jest nieodwracalna.
-        </p>
-      </div>
-      <div class="flex items-center justify-center gap-3 pt-2">
-        <button (click)="cancelDeleteItem()" class="gastro-btn-secondary flex-1 py-2 text-xs">
-          Anuluj
-        </button>
-        <button (click)="confirmDeleteItem()" class="gastro-btn-primary bg-rose-600 hover:bg-rose-500 flex-1 py-2 text-xs">
-          Usuń
-        </button>
-      </div>
-    </div>
-  </div>
-}
-

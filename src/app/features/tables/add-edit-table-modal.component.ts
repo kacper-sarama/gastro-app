@@ -2,8 +2,11 @@ import { Component, EventEmitter, Input, Output, OnInit, inject, signal } from '
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { RestaurantTable, TableStatus } from '../../core/models/table.model';
 import { TableService } from '../../core/services/table.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 export interface AddEditTableModalData {
   tableToEdit?: RestaurantTable | null;
@@ -12,11 +15,12 @@ export interface AddEditTableModalData {
 @Component({
   selector: 'app-add-edit-table-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule],
   templateUrl: './add-edit-table-modal.component.html'
 })
 export class AddEditTableModalComponent implements OnInit {
   private tableService = inject(TableService);
+  private confirmDialogService = inject(ConfirmDialogService);
   private dialogRef = inject<MatDialogRef<AddEditTableModalComponent>>(MatDialogRef, { optional: true });
   private dialogData = inject<AddEditTableModalData>(MAT_DIALOG_DATA, { optional: true });
 
@@ -108,6 +112,16 @@ export class AddEditTableModalComponent implements OnInit {
 
   async onDelete(): Promise<void> {
     if (!this.tableToEdit) return;
+
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Usunąć stolik?',
+      message: `Czy na pewno chcesz usunąć stolik "${this.tableToEdit.number}" z planu sali?`,
+      confirmText: 'Usuń',
+      isDestructive: true
+    });
+
+    if (!confirmed) return;
+
     try {
       await this.tableService.deleteTable(this.tableToEdit.id);
       this.saved.emit();

@@ -2,6 +2,9 @@ import { Component, EventEmitter, Input, Output, OnInit, inject, signal } from '
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { InventoryItem, StockStatus, formatStockAmount, getStockStatus } from '../../core/models/inventory-item.model';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -20,7 +23,7 @@ export interface BulkRestockModalData {
 @Component({
   selector: 'app-bulk-restock-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule, MatTooltipModule],
   templateUrl: './bulk-restock-modal.component.html'
 })
 export class BulkRestockModalComponent implements OnInit {

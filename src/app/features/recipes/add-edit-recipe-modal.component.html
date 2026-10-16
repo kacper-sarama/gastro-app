@@ -130,14 +130,15 @@
             >
               <!-- Select Inventory Item (pełna szerokość na mobile) -->
               <div class="flex-1 min-w-0">
-                <select formControlName="inventoryItemId" class="gastro-input py-2 text-xs w-full">
-                  <option value="" disabled>-- Wybierz surowiec z magazynu --</option>
-                  @for (item of inventoryService.items(); track item.id) {
-                    <option [value]="item.id">
-                      {{ item.name }} (Stan: {{ item.amount }} {{ item.unit }})
-                    </option>
-                  }
-                </select>
+                <mat-form-field appearance="outline" class="w-full gastro-select-field gastro-select-compact" subscriptSizing="dynamic">
+                  <mat-select formControlName="inventoryItemId" placeholder="-- Wybierz surowiec z magazynu --">
+                    @for (item of inventoryService.items(); track item.id) {
+                      <mat-option [value]="item.id">
+                        {{ item.name }} (Stan: {{ item.amount }} {{ item.unit }})
+                      </mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
               </div>
 
               <!-- Ilość, Jednostka i Przycisk usuwania w jednym rzędzie -->
@@ -156,17 +157,19 @@
 
                 <!-- Multiplier / Unit -->
                 <div class="w-24 shrink-0">
-                  <select formControlName="displayMultiplier" class="gastro-input py-2 text-xs">
-                    @if (getItemUnit(group.get('inventoryItemId')?.value) === 'g') {
-                      <option value="1">g</option>
-                      <option value="1000">kg</option>
-                    } @else if (getItemUnit(group.get('inventoryItemId')?.value) === 'ml') {
-                      <option value="1">ml</option>
-                      <option value="1000">l</option>
-                    } @else {
-                      <option value="1">szt</option>
-                    }
-                  </select>
+                  <mat-form-field appearance="outline" class="w-full gastro-select-field gastro-select-compact" subscriptSizing="dynamic">
+                    <mat-select formControlName="displayMultiplier">
+                      @if (getItemUnit(group.get('inventoryItemId')?.value) === 'g') {
+                        <mat-option [value]="1">g</mat-option>
+                        <mat-option [value]="1000">kg</mat-option>
+                      } @else if (getItemUnit(group.get('inventoryItemId')?.value) === 'ml') {
+                        <mat-option [value]="1">ml</mat-option>
+                        <mat-option [value]="1000">l</mat-option>
+                      } @else {
+                        <mat-option [value]="1">szt</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
                 </div>
 
                 <!-- Remove button -->
@@ -175,7 +178,7 @@
                   (click)="removeIngredient($index)"
                   [disabled]="ingredientsArray.length <= 1"
                   class="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 disabled:opacity-30 transition-colors shrink-0"
-                  title="Usuń składnik"
+                  matTooltip="Usuń składnik"
                 >
                   <span class="material-icons-round text-lg">delete</span>
                 </button>

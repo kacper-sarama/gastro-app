@@ -2,6 +2,8 @@ import { Component, EventEmitter, Input, Output, OnInit, inject, computed } from
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { InventoryItem, InventoryUnit } from '../../core/models/inventory-item.model';
 import { InventoryService } from '../../core/services/inventory.service';
 import { CategorySelectorComponent } from '../../shared/components/category-selector/category-selector.component';
@@ -13,7 +15,7 @@ export interface AddEditIngredientModalData {
 @Component({
   selector: 'app-add-edit-ingredient-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CategorySelectorComponent],
+  imports: [CommonModule, ReactiveFormsModule, CategorySelectorComponent, MatSelectModule, MatFormFieldModule],
   templateUrl: './add-edit-ingredient-modal.component.html'
 })
 export class AddEditIngredientModalComponent implements OnInit {

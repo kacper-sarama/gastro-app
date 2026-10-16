@@ -474,8 +474,6 @@ export class PromotionService {
   }
 
   async deletePromotion(id: string): Promise<void> {
-    if (!confirm('Czy na pewno chcesz usunąć tę promocję?')) return;
-
     try {
       const docRef = doc(this.firestore, `promotions/${id}`);
       await deleteDoc(docRef);

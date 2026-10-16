@@ -323,3 +323,188 @@ html {
   }
 }
 
+/* ======================================================== */
+/* Angular Material Select (MatSelect) - GastroApp Styling  */
+/* ======================================================== */
+.gastro-select-field {
+  width: 100%;
+  display: block;
+
+  .mat-mdc-text-field-wrapper {
+    background-color: #ffffff;
+    border-radius: 0.75rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .mat-mdc-form-field-flex {
+    align-items: center !important;
+    min-height: 42px !important;
+    height: 42px !important;
+  }
+
+  .mat-mdc-form-field-infix {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: unset !important;
+  }
+
+  .mdc-notched-outline {
+    .mdc-notched-outline__leading {
+      border-top-left-radius: 0.75rem !important;
+      border-bottom-left-radius: 0.75rem !important;
+      border-color: #e2e8f0 !important;
+      width: 12px !important;
+    }
+
+    .mdc-notched-outline__notch {
+      border-color: #e2e8f0 !important;
+    }
+
+    .mdc-notched-outline__trailing {
+      border-top-right-radius: 0.75rem !important;
+      border-bottom-right-radius: 0.75rem !important;
+      border-color: #e2e8f0 !important;
+    }
+  }
+
+  &.mat-focused .mdc-notched-outline {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #ea580c !important;
+      border-width: 2px !important;
+    }
+  }
+
+  .mat-mdc-select-value {
+    font-size: 0.8125rem !important; // 13px
+    font-weight: 500 !important;
+    color: #0f172a !important;
+  }
+
+  .mat-mdc-select-placeholder {
+    color: #94a3b8 !important;
+  }
+
+  .mat-mdc-select-arrow svg {
+    fill: #64748b !important;
+  }
+
+  // Compact variant for multipliers / inline filters
+  &.gastro-select-compact {
+    .mat-mdc-form-field-flex {
+      min-height: 38px !important;
+      height: 38px !important;
+    }
+
+    .mat-mdc-select-value {
+      font-size: 0.75rem !important; // 12px
+    }
+  }
+}
+
+// Dark Mode dla gastro-select-field
+.dark .gastro-select-field {
+  .mat-mdc-text-field-wrapper {
+    background-color: #1e293b !important; // slate-800
+  }
+
+  .mdc-notched-outline {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #334155 !important; // slate-700
+    }
+  }
+
+  &.mat-focused .mdc-notched-outline {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #ea580c !important;
+    }
+  }
+
+  .mat-mdc-select-value {
+    color: #f8fafc !important;
+  }
+
+  .mat-mdc-select-arrow svg {
+    fill: #94a3b8 !important;
+  }
+}
+
+// Dropdown popup panel dla MatSelect
+.mat-mdc-select-panel {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+  padding: 6px !important;
+  max-height: 320px !important;
+
+  .mat-mdc-option {
+    border-radius: 0.625rem !important;
+    min-height: 38px !important;
+    padding: 0 12px !important;
+    margin-bottom: 2px !important;
+    font-size: 0.8125rem !important;
+    color: #0f172a !important;
+    transition: background-color 0.12s ease;
+
+    &:hover:not(.mdc-list-item--disabled) {
+      background-color: #f1f5f9 !important;
+    }
+
+    &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+      background-color: rgba(234, 88, 12, 0.1) !important;
+      color: #ea580c !important;
+      font-weight: 700 !important;
+    }
+  }
+}
+
+// Dark Mode dla panelu popup MatSelect
+.dark .mat-mdc-select-panel {
+  background-color: #0f172a !important; // slate-900
+  border-color: #334155 !important; // slate-700
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.6) !important;
+
+  .mat-mdc-option {
+    color: #f8fafc !important;
+
+    &:hover:not(.mdc-list-item--disabled) {
+      background-color: #1e293b !important;
+    }
+
+    &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+      background-color: rgba(234, 88, 12, 0.22) !important;
+      color: #fb923c !important;
+      font-weight: 700 !important;
+    }
+  }
+}
+
+/* ======================================================== */
+/* Angular Material Tooltip (MatTooltip) - Styling          */
+/* ======================================================== */
+.mat-mdc-tooltip {
+  --mdc-plain-tooltip-container-color: #0f172a !important;
+  --mdc-plain-tooltip-supporting-text-color: #ffffff !important;
+  font-size: 0.6875rem !important; // 11px
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  border-radius: 0.5rem !important;
+  padding: 5px 9px !important;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .mat-mdc-tooltip {
+  --mdc-plain-tooltip-container-color: #1e293b !important; // slate-800
+  --mdc-plain-tooltip-supporting-text-color: #f8fafc !important;
+  border: 1px solid rgba(51, 65, 85, 0.6) !important;
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.5) !important;
+}
+

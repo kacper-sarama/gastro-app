@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, OnInit, inject, signal, compute
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { RecipeService } from '../../core/services/recipe.service';
 import { OrderService } from '../../core/services/order.service';
 import { TableService } from '../../core/services/table.service';
@@ -24,7 +25,7 @@ export interface NewOrderModalData {
 @Component({
   selector: 'app-new-order-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatTooltipModule],
   templateUrl: './new-order-modal.component.html'
 })
 export class NewOrderModalComponent implements OnInit {

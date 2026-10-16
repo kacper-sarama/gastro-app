@@ -101,7 +101,7 @@
                       type="button"
                       (click)="startEdit(cat)"
                       class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
-                      title="Zmień nazwę kategorii"
+                      matTooltip="Zmień nazwę kategorii"
                     >
                       <span class="material-icons-round text-base">edit</span>
                     </button>
@@ -110,7 +110,7 @@
                       type="button"
                       (click)="startDelete(cat)"
                       class="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded transition-colors"
-                      title="Usuń kategorię"
+                      matTooltip="Usuń kategorię"
                     >
                       <span class="material-icons-round text-base">delete</span>
                     </button>
@@ -178,15 +178,16 @@
 
                   @if (getItemCount(cat) > 0) {
                     <div>
-                      <select
-                        [ngModel]="targetReassignCategory()"
-                        (ngModelChange)="targetReassignCategory.set($event)"
-                        class="gastro-input py-1.5 text-xs w-full cursor-pointer"
-                      >
-                        @for (alt of alternativeCategories(); track alt) {
-                          <option [value]="alt">Przenieś do: {{ alt }}</option>
-                        }
-                      </select>
+                      <mat-form-field appearance="outline" class="w-full gastro-select-field gastro-select-compact" subscriptSizing="dynamic">
+                        <mat-select
+                          [ngModel]="targetReassignCategory()"
+                          (ngModelChange)="targetReassignCategory.set($event)"
+                        >
+                          @for (alt of alternativeCategories(); track alt) {
+                            <mat-option [value]="alt">Przenieś do: {{ alt }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
                     </div>
                   }
 
