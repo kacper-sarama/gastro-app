@@ -20,11 +20,28 @@ import { AccountSettingsModalComponent } from '../../features/account/account-se
 const MOBILE_WIDTH_QUERY = '(max-width: 767.98px)';
 // Telefon w poziomie (szeroki, ale bardzo niski ekran)
 const MOBILE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 499.98px)';
-// Tablet / małe okno – automatyczny tryb kompaktowy (same ikony)
-const COMPACT_QUERY = '(max-width: 899.98px)';
+// Ekran 'md' i węższe (do 1023px) – automatyczne odpięcie/ukrycie napisów (same ikony)
+const MD_SCREEN_QUERY = '(max-width: 1023.98px)';
+
+const SIDEBAR_STORAGE_KEY = 'gastro_sidebar_pinned';
+
+function getInitialSidebarPinned(): boolean {
+  try {
+    const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    // Domyślnie na dużym ekranie menu jest zakotwiczone (true)
+    return saved !== null ? saved === 'true' : true;
+  } catch {
+    return true;
+  }
+}
 
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatListModule } from '@angular/material/list';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatIconModule } from '@angular/material/icon';
 import { ConfirmDialogService } from '../services/confirm-dialog.service';
 
 interface NavItem {
@@ -36,7 +53,19 @@ interface NavItem {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, MatMenuModule, MatDialogModule],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatMenuModule,
+    MatDialogModule,
+    MatSidenavModule,
+    MatListModule,
+    MatCheckboxModule,
+    MatTooltipModule,
+    MatIconModule
+  ],
   templateUrl: './main-layout.component.html'
 })
 export class MainLayoutComponent implements OnInit {
@@ -58,11 +87,21 @@ export class MainLayoutComponent implements OnInit {
   private confirmDialogService = inject(ConfirmDialogService);
 
   isMobileMenuOpen = signal(false);
-  isSidebarCollapsed = signal(false);
+  /** Czy menu jest zakotwiczone na stałe (checked = true: pełne menu z tekstem, false: odpięte, same ikony) */
+  isSidebarPinned = signal<boolean>(getInitialSidebarPinned());
+  /** Czy kursor myszy unosi się nad odpiętym menu (efekt hover z Freya) */
+  isHovered = signal(false);
   /** Telefon (pion lub poziom) – menu jako wysuwana szuflada */
   isMobile = signal(false);
-  /** Tryb samych ikon – tylko poza widokiem mobilnym */
-  readonly isCompact = computed(() => this.isSidebarCollapsed() && !this.isMobile());
+  
+  /** 
+   * Czy menu ma być wizualnie rozwinięte:
+   * gdy jest zakotwiczone, gdy użytkownik najechał myszką (hover), lub na telefonie w szufladzie
+   */
+  readonly isExpanded = computed(() => this.isSidebarPinned() || this.isHovered() || this.isMobile());
+  /** Tryb kompaktowy (same ikony) – gdy menu nie jest rozwinięte */
+  readonly isCompact = computed(() => !this.isExpanded());
+
   isUserMenuOpen = signal(false);
   isRoleMenuOpen = signal(false);
   isNotificationsMenuOpen = signal(false);
@@ -95,12 +134,12 @@ export class MainLayoutComponent implements OnInit {
   ngOnInit(): void {
     // Oficjalny reaktywny mechanizm Angular CDK BreakpointObserver
     this.breakpointObserver
-      .observe([COMPACT_QUERY, MOBILE_WIDTH_QUERY, MOBILE_LANDSCAPE_QUERY])
+      .observe([MD_SCREEN_QUERY, MOBILE_WIDTH_QUERY, MOBILE_LANDSCAPE_QUERY])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(result => {
         const isMobile =
           result.breakpoints[MOBILE_WIDTH_QUERY] || result.breakpoints[MOBILE_LANDSCAPE_QUERY];
-        const isUnder900 = result.breakpoints[COMPACT_QUERY];
+        const isMdOrBelow = result.breakpoints[MD_SCREEN_QUERY];
 
         // Przy każdej zmianie trybu zamykamy szufladę mobilną
         if (isMobile !== this.isMobile()) {
@@ -109,28 +148,59 @@ export class MainLayoutComponent implements OnInit {
         this.isMobile.set(isMobile);
 
         if (isMobile) {
-          // Na telefonach menu to szuflada z ikonami i tekstem (isCompact = false)
+          // Na telefonach menu to szuflada modalna
           return;
-        } else if (isUnder900) {
-          // Pomiędzy 768px a 900px automatycznie aktywuj tryb kompaktowy (same ikony)
+        } else if (isMdOrBelow) {
+          // Już na ekranie 'md' (do 1023px) automatycznie odepnij menu (same ikony, checkbox odznaczony)
           if (!this.userHasManuallyToggled) {
-            this.isSidebarCollapsed.set(true);
+            this.isSidebarPinned.set(false);
           }
         } else {
-          // Powyżej 900px powrót do pełnego menu
+          // Na dużym ekranie powyżej 'md' przywróć zakotwiczenie (chyba że użytkownik ręcznie wybrał inaczej)
           if (!this.userHasManuallyToggled) {
-            this.isSidebarCollapsed.set(false);
+            this.isSidebarPinned.set(getInitialSidebarPinned());
           }
         }
       });
+  }
+
+  onSidebarMouseEnter(): void {
+    if (!this.isMobile() && !this.isSidebarPinned()) {
+      this.isHovered.set(true);
+    }
+  }
+
+  onSidebarMouseLeave(): void {
+    if (!this.isMobile() && !this.isSidebarPinned()) {
+      this.isHovered.set(false);
+    }
+  }
+
+  togglePin(pinned?: boolean): void {
+    this.userHasManuallyToggled = true;
+    const nextVal = pinned !== undefined ? pinned : !this.isSidebarPinned();
+    this.isSidebarPinned.set(nextVal);
+    if (nextVal) {
+      this.isHovered.set(false);
+    }
+    try {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(nextVal));
+    } catch (e) {
+      console.warn('Nie udało się zapisać stanu paska bocznego w localStorage:', e);
+    }
   }
 
   toggleSidebar(): void {
     if (this.isMobile()) {
       this.toggleMobileMenu();
     } else {
-      this.userHasManuallyToggled = true;
-      this.isSidebarCollapsed.update(v => !v);
+      this.togglePin();
+    }
+  }
+
+  onNavItemClick(): void {
+    if (this.isMobile()) {
+      this.closeMobileMenu();
     }
   }
 

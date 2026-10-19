@@ -1,28 +1,38 @@
-<div
-  class="h-screen h-[100dvh] w-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-150">
-  <!-- Mobile Backdrop Overlay -->
-  @if (isMobile() && isMobileMenuOpen()) {
-  <div (click)="closeMobileMenu()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"></div>
-  }
+<mat-sidenav-container
+  class="h-screen h-[100dvh] w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-150 gastro-sidenav-container"
+  [class.sidebar-pinned]="isSidebarPinned() && !isMobile()"
+  [class.sidebar-collapsed]="!isSidebarPinned() && !isMobile()"
+  [class.is-mobile]="isMobile()"
+  [hasBackdrop]="isMobile()">
 
-
-  <!-- Sidebar Navigation (mobile: wysuwana szuflada, desktop/tablet: stały pasek) -->
-  <aside [class.fixed]="isMobile()" [class.static]="!isMobile()" [class.shadow-2xl]="isMobile()"
-    [class.translate-x-0]="!isMobile() || isMobileMenuOpen()"
-    [class.-translate-x-full]="isMobile() && !isMobileMenuOpen()" [class.w-72]="!isCompact()" [class.w-20]="isCompact()"
-    class="inset-y-0 left-0 z-50 h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 ease-in-out">
-    <!-- Brand Header -->
+  <!-- Sidebar Navigation (Material Sidenav) -->
+  <mat-sidenav #sidenav
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="isMobile() ? isMobileMenuOpen() : true"
+    (closed)="closeMobileMenu()"
+    (mouseenter)="onSidebarMouseEnter()"
+    (mouseleave)="onSidebarMouseLeave()"
+    [class.collapsed-sidebar]="!isSidebarPinned() && !isMobile()"
+    [class.hover-expanded]="isHovered()"
+    class="gastro-sidebar border-r border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 flex flex-col">
+    <!-- Brand Header (Freya-style: tylko wyśrodkowane logo gdy zwinięte; logo + nazwa + checkbox w jednym rzędzie gdy rozwinięte) -->
     <div
-      class="h-20 flex items-center border-b border-slate-200 dark:border-slate-800/80 shrink-0 transition-all duration-300"
-      [class.justify-between]="!isCompact()" [class.px-6]="!isCompact()" [class.justify-center]="isCompact()"
-      [class.px-2]="isCompact()">
-      <div class="flex items-center gap-3">
+      class="h-20 flex items-center border-b border-slate-200 dark:border-slate-800/80 shrink-0"
+      [class.justify-between]="isExpanded()" [class.px-4]="isExpanded()"
+      [class.justify-center]="!isExpanded()" [class.px-2]="!isExpanded()">
+      
+      <div class="flex items-center gap-3 min-w-0" [class.justify-center]="!isExpanded()">
+        <!-- Ikona lokalu -->
         <div
-          class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+          (click)="toggleSidebar()"
+          [title]="!isSidebarPinned() ? 'Kliknij, aby zakotwiczyć menu' : ''"
+          class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20 cursor-pointer">
           <span class="material-icons-round text-white text-xl">restaurant</span>
         </div>
-        @if (!isCompact()) {
-        <div class="truncate transition-opacity duration-200">
+
+        <!-- Nazwa aplikacji (widoczna gdy rozwinięte: zakotwiczone, hover lub mobile) -->
+        @if (isExpanded()) {
+        <div class="truncate transition-opacity duration-200 flex-1 min-w-0">
           <span
             class="font-bold text-lg tracking-tight text-slate-900 dark:text-white block leading-tight truncate">GastroApp</span>
           <span
@@ -31,45 +41,53 @@
         </div>
         }
       </div>
-      <!-- Close button on mobile -->
+
+      <!-- Right Header Actions: Close na mobile LUB Checkbox w rzędzie gdy rozwinięte (zakotwiczone lub hover) -->
       @if (isMobile()) {
-      <button (click)="closeMobileMenu()"
-        class="p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800">
+      <button (click)="closeMobileMenu()" type="button"
+        class="p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
         <span class="material-icons-round text-2xl">close</span>
       </button>
+      } @else if (isExpanded()) {
+      <div class="flex items-center pl-2" [title]="isSidebarPinned() ? 'Odepnij menu (zwiń do samych ikon)' : 'Zakotwicz pełne menu na stałe'">
+        <mat-checkbox
+          [checked]="isSidebarPinned()"
+          (change)="togglePin($event.checked)"
+          color="primary"
+          class="gastro-sidebar-checkbox"
+          [matTooltip]="isSidebarPinned() ? 'Odepnij menu (zwiń do samych ikon)' : 'Zakotwicz pełne menu na stałe'"
+          matTooltipPosition="below">
+        </mat-checkbox>
+      </div>
       }
     </div>
 
-    <!-- Navigation Links -->
-    <nav class="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
+    <!-- Navigation Links (Angular Material Nav List) -->
+    <mat-nav-list class="flex-1 p-2 space-y-1 overflow-y-auto overflow-x-hidden gastro-nav-list" [class.compact-nav-list]="isCompact()">
       @if (!isCompact()) {
       <div
-        class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mb-2 truncate">
+        class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 my-2 truncate">
         Nawigacja Główna
       </div>
       } @else {
-      <div class="h-px bg-slate-200 dark:bg-slate-800 mx-2 my-2"></div>
+      <div class="h-px bg-slate-200 dark:bg-slate-800 mx-auto my-3 w-8"></div>
       }
 
       @for (item of filteredNavItems(); track item.route) {
-      <a [routerLink]="item.route" (click)="closeMobileMenu()" [title]="isCompact() ? item.label : ''"
-        routerLinkActive="bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold shadow-sm shadow-orange-500/5 active-nav-link"
+      <a mat-list-item [routerLink]="item.route" (click)="onNavItemClick()"
+        routerLinkActive="active-nav-link"
         [routerLinkActiveOptions]="{ exact: false }"
-        class="flex items-center rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-150 group"
-        [class.px-3.5]="!isCompact()" [class.py-3]="!isCompact()" [class.gap-3.5]="!isCompact()"
-        [class.text-sm]="!isCompact()" [class.border-l-4]="!isCompact()" [class.border-transparent]="!isCompact()"
-        [class.[&.active-nav-link]:border-orange-500]="!isCompact()" [class.justify-center]="isCompact()"
-        [class.p-3]="isCompact()">
-        <span
-          class="material-icons-round text-slate-400 group-hover:text-orange-500 group-[.active-nav-link]:text-orange-500 text-xl transition-colors shrink-0">
-          {{ item.icon }}
-        </span>
+        [matTooltip]="isCompact() ? item.label : ''"
+        matTooltipPosition="right"
+        class="gastro-nav-item"
+        [class.compact-item]="isCompact()">
+        <mat-icon matListItemIcon class="material-icons-round text-xl">{{ item.icon }}</mat-icon>
         @if (!isCompact()) {
-        <span class="truncate">{{ item.label }}</span>
+        <span matListItemTitle class="truncate">{{ item.label }}</span>
         }
       </a>
       }
-    </nav>
+    </mat-nav-list>
 
     <!-- Sidebar Footer / System Badge -->
     <div class="p-3 border-t border-slate-200 dark:border-slate-800/80 text-center shrink-0">
@@ -85,10 +103,10 @@
       </div>
       }
     </div>
-  </aside>
+  </mat-sidenav>
 
   <!-- Main Content Column -->
-  <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+  <mat-sidenav-content class="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
     <!-- Top Demo Banner -->
     @if (authService.isDemoAccount()) {
     <div
@@ -118,9 +136,9 @@
         <!-- Burger menu toggle button (inspired by Berry Dashboard) -->
         <button (click)="toggleSidebar()" type="button"
           class="w-10 h-10 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/20 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 focus:outline-none cursor-pointer"
-          [title]="isMobile() ? (isMobileMenuOpen() ? 'Zamknij menu' : 'Otwórz menu') : (isSidebarCollapsed() ? 'Rozwiń menu boczne' : 'Zwiń menu boczne')">
+          [title]="isMobile() ? (isMobileMenuOpen() ? 'Zamknij menu' : 'Otwórz menu') : (!isSidebarPinned() ? 'Zakotwicz menu boczne' : 'Odepnij menu boczne')">
           <span class="material-icons-round text-2xl transition-transform duration-200">
-            {{ (isMobile() ? isMobileMenuOpen() : !isSidebarCollapsed()) ? 'menu_open' : 'menu' }}
+            {{ (isMobile() ? isMobileMenuOpen() : isSidebarPinned()) ? 'menu_open' : 'menu' }}
           </span>
         </button>
 
@@ -386,5 +404,5 @@
     <main class="flex-1 p-4 sm:p-8 overflow-y-auto">
       <router-outlet></router-outlet>
     </main>
-  </div>
-</div>
+  </mat-sidenav-content>
+</mat-sidenav-container>
