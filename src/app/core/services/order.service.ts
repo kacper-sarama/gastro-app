@@ -104,6 +104,16 @@ export class OrderService implements OnDestroy {
                 )
               );
             });
+          } else if (event.data?.type === 'ORDER_PAID') {
+            const { orderId, paid, paymentMethod, paidAt, updatedAt } = event.data;
+            this.ngZone.run(() => {
+              this.orders.update(currentOrders =>
+                currentOrders.map(o => o.id === orderId
+                  ? { ...o, paid, paymentMethod, paidAt, updatedAt: updatedAt || new Date().toISOString() }
+                  : o
+                )
+              );
+            });
           }
         };
       } catch (e) {
@@ -542,9 +552,11 @@ export class OrderService implements OnDestroy {
 
   // --- Zmiana statusu zamówienia i automatyczny odpis magazynowy ---
 
-  async updateOrderStatus(orderId: string, newStatus: OrderStatus): Promise<void> {
+  async updateOrderStatus(orderId: string, newStatus: OrderStatus, options?: { silent?: boolean }): Promise<void> {
     const target = this.orders().find(o => o.id === orderId);
     if (!target) return;
+    // Zapobiegaj powtórnemu przetwarzaniu tego samego statusu (np. przy rozliczaniu stolika)
+    if (target.status === newStatus) return;
 
     let stockDeducted = target.stockDeducted;
     let depletedIngredients: string[] = [];
@@ -554,10 +566,12 @@ export class OrderService implements OnDestroy {
     if (newStatus === 'cancelled' && target.stockDeducted) {
       await this.restoreStockForOrder(target);
       stockDeducted = false;
-      this.toastService.info(
-        `Zwrócono składniki zamówienia #${target.orderNumber} do magazynu.`,
-        'Zwrot do magazynu'
-      );
+      if (!options?.silent) {
+        this.toastService.info(
+          `Zwrócono składniki zamówienia #${target.orderNumber} do magazynu.`,
+          'Zwrot do magazynu'
+        );
+      }
     }
 
     // 2. FALLBACK ODPISU: dla starszych/archiwalnych zamówień z stockDeducted: false
@@ -600,46 +614,90 @@ export class OrderService implements OnDestroy {
       await updateDoc(docRef, updatedFields);
     } catch (err) {
       console.error('Błąd aktualizacji statusu zamówienia w Firestore:', err);
-      this.toastService.danger('Nie udało się zaktualizować statusu zamówienia.', 'Błąd');
+      if (!options?.silent) {
+        this.toastService.danger('Nie udało się zaktualizować statusu zamówienia.', 'Błąd');
+      }
       return;
     }
 
-    // Powiadomienia Toast w zależności od nowego statusu
-    const num = target.orderNumber || target.id.slice(-4);
-    if (newStatus === 'ready') {
-      this.toastService.success(
-        `Zamówienie #${num} (${target.tableNumber}) jest gotowe do wydania.`,
-        'Gotowe do wydania'
-      );
-
-      if (depletedIngredients.length > 0) {
-        this.toastService.danger(
-          `Wyczerpano zapas do zera: ${depletedIngredients.join(', ')}! Powiązane pozycje mogą zostać zablokowane.`,
-          'Brak surowca w magazynie'
+    // Powiadomienia Toast w zależności od nowego statusu (tylko gdy nie jest w trybie cichym)
+    if (!options?.silent) {
+      const num = target.orderNumber || target.id.slice(-4);
+      if (newStatus === 'ready') {
+        this.toastService.success(
+          `Zamówienie #${num} (${target.tableNumber}) jest gotowe do wydania.`,
+          'Gotowe do wydania'
         );
-      } else if (lowStockIngredients.length > 0) {
-        this.toastService.warning(
-          `Niski stan po realizacji: ${lowStockIngredients.join(', ')}. Wymagane uzupełnienie!`,
-          'Niski stan magazynowy'
+
+        if (depletedIngredients.length > 0) {
+          this.toastService.danger(
+            `Wyczerpano zapas do zera: ${depletedIngredients.join(', ')}! Powiązane pozycje mogą zostać zablokowane.`,
+            'Brak surowca w magazynie'
+          );
+        } else if (lowStockIngredients.length > 0) {
+          this.toastService.warning(
+            `Niski stan po realizacji: ${lowStockIngredients.join(', ')}. Wymagane uzupełnienie!`,
+            'Niski stan magazynowy'
+          );
+        }
+      } else if (newStatus === 'completed') {
+        this.toastService.success(
+          `Wydano zamówienie #${num} (${target.tableNumber}).`,
+          'Wydano zamówienie'
+        );
+
+        if (depletedIngredients.length > 0) {
+          this.toastService.danger(
+            `Wyczerpano zapas do zera: ${depletedIngredients.join(', ')}! Powiązane pozycje mogą zostać zablokowane.`,
+            'Brak surowca w magazynie'
+          );
+        }
+      } else if (newStatus === 'in_progress') {
+        this.toastService.info(
+          `Zamówienie #${num} (${target.tableNumber}) trafiło na kuchnię.`,
+          'W realizacji'
         );
       }
-    } else if (newStatus === 'completed') {
-      this.toastService.success(
-        `Wydano zamówienie #${num} (${target.tableNumber}).`,
-        'Wydano zamówienie'
-      );
+    }
+  }
 
-      if (depletedIngredients.length > 0) {
-        this.toastService.danger(
-          `Wyczerpano zapas do zera: ${depletedIngredients.join(', ')}! Powiązane pozycje mogą zostać zablokowane.`,
-          'Brak surowca w magazynie'
-        );
+  /**
+   * Oznacza zamówienie jako opłacone
+   */
+  async markOrderPaid(orderId: string, paymentMethod: string): Promise<void> {
+    const target = this.orders().find(o => o.id === orderId);
+    if (!target) return;
+    if (target.paid && target.paymentMethod === paymentMethod) return;
+
+    const nowIso = new Date().toISOString();
+    const updatedFields = {
+      paid: true,
+      paymentMethod,
+      paidAt: nowIso,
+      updatedAt: nowIso
+    };
+
+    this.orders.update(currentOrders =>
+      currentOrders.map(o => o.id === orderId ? { ...o, ...updatedFields } : o)
+    );
+
+    if (this.syncChannel) {
+      try {
+        this.syncChannel.postMessage({
+          type: 'ORDER_PAID',
+          orderId,
+          ...updatedFields
+        });
+      } catch (e) {
+        // Ignoruj błędy broadcastu
       }
-    } else if (newStatus === 'in_progress') {
-      this.toastService.info(
-        `Zamówienie #${num} (${target.tableNumber}) trafiło na kuchnię.`,
-        'W realizacji'
-      );
+    }
+
+    try {
+      const docRef = doc(this.firestore, `orders/${orderId}`);
+      await updateDoc(docRef, updatedFields);
+    } catch (err) {
+      console.error('Błąd aktualizacji opłacenia zamówienia w Firestore:', err);
     }
   }
 

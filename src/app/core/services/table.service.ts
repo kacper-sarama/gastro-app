@@ -518,7 +518,13 @@ export class TableService {
       : (orderIds ? [orderIds] : []);
 
     for (const ordId of idsToSettle) {
-      await this.orderService.updateOrderStatus(ordId, 'completed');
+      const ord = this.orderService.orders().find(o => o.id === ordId);
+      if (ord && ord.status !== 'completed') {
+        await this.orderService.updateOrderStatus(ordId, 'completed', { silent: true });
+      }
+      if (ord && !ord.paid) {
+        await this.orderService.markOrderPaid(ordId, paymentMethod);
+      }
     }
 
     // Po opłaceniu oznaczamy jako do posprzątania i czyścimy bieżący otwarty rachunek wizyty
