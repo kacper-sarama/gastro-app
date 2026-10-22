@@ -87,6 +87,9 @@ export class MainLayoutComponent implements OnInit {
   private confirmDialogService = inject(ConfirmDialogService);
 
   isMobileMenuOpen = signal(false);
+  /** Czy tranzycje są tymczasowo wyłączone przy zmianie rozmiaru ekranu (zapobieganie glitchom animacji) */
+  isTransitionDisabled = signal(false);
+  private resizeTransitionTimer: ReturnType<typeof setTimeout> | null = null;
   /** Czy menu jest zakotwiczone na stałe (checked = true: pełne menu z tekstem, false: odpięte, same ikony) */
   isSidebarPinned = signal<boolean>(getInitialSidebarPinned());
   /** Czy kursor myszy unosi się nad odpiętym menu (efekt hover z Freya) */
@@ -132,6 +135,12 @@ export class MainLayoutComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => {
+      if (this.resizeTransitionTimer) {
+        clearTimeout(this.resizeTransitionTimer);
+      }
+    });
+
     // Oficjalny reaktywny mechanizm Angular CDK BreakpointObserver
     this.breakpointObserver
       .observe([MD_SCREEN_QUERY, MOBILE_WIDTH_QUERY, MOBILE_LANDSCAPE_QUERY])
@@ -141,9 +150,17 @@ export class MainLayoutComponent implements OnInit {
           result.breakpoints[MOBILE_WIDTH_QUERY] || result.breakpoints[MOBILE_LANDSCAPE_QUERY];
         const isMdOrBelow = result.breakpoints[MD_SCREEN_QUERY];
 
-        // Przy każdej zmianie trybu zamykamy szufladę mobilną
+        // Przy każdej zmianie trybu wyłączamy animacje na ułamek sekundy,
+        // aby uniknąć glitcha jednoczesnej zmiany szerokości i zamykania szuflady
         if (isMobile !== this.isMobile()) {
+          this.isTransitionDisabled.set(true);
           this.isMobileMenuOpen.set(false);
+          if (this.resizeTransitionTimer) {
+            clearTimeout(this.resizeTransitionTimer);
+          }
+          this.resizeTransitionTimer = setTimeout(() => {
+            this.isTransitionDisabled.set(false);
+          }, 450);
         }
         this.isMobile.set(isMobile);
 

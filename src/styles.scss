@@ -547,6 +547,28 @@ html {
     .gastro-sidebar.mat-drawer {
       z-index: 60 !important;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+      width: 17.5rem !important;
+      max-width: 85vw !important;
+    }
+  }
+
+  // Blokada glitchy animacji przy gwałtownej zmianie breakpointu mobilny <-> desktop
+  &.disable-sidebar-transitions {
+    // Przy wejściu w tryb mobilny: szuflada natychmiast znika poza ekranem bez żadnego rozszerzania na widoku
+    &.is-mobile {
+      .gastro-sidebar.mat-drawer {
+        transform: translate3d(-100%, 0, 0) !important;
+        visibility: hidden !important;
+        transition: none !important;
+      }
+    }
+
+    // Przy powrocie na desktop: wyłączamy tranzycje width/margin, aby układ od razu wskoczył na miejsce
+    &:not(.is-mobile) {
+      .gastro-sidebar.mat-drawer,
+      .mat-drawer-content {
+        transition: none !important;
+      }
     }
   }
 }
@@ -557,17 +579,25 @@ html {
   top: 0;
   bottom: 0;
   left: 0;
-  z-index: 40;
-  // transform: animacja wjazdu szuflady z lewej na mobilce; width i box-shadow: animacja na desktopie
-  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), width 260ms cubic-bezier(0.2, 0, 0, 1), box-shadow 260ms cubic-bezier(0.2, 0, 0, 1) !important;
-  will-change: transform, width, box-shadow;
+  z-index: 45; // Ponad z-40 navbaru, aby cień i zaokrąglenie w prawym górnym rogu nie były ucinane przez header
+  // Na mobilce animuje się wyłącznie transform (wjazd szuflady)
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: transform;
   overflow-x: hidden !important;
   background-color: #ffffff !important;
   border-right: 1px solid #e2e8f0 !important;
   color: #1e293b;
 
+  // Animacja szerokości (width) i cienia obowiązuje WYŁĄCZNIE na desktopie (gdy container nie jest mobilny):
+  .gastro-sidenav-container:not(.is-mobile) & {
+    transition: width 260ms cubic-bezier(0.2, 0, 0, 1), box-shadow 260ms cubic-bezier(0.2, 0, 0, 1) !important;
+    will-change: width, box-shadow;
+  }
+
   &.collapsed-sidebar {
     width: 4.5rem !important; // 72px - smukły pasek z wyśrodkowanymi ikonami (jak Freya)
+    // Cień w stanie zwiniętym zapewniający płynną głębię wokół zaokrąglonego prawego rogu i wzdłuż krawędzi
+    box-shadow: 4px 0 20px -2px rgba(0, 0, 0, 0.08), 2px 0 6px -2px rgba(0, 0, 0, 0.04) !important;
 
     &.hover-expanded {
       width: 17.5rem !important; // 280px - płynne wysunięcie nad treść
@@ -589,6 +619,10 @@ html {
   background-color: #0f172a !important;
   border-right: 1px solid rgba(51, 65, 85, 0.8) !important;
   color: #f8fafc !important;
+
+  &.collapsed-sidebar {
+    box-shadow: 4px 0 20px -2px rgba(0, 0, 0, 0.4), 2px 0 6px -2px rgba(0, 0, 0, 0.3) !important;
+  }
 
   &.collapsed-sidebar.hover-expanded {
     box-shadow: 0 20px 30px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;

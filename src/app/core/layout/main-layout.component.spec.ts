@@ -189,10 +189,18 @@ describe('MainLayoutComponent (Navigation & Dynamic RBAC Menu)', () => {
   });
 
   it('powinien poprawnie zwijać i rozwijać menu boczne (toggleSidebar)', () => {
-    expect(component.isSidebarCollapsed()).toBeFalse();
+    expect(component.isSidebarPinned()).toBeTrue();
     component.toggleSidebar();
-    expect(component.isSidebarCollapsed()).toBeTrue();
+    expect(component.isSidebarPinned()).toBeFalse();
     component.toggleSidebar();
-    expect(component.isSidebarCollapsed()).toBeFalse();
+    expect(component.isSidebarPinned()).toBeTrue();
+  });
+
+  it('powinien poprawnie zarządzać stanem menu mobilnego (toggleMobileMenu i closeMobileMenu)', () => {
+    expect(component.isMobileMenuOpen()).toBeFalse();
+    component.toggleMobileMenu();
+    expect(component.isMobileMenuOpen()).toBeTrue();
+    component.closeMobileMenu();
+    expect(component.isMobileMenuOpen()).toBeFalse();
   });
 });
