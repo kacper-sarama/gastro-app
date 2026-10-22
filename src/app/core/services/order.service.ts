@@ -552,6 +552,11 @@ export class OrderService implements OnDestroy {
       updatedAt: new Date().toISOString()
     };
 
+    // Natychmiastowa reaktywna aktualizacja w pamięci (optymistyczny stan dla wszystkich widoków/ról)
+    this.orders.update(currentOrders =>
+      currentOrders.map(o => o.id === orderId ? { ...o, ...updatedFields } : o)
+    );
+
     try {
       const docRef = doc(this.firestore, `orders/${orderId}`);
       await updateDoc(docRef, updatedFields);

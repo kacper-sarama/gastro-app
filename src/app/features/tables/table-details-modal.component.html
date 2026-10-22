@@ -147,6 +147,32 @@
           </div>
         </div>
 
+        <!-- Pasek powiadomienia o gotowych daniach z kuchni z przyciskiem szybkiego wydania -->
+        <div *ngIf="hasReadyOrders()" class="p-3.5 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-between gap-3 animate-fade-in">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 animate-bounce">
+              <span class="material-icons-round text-base">room_service</span>
+            </span>
+            <div>
+              <h5 class="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                Dania są gotowe do odebrania z kuchni!
+              </h5>
+              <p class="text-[11px] text-emerald-700/80 dark:text-emerald-400/80">
+                Odbierz z okna wydawczego i wydaj gościom do stolika.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            [disabled]="isDelivering()"
+            (click)="onDeliverAllReady()"
+            class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0"
+          >
+            <span class="material-icons-round text-sm">check_circle</span>
+            Wydaj na stół
+          </button>
+        </div>
+
         <!-- Lista poszczególnych bonów/zamówień (transze wizyty) -->
         <div class="space-y-3">
           <div *ngFor="let order of activeOrders(); let i = index" class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900/60 shadow-xs">
@@ -174,6 +200,19 @@
                   <span class="material-icons-round text-xs text-emerald-600 dark:text-emerald-400" *ngIf="order.status === 'completed'">done_all</span>
                   {{ order.status === 'pending' ? 'Oczekujące' : order.status === 'in_progress' ? 'W kuchni' : order.status === 'ready' ? 'Gotowe do wydania' : 'Wydane' }}
                 </span>
+
+                <!-- Przycisk wydania konkretnego bonu przez kelnerkę -->
+                <button 
+                  *ngIf="order.status === 'ready'"
+                  type="button"
+                  [disabled]="isDelivering()"
+                  (click)="onDeliverOrder(order)"
+                  class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center gap-1 shadow-xs transition-all active:scale-95 cursor-pointer ml-1 animate-pulse hover:animate-none"
+                  title="Kliknij, aby wydać to zamówienie do stolika"
+                >
+                  <span class="material-icons-round text-xs">check_circle</span>
+                  <span>Wydaj na stół</span>
+                </button>
               </div>
               <div class="flex items-center gap-2">
                 <!-- Status opłacenia bonu -->

@@ -1,5 +1,6 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { OrderService } from '../../core/services/order.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Order, OrderStatus } from '../../core/models/order.model';
@@ -14,17 +15,25 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
   imports: [CommonModule, MatDialogModule, MatTooltipModule],
   templateUrl: './orders-kanban.component.html'
 })
-export class OrdersKanbanComponent {
+export class OrdersKanbanComponent implements OnInit {
   readonly orderService = inject(OrderService);
   readonly authService = inject(AuthService);
   private dialog = inject(MatDialog);
   private confirmDialogService = inject(ConfirmDialogService);
+  private route = inject(ActivatedRoute);
 
   // Kontrola modala nowego zamówienia
   isNewOrderModalOpen = signal<boolean>(false);
 
   // Zakładka dla widoku mobilnego (na małych ekranach)
   activeMobileTab = signal<OrderStatus>('pending');
+
+  ngOnInit(): void {
+    const tabParam = this.route.snapshot.queryParamMap.get('tab') as OrderStatus;
+    if (tabParam && ['pending', 'in_progress', 'ready', 'completed'].includes(tabParam)) {
+      this.activeMobileTab.set(tabParam);
+    }
+  }
 
   // Zamówienia podzielone na 4 kolumny tablicy Kanban
   readonly pendingOrders = computed(() => 
@@ -75,6 +84,9 @@ export class OrdersKanbanComponent {
 
     if (nextStatus) {
       await this.orderService.updateOrderStatus(order.id, nextStatus);
+      if (nextStatus === 'completed' && this.activeMobileTab() === 'ready' && this.readyOrders().length === 0) {
+        this.activeMobileTab.set('completed');
+      }
     }
   }
 
