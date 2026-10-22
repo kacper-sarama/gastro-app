@@ -44,6 +44,7 @@ export class OrderService implements OnDestroy {
   readonly errorMessage = signal<string | null>(null);
 
   private firestoreUnsub: Unsubscribe | null = null;
+  private syncChannel: BroadcastChannel | null = null;
 
   // --- Sygnały podsumowujące (Live KPI) ---
 
@@ -86,6 +87,28 @@ export class OrderService implements OnDestroy {
       this.timeTickerInterval = setInterval(() => {
         this.currentTime.set(Date.now());
       }, 15000); // co 15 sekund
+    }
+
+    // Błyskawiczna synchronizacja zamówień na żywo między kartami/oknami przeglądarki (np. Kucharz <-> Kelnerka <-> Właściciel)
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        this.syncChannel = new BroadcastChannel('gastro_live_sync');
+        this.syncChannel.onmessage = (event) => {
+          if (event.data?.type === 'ORDER_STATUS_CHANGED') {
+            const { orderId, newStatus, stockDeducted, updatedAt } = event.data;
+            this.ngZone.run(() => {
+              this.orders.update(currentOrders =>
+                currentOrders.map(o => o.id === orderId 
+                  ? { ...o, status: newStatus, stockDeducted: stockDeducted ?? o.stockDeducted, updatedAt: updatedAt || new Date().toISOString() } 
+                  : o
+                )
+              );
+            });
+          }
+        };
+      } catch (e) {
+        console.warn('BroadcastChannel niedostępny:', e);
+      }
     }
 
     // Reaguj na zmiany zalogowanego użytkownika
@@ -557,6 +580,21 @@ export class OrderService implements OnDestroy {
       currentOrders.map(o => o.id === orderId ? { ...o, ...updatedFields } : o)
     );
 
+    // Błyskawiczny broadcast do pozostałych kart przeglądarki (kucharz / kelnerka / właściciel)
+    if (this.syncChannel) {
+      try {
+        this.syncChannel.postMessage({
+          type: 'ORDER_STATUS_CHANGED',
+          orderId,
+          newStatus,
+          stockDeducted,
+          updatedAt: updatedFields.updatedAt
+        });
+      } catch (e) {
+        // Ignoruj błędy broadcastu
+      }
+    }
+
     try {
       const docRef = doc(this.firestore, `orders/${orderId}`);
       await updateDoc(docRef, updatedFields);
@@ -634,7 +672,7 @@ export class OrderService implements OnDestroy {
       }
     }
 
-    // 2. Wykonaj odpis magazynowy dla każdego surowca i zweryfikuj progi
+    // 2. Wykonaj równoległy odpis magazynowy dla każdego surowca i zweryfikuj progi
     for (const [inventoryItemId, totalAmount] of deductions.entries()) {
       const item = inventoryItems.find(i => i.id === inventoryItemId);
       if (item) {
@@ -645,8 +683,13 @@ export class OrderService implements OnDestroy {
           lowStockItems.push(item.name);
         }
       }
-      await this.inventoryService.quickAdjustStock(inventoryItemId, -totalAmount, true);
     }
+
+    await Promise.all(
+      Array.from(deductions.entries()).map(([inventoryItemId, totalAmount]) =>
+        this.inventoryService.quickAdjustStock(inventoryItemId, -totalAmount, true)
+      )
+    );
 
     return { depletedItems, lowStockItems };
   }
@@ -704,6 +747,10 @@ export class OrderService implements OnDestroy {
     if (this.firestoreUnsub) {
       this.firestoreUnsub();
       this.firestoreUnsub = null;
+    }
+    if (this.syncChannel) {
+      this.syncChannel.close();
+      this.syncChannel = null;
     }
   }
 }

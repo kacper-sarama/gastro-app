@@ -91,13 +91,6 @@ export class TableDetailsModalComponent implements OnInit {
     return paid?.paymentMethod || 'Online';
   });
 
-  // Czy stolik ma jakiekolwiek dania gotowe do odebrania z kuchni
-  readonly hasReadyOrders = computed<boolean>(() => {
-    return this.activeOrders().some(o => o.status === 'ready');
-  });
-
-  isDelivering = signal<boolean>(false);
-
   ngOnInit(): void {
     if (this.dialogData?.table) {
       this.table = this.dialogData.table;
@@ -107,35 +100,6 @@ export class TableDetailsModalComponent implements OnInit {
   closeModal(): void {
     this.close.emit();
     this.dialogRef?.close({ action: 'close' });
-  }
-
-  /**
-   * Kelnerka wydaje wybrany bon bezpośrednio ze szczegółów stolika na Sali
-   */
-  async onDeliverOrder(order: Order): Promise<void> {
-    if (order.status !== 'ready') return;
-    this.isDelivering.set(true);
-    try {
-      await this.orderService.updateOrderStatus(order.id, 'completed');
-    } finally {
-      this.isDelivering.set(false);
-    }
-  }
-
-  /**
-   * Kelnerka wydaje wszystkie gotowe bony na stół jednym kliknięciem
-   */
-  async onDeliverAllReady(): Promise<void> {
-    const readyOrders = this.activeOrders().filter(o => o.status === 'ready');
-    if (readyOrders.length === 0) return;
-    this.isDelivering.set(true);
-    try {
-      for (const ord of readyOrders) {
-        await this.orderService.updateOrderStatus(ord.id, 'completed');
-      }
-    } finally {
-      this.isDelivering.set(false);
-    }
   }
 
   async onRequestBill(): Promise<void> {
