@@ -83,6 +83,7 @@ export class AccountSettingsModalComponent {
   showPasswords = signal<boolean>(false);
 
   setTab(tab: AccountTab): void {
+    if (tab === 'payments') return;
     this.activeTab.set(tab);
     this.errorMessage.set(null);
   }

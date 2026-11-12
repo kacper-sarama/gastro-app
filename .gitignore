@@ -45,3 +45,12 @@ Thumbs.db
 
 # Firebase cache
 .firebase/
+
+# Secrets & Environment variables
+.env
+.env.*
+!.env.example
+*.local
+*serviceAccountKey*.json
+functions/.env*
+functions/*serviceAccountKey*.json

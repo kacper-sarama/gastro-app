@@ -3,11 +3,70 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Pomocnicze funkcje autoryzacji
+    // ===============================================================
+    // Założenia Modelu Danych (Assumed Data Model)
+    // ===============================================================
+    //
+    // 1. Kolekcja: restaurant_settings/{restaurantId}
+    //    Identyfikator dokumentu: restaurantId (UID właściciela lub 'demo-restaurant')
+    //    Pola: name, categories, tables, openHours itp.
+    //    Uprawnienia: get publiczny (menu gościa), list i zapis wyłącznie dla właściciela.
+    //
+    // 2. Kolekcja: inventory/{itemId}
+    //    Pola:
+    //      - restaurantId: string (wymagane, niezmienne po utworzeniu)
+    //      - name: string (1-100 znaków)
+    //      - amount: number (>= 0)
+    //      - unit: string (dozwolone: 'g', 'ml', 'szt')
+    //    Uprawnienia: odczyt dla właściciela lub publiczny z limitem (limit <= 200),
+    //      zapis wyłącznie dla właściciela.
+    //
+    // 3. Kolekcja: recipes/{recipeId}
+    //    Pola:
+    //      - restaurantId: string (wymagane, niezmienne po utworzeniu)
+    //      - name: string (1-100 znaków)
+    //      - price, ingredients itp.
+    //    Uprawnienia: odczyt dla właściciela lub publiczny z limitem (limit <= 200),
+    //      zapis wyłącznie dla właściciela.
+    //
+    // 4. Kolekcja: orders/{orderId}
+    //    Pola:
+    //      - restaurantId: string (wymagane, niezmienne po utworzeniu)
+    //      - status: string (np. 'pending', 'in-progress', 'completed', 'cancelled')
+    //      - items: list (1-50 pozycji)
+    //      - totalPrice: number (0 - 100000)
+    //    Uprawnienia:
+    //      - get: publiczny (gość sprawdza status swojego bonu) lub właściciel
+    //      - list: WYŁĄCZNIE właściciel danego lokalu (ochrona przed wyciekiem między lokalami)
+    //      - create: właściciel LUB gość (z walidacją stanu początkowego 'pending')
+    //      - update / delete: WYŁĄCZNIE właściciel danego lokalu
+    //
+    // 5. Kolekcja: promotions/{promoId}
+    //    Pola: restaurantId, code, discount, validUntil itp.
+    //    Uprawnienia: WYŁĄCZNIE właściciel lokalu (pełna izolacja danych).
+    //
+    // 6. Kolekcja: tables/{tableId}
+    //    Pola: restaurantId, number, seats, status itp.
+    //    Uprawnienia: WYŁĄCZNIE właściciel lokalu.
+    //
+    // 7. Kolekcja: staff/{staffId}
+    //    Pola: restaurantId, name, role, pin itp.
+    //    Uprawnienia: WYŁĄCZNIE właściciel lokalu (ochrona danych pracowników i kodów PIN).
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Pomocnicze Funkcje Autoryzacji i Walidacji
+    // ===============================================================
+
+    // Sprawdzenie, czy żądanie pochodzi od uwierzytelnionego użytkownika Firebase Auth
     function isAuthenticated() {
       return request.auth != null;
     }
 
+    // Weryfikacja własności lokalu:
+    // Użytkownik jest właścicielem, jeśli jego UID zgadza się z restaurantId
+    // LUB jest zalogowany kontem demonstracyjnym demo@gastroapp.pl dla 'demo-restaurant'
     function isOwner(restaurantId) {
       return isAuthenticated() && (
         request.auth.uid == restaurantId ||
@@ -15,110 +74,151 @@ service cloud.firestore {
       );
     }
 
-    // ========================================================
-    // 1. Magazyn Surowców (inventory)
-    // ========================================================
-    match /inventory/{itemId} {
-      // Właściciel lokalu ma pełne prawa odczytu i zapisu swoich surowców
-      // Goście mogą odczytywać stan magazynowy (potrzebne do wyliczania wydajności dań w publicznym menu)
-      allow read: if true;
-
-      allow create: if isOwner(request.resource.data.restaurantId)
-        && request.resource.data.name is string
-        && request.resource.data.amount is number
-        && request.resource.data.unit in ['g', 'ml', 'szt'];
-
-      allow update: if isOwner(resource.data.restaurantId)
-        && request.resource.data.restaurantId == resource.data.restaurantId
-        && request.resource.data.amount is number;
-
-      allow delete: if isOwner(resource.data.restaurantId);
+    // Walidator pozycji magazynowej (inventory)
+    function isValidInventoryItem(data) {
+      return data.restaurantId is string
+        && data.restaurantId.size() > 0 && data.restaurantId.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.amount is number && data.amount >= 0
+        && data.unit in ['g', 'ml', 'szt'];
     }
 
-    // ========================================================
-    // 2. Księga Receptur (recipes)
-    // ========================================================
-    match /recipes/{recipeId} {
-      // Publiczny odczyt dla karty dań (goście skanujący QR kod oraz restaurator)
-      allow read: if true;
-
-      allow create: if isOwner(request.resource.data.restaurantId)
-        && request.resource.data.name is string;
-
-      allow update: if isOwner(resource.data.restaurantId)
-        && request.resource.data.restaurantId == resource.data.restaurantId;
-
-      allow delete: if isOwner(resource.data.restaurantId);
+    // Walidator receptury / dania menu (recipes)
+    function isValidRecipe(data) {
+      return data.restaurantId is string
+        && data.restaurantId.size() > 0 && data.restaurantId.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100;
     }
 
-    // ========================================================
-    // 3. Ustawienia Lokalu i Kategorie (restaurant_settings)
-    // ========================================================
+    // Walidator nowego zamówienia składanego przez gościa (guest order)
+    function isValidGuestOrder(data) {
+      return data.restaurantId is string
+        && data.restaurantId.size() > 0 && data.restaurantId.size() <= 128
+        && data.status == 'pending'
+        && data.items is list && data.items.size() > 0 && data.items.size() <= 50
+        && data.totalPrice is number && data.totalPrice >= 0 && data.totalPrice <= 100000;
+    }
+
+    // ===============================================================
+    // 1. Ustawienia Lokalu i Kategorie (restaurant_settings)
+    // ===============================================================
     match /restaurant_settings/{restaurantId} {
-      // Odczyt kategorii dań jest publiczny dla karty menu
-      allow read: if true;
+      // Pobranie ustawień konkretnego lokalu (get) jest publiczne - potrzebne dla karty dań gościa
+      allow get: if true;
+
+      // Listowanie (list) jest zablokowane dla osób postronnych; tylko właściciel może listować
+      // Chroni przed masowym pobieraniem danych wszystkich lokali w systemie
+      allow list: if isOwner(restaurantId);
+
+      // Zapis, aktualizacja i usunięcie wyłącznie przez właściciela lokalu
       allow write: if isOwner(restaurantId);
     }
 
-    // ========================================================
+    // ===============================================================
+    // 2. Magazyn Surowców (inventory)
+    // ===============================================================
+    match /inventory/{itemId} {
+      // Odczyt: Właściciel lokalu ma pełny dostęp.
+      // Goście na stronie /menu/:restaurantId mogą odczytywać surowce danego lokalu
+      // w celu dynamicznego wyliczania dostępności dań (ochrona przed DoS limitem do 200 pozycji).
+      allow read: if isOwner(resource.data.restaurantId)
+        || (resource.data.restaurantId is string && request.query.limit <= 200);
+
+      // Tworzenie: Tylko właściciel z walidacją typów, zakresu jednostek i nazwy
+      allow create: if isOwner(request.resource.data.restaurantId)
+        && isValidInventoryItem(request.resource.data);
+
+      // Aktualizacja: Tylko właściciel; niezmienny identyfikator lokalu oraz walidacja danych
+      allow update: if isOwner(resource.data.restaurantId)
+        && request.resource.data.restaurantId == resource.data.restaurantId
+        && isValidInventoryItem(request.resource.data);
+
+      // Usuwanie: Tylko właściciel lokalu
+      allow delete: if isOwner(resource.data.restaurantId);
+    }
+
+    // ===============================================================
+    // 3. Księga Receptur i Karty Dań (recipes)
+    // ===============================================================
+    match /recipes/{recipeId} {
+      // Odczyt: Pełny dla właściciela; publiczny dla gości przeglądających menu z limitem do 200 dań
+      allow read: if isOwner(resource.data.restaurantId)
+        || (resource.data.restaurantId is string && request.query.limit <= 200);
+
+      // Tworzenie: Tylko właściciel danego lokalu z poprawną nazwą potrawy
+      allow create: if isOwner(request.resource.data.restaurantId)
+        && isValidRecipe(request.resource.data);
+
+      // Aktualizacja: Tylko właściciel; zakaz przenoszenia receptur do innego lokalu
+      allow update: if isOwner(resource.data.restaurantId)
+        && request.resource.data.restaurantId == resource.data.restaurantId
+        && isValidRecipe(request.resource.data);
+
+      // Usuwanie: Tylko właściciel lokalu
+      allow delete: if isOwner(resource.data.restaurantId);
+    }
+
+    // ===============================================================
     // 4. Zamówienia i Kolejka Kuchenna (orders)
-    // ========================================================
+    // ===============================================================
     match /orders/{orderId} {
-      // Odczyt zamówień:
-      // - Pobranie pojedynczego zamówienia (get) dozwolone publicznie (dla gościa sprawdzającego status bonu na telefonie)
-      // - Pobranie listy zamówień lokalu (list) zarezerwowane dla zalogowanego personelu lokalu
-      allow get: if true;
-      allow list: if isAuthenticated();
+      // Pojedynczy odczyt (get): Dostępny dla właściciela oraz gościa sprawdzającego status zamówienia
+      allow get: if isOwner(resource.data.restaurantId) || true;
+
+      // Listowanie (list): ŚCIŚLE OGRANICZONE do właściciela danego lokalu!
+      // Usunięto lukę cross-tenant (stare reguły pozwalały dowolnemu zalogowanemu użytkownikowi widzieć zamówienia innych lokali)
+      allow list: if isOwner(resource.data.restaurantId);
 
       // Tworzenie zamówienia:
-      // - Przez managera/kelnera (zalogowanego)
-      // - LUB przez gościa ze stolika (status musi być 'pending', restaurantId musi być podany)
+      // - Zalogowany właściciel/manager lokalu
+      // LUB
+      // - Gość lokalu składający nowe zamówienie ze stolika (status początkowy 'pending', limit pozycji i ceny)
       allow create: if (isAuthenticated() && isOwner(request.resource.data.restaurantId))
-        || (
-          request.resource.data.restaurantId is string
-          && request.resource.data.status == 'pending'
-          && request.resource.data.items is list
-        );
+        || isValidGuestOrder(request.resource.data);
 
-      // Aktualizacja statusu (np. realizacja przez kuchnię, odpis surowców) - tylko właściciel
+      // Aktualizacja: Tylko właściciel lokalu (kuchnia/kelner zmienia status, rozlicza itp.)
+      // Identyfikator lokalu jest ściśle niemutowalny
       allow update: if isOwner(resource.data.restaurantId)
         && request.resource.data.restaurantId == resource.data.restaurantId;
 
-      // Usunięcie lub anulowanie zamówienia - tylko właściciel
+      // Usunięcie: Tylko właściciel lokalu
       allow delete: if isOwner(resource.data.restaurantId);
     }
 
-    // ========================================================
-    // 5. Promocje i Vouchery (promotions)
-    // ========================================================
+    // ===============================================================
+    // 5. Promocje i Rabaty (promotions)
+    // ===============================================================
     match /promotions/{promoId} {
-      // Właściciel lokalu zarządza promocjami lokalu
+      // Wewnętrzne kampanie i promocje lokalu – dostęp wyłącznie dla właściciela
       allow read: if isOwner(resource.data.restaurantId);
-      allow create: if isOwner(request.resource.data.restaurantId);
+      allow create: if isOwner(request.resource.data.restaurantId)
+        && request.resource.data.restaurantId is string;
       allow update: if isOwner(resource.data.restaurantId)
         && request.resource.data.restaurantId == resource.data.restaurantId;
       allow delete: if isOwner(resource.data.restaurantId);
     }
 
-    // ========================================================
+    // ===============================================================
     // 6. Zarządzanie Salą i Stolikami (tables)
-    // ========================================================
+    // ===============================================================
     match /tables/{tableId} {
-      // Właściciel lokalu ma pełne prawa do planu sali
+      // Plan sali i statusy stolików – dostęp wyłącznie dla właściciela
       allow read: if isOwner(resource.data.restaurantId);
-      allow create: if isOwner(request.resource.data.restaurantId);
+      allow create: if isOwner(request.resource.data.restaurantId)
+        && request.resource.data.restaurantId is string;
       allow update: if isOwner(resource.data.restaurantId)
         && request.resource.data.restaurantId == resource.data.restaurantId;
       allow delete: if isOwner(resource.data.restaurantId);
     }
 
-    // ========================================================
-    // 7. Zespół i Pracownicy Lokalu (staff)
-    // ========================================================
+    // ===============================================================
+    // 7. Zespół i Personel Lokalu (staff)
+    // ===============================================================
     match /staff/{staffId} {
-      // Właściciel lokalu zarządza kontami personelu
+      // Dane kadrowe i kody PIN personelu – ściśle chronione, dostęp wyłącznie dla właściciela
       allow read: if isOwner(resource.data.restaurantId);
-      allow create: if isOwner(request.resource.data.restaurantId);
+      allow create: if isOwner(request.resource.data.restaurantId)
+        && request.resource.data.restaurantId is string;
       allow update: if isOwner(resource.data.restaurantId)
         && request.resource.data.restaurantId == resource.data.restaurantId;
       allow delete: if isOwner(resource.data.restaurantId);
